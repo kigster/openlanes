@@ -29,6 +29,8 @@ classDiagram
   class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
   class OpenLanes__Execution__Control["OpenLanes::Execution::Control"]
   <<module>> OpenLanes__Execution__Control
+  class OpenLanes__Execution__Deadline["OpenLanes::Execution::Deadline"]
+  <<module>> OpenLanes__Execution__Deadline
   class OpenLanes__Execution__Executor["OpenLanes::Execution::Executor"]
   class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
   <<module>> OpenLanes__Lifecycle
@@ -81,6 +83,7 @@ classDiagram
   class OpenLanes__Live__Interview__Feed["Interview::Feed"]
   class OpenLanes__Live__Interview__Invalid["Interview::Invalid"]
   class OpenLanes__Live__Interview__Operator["Interview::Operator"]
+  class OpenLanes__Live__Interview__Operator__Failed["Interview::Operator::Failed"]
   class OpenLanes__Live__Interview__Turn["Interview::Turn"]
   class OpenLanes__Live__Interviewer["Interviewer"]
   class OpenLanes__Live__Keys["Keys"]
@@ -229,6 +232,7 @@ classDiagram
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Agents__Profile : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Error : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Execution__Child : uses
+  OpenLanes__Live__Copilot__Operator ..> OpenLanes__Execution__Deadline : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Live : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Live__Copilot : uses
@@ -255,9 +259,11 @@ classDiagram
   OpenLanes__Live__EventBus__Transaction ..> OpenLanes__Live__Store : uses
   OpenLanes__Live__GroupMissing --|> OpenLanes__Error : inherits
   OpenLanes__Live__Interview ..> OpenLanes__Error : uses
+  OpenLanes__Live__Interview ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Live__Interview ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Live__Interview ..> OpenLanes__Live__Interview__Feed : uses
   OpenLanes__Live__Interview ..> OpenLanes__Live__News : uses
+  OpenLanes__Live__Interview ..> OpenLanes__Plans__BlockedFile : uses
   OpenLanes__Live__Interview__Feed ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Live__Interview__Invalid --|> OpenLanes__Error : inherits
   OpenLanes__Live__Interview__Operator ..> OpenLanes__Adapters__Invocation : uses
@@ -265,12 +271,15 @@ classDiagram
   OpenLanes__Live__Interview__Operator ..> OpenLanes__Agents__Profile : uses
   OpenLanes__Live__Interview__Operator ..> OpenLanes__Error : uses
   OpenLanes__Live__Interview__Operator ..> OpenLanes__Execution__Child : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Execution__Deadline : uses
   OpenLanes__Live__Interview__Operator ..> OpenLanes__Live__Copilot__Operator : uses
   OpenLanes__Live__Interview__Operator ..> OpenLanes__Live__Interview : uses
   OpenLanes__Live__Interview__Operator ..> OpenLanes__Live__Interview__Brief : uses
   OpenLanes__Live__Interview__Operator ..> OpenLanes__Live__Interview__Invalid : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Live__Interview__Operator__Failed : uses
   OpenLanes__Live__Interview__Operator ..> OpenLanes__Plans : uses
   OpenLanes__Live__Interview__Operator ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Live__Interview__Operator__Failed --|> OpenLanes__Error : inherits
   OpenLanes__Live__Interview__Turn ..> OpenLanes__Live__Interview__Invalid : uses
   OpenLanes__Live__Interviewer ..> OpenLanes__Config : uses
   OpenLanes__Live__Interviewer ..> OpenLanes__Live__ChoiceConverter : uses

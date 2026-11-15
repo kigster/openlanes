@@ -24,7 +24,13 @@ RSpec.describe OpenLanes::Web::App, :tree do
   let(:app) { OpenLanes::Web.app(context) }
   let(:path) { "/api/plans/002.00/questions/1/interview" }
 
-  before { header "Host", "127.0.0.1:11000" }
+  let(:asked) { "# Blocked\n\n## B1 Rebase\n\nShould I rebase?\n\na) yes (Recommended)\nb) no\n" }
+  let(:blocked_md) { File.join(OpenLanes::Plans.tree(plans_root).find("002.00").feature.path, "blocked.md") }
+
+  before do
+    header "Host", "127.0.0.1:11000"
+    plans { |t| t.plan "002.00", :blocked, "rebase", files: { "spec.md" => "# Spec\n", "blocked.md" => asked } }
+  end
 
   def body = JSON.parse(last_response.body)
 
@@ -91,6 +97,85 @@ RSpec.describe OpenLanes::Web::App, :tree do
     expect(last_response.status).to eq(403)
     reply("r1", "  ")
     expect([last_response.status, body["error"]]).to eq([422, "a turn needs text"])
+  end
+
+  it "serves each turn's place in the conversation, in order" do
+    turns
+    run_later
+    reply("r1", "yes")
+    seqs = turns.map { it["seq"].split("-").map(&:to_i) }
+    expect(seqs).to eq(seqs.sort).and eq(seqs.uniq)
+    expect(body["turns"].last["seq"]).to eq(seqs.last.join("-"))
+  end
+
+  # Issue 252: a read used to start a model run on any path that looked like a question.
+  describe "a question that is not open" do
+    def refused = [last_response.status, body["error"], later]
+
+    it "starts nothing for a plan that asks no such question" do
+      get "/api/plans/002.00/questions/7/interview"
+      expect(refused).to eq([409, "plan 002.00 has no open question 7 to talk through", []])
+      get "/api/plans/099.00/questions/1/interview"
+      expect(refused).to eq([409, "plan 099.00 has no open question 1 to talk through", []])
+    end
+
+    it "starts nothing once it is answered, forgets what was said, and takes no more replies" do
+      turns
+      run_later
+      File.write(blocked_md, "#{asked}\n## A1\n\nyes\n")
+      get path
+      expect(refused).to eq([409, "plan 002.00 has no open question 1 to talk through", []])
+      expect(OpenLanes::Live::Interview.new(store:, keys:, plan: "002.00", number: 1).history).to be_empty
+      reply("r1", "yes")
+      expect(refused).to eq([409, "plan 002.00 has no open question 1 to talk through", []])
+    end
+
+    it "starts over when the plan blocks again with a new question under the same number" do
+      turns
+      run_later
+      reply("r1", "yes")
+      run_later
+      File.write(blocked_md, "# Blocked\n\n## B1 Database\n\nPostgres or SQLite?\n")
+      expect(turns).to eq([])
+      run_later
+      expect(turns.map { it["kind"] }).to eq(%w[question])
+    end
+  end
+
+  context "with the demo, where no blocked.md says what is open" do
+    let(:demo) { instance_double(OpenLanes::Web::Demo) }
+    let(:app) { OpenLanes::Web.app(context.with(demo:)) }
+    let(:question) { { "number" => 1, "kind" => "block", "heading" => "B1 Rebase", "body" => "Should I rebase?" } }
+
+    def publish(*questions)
+      store.set(keys.snapshot(keys.node), JSON.generate("node" => { "host" => "studio" }, "plans" => [{ "ordinal" => "007.00", "questions" => questions }]))
+    end
+
+    it "talks through a question the demo's board holds open, and no other" do
+      publish(question, question.merge("number" => 2, "kind" => "extension"), question.merge("number" => 3, "kind" => nil))
+      get "/api/plans/007.00/questions/1/interview"
+      expect([last_response.status, later.size]).to eq([200, 1])
+      get "/api/plans/007.00/questions/2/interview"
+      expect(last_response.status).to eq(409)
+      get "/api/plans/007.00/questions/3/interview"
+      expect(last_response.status).to eq(200)
+      get path
+      expect(last_response.status).to eq(409)
+    end
+
+    it "starts nothing before the demo has published a board" do
+      get "/api/plans/007.00/questions/1/interview"
+      expect([last_response.status, later]).to eq([409, []])
+    end
+
+    it "starts over when the board asks something else under the number" do
+      publish(question)
+      get "/api/plans/007.00/questions/1/interview"
+      run_later
+      publish(question.merge("body" => "Postgres or SQLite?"))
+      get "/api/plans/007.00/questions/1/interview"
+      expect(body["turns"]).to eq([])
+    end
   end
 
   it "answers 404 for a path that names no plan or question" do

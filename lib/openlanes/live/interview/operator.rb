@@ -10,7 +10,17 @@ module OpenLanes
       # {Brief}. What it says is JSON turns, each checked by {Turn.check}; a
       # reply that fails the check goes back to the model once to be said
       # again, and is never shown to the person as a refusal.
+      #
+      # A run that fails is another matter: a usage limit or a login that
+      # lapsed is not something to rephrase. It raises {Failed}, which
+      # {Interview#reply} shows as it is, so the person reads "usage limit
+      # reached" and not a clarifying question about their own answer, and
+      # no second run is spent finding the same limit (issue 252).
       class Operator
+        # The model run itself failed: it exited non-zero, reported an
+        # error as its result, or ran out of time.
+        class Failed < OpenLanes::Error; end
+
         # The agent whose profile and prompt the interview runs under.
         NAME = "unblocker"
 
@@ -23,6 +33,15 @@ module OpenLanes
         # Asked when the model could not say a turn the page can draw: a
         # clarifying question, never a refusal.
         FALLBACK = "Could you tell me a little more about what you would like here?"
+
+        # Seconds one run may take when the definition names none.
+        TIMEOUT = 180
+
+        # The most seconds one run is given, whatever the definition says: a
+        # reply is at most two runs, the second to rephrase, and both must
+        # end inside the hold {Interview#reply} keeps ({Interview::BUSY}).
+        # Past it a second reply started beside the first.
+        CEILING = Interview::BUSY / 3
 
         # @param root [String] the checkout `claude` runs in
         # @param plans_dir [String]
@@ -52,28 +71,49 @@ module OpenLanes
 
         # @return [Array<OpenLanes::Live::Interview::Turn>]
         def turns(interview, prompt, again: true)
-          data = JSON.parse(json_in(ask(prompt)))
-          Array(data["turns"]).map { Turn.parse(it.merge("id" => interview.next_id, "from" => "unblocker")) }
-                              .tap { raise Invalid, "the reply held no turns" if it.empty? }
+          said(JSON.parse(json_in(ask(prompt)))).map { Turn.parse(it.merge("id" => interview.next_id, "from" => "unblocker")) }
         rescue Invalid, JSON::ParserError
           raise if again
 
           [Turn.new(id: interview.next_id, from: "unblocker", kind: "text", text: FALLBACK)]
         end
 
+        # @param data [Object] the model's JSON, of whatever shape it chose
+        # @return [Array<Hash>] its turns, none of them a turn yet
+        # @raise [OpenLanes::Live::Interview::Invalid] when it is not `{"turns": [{...}, ...]}`
+        def said(data)
+          turns = data.is_a?(Hash) ? data["turns"] : nil
+          raise Invalid, "the reply must be {\"turns\": [...]} with at least one turn" unless turns.is_a?(Array) && !turns.empty?
+          raise Invalid, "every turn must be an object" unless turns.all?(Hash)
+
+          turns
+        end
+
         # @return [String] the JSON object inside +text+, fenced or not
         def json_in(text) = text[/\{.*\}/m] || text
 
         # @return [String] what the model said
+        # @raise [Failed] when the run did not end well
         def ask(prompt)
           command = argv(prompt)
           transcript = profile.adapter.transcript(trace: File::NULL, argv: command)
           child = @spawn.call(command, chdir: @root, env: profile.adapter.environment)
-          child.each_chunk { transcript.push(it) }
-          child.wait
+          status, late = Execution::Deadline.wait(child, timeout) { child.each_chunk { transcript.push(it) } }
           transcript.finish
+          failure = failure(status, transcript, late) and raise Failed, failure
           transcript.result.to_s
         end
+
+        # @return [String, nil] why the run failed, in the copilot's words; nil when it did not
+        def failure(status, transcript, late)
+          return "it took longer than #{timeout} seconds" if late
+          return "#{profile.adapter.executable} reported: #{transcript.error}" if transcript.failed?
+
+          "#{profile.adapter.executable} exited #{status.exitstatus}: #{transcript.plain.last(3).join(" ")}".strip unless status.success?
+        end
+
+        # @return [Numeric] seconds one run may take
+        def timeout = [@agent.timeout || TIMEOUT, CEILING].min
 
         # @return [Array<String>] one turn's `claude -p`, read-only
         def argv(prompt)

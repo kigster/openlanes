@@ -31,6 +31,40 @@ describe("renderMarkdown", () => {
   it("strips script", () => {
     expect(renderMarkdown("<script>alert(1)</script>hi")).not.toContain("<script");
   });
+
+  it("drops a <style> block with its rules, and a style attribute", () => {
+    const out = html('text\n\n<style>.plan{display:none}</style>\n\n<div style="position:fixed;inset:0">fake UI</div>\n');
+    expect(out.querySelector("style")).toBeNull();
+    expect(out.innerHTML).not.toContain("display:none");
+    expect(out.querySelector("[style]")).toBeNull();
+    expect(out.textContent).toContain("fake UI");
+  });
+
+  it("drops form controls and keeps their text", () => {
+    const out = html('<form action="https://evil.example/"><input name="csrf"><button>Save</button></form>');
+    expect(out.querySelector("form, input, button")).toBeNull();
+    expect(out.textContent).toContain("Save");
+  });
+
+  it("drops the author's classes and ids, so a document cannot borrow the page's styles", () => {
+    const out = html('<div class="dialog-overlay" id="root">covers the page</div>\n\n<code class="language-ruby hljs dialog-overlay">x</code>\n');
+    expect(out.querySelector(".dialog-overlay, [id]")).toBeNull();
+    expect(out.querySelector("div")?.hasAttribute("class")).toBe(false);
+    expect(out.querySelector("code")?.className).toBe("language-ruby");
+  });
+
+  it("keeps the classes the page adds itself: the fence's language, hljs tokens and admonitions", () => {
+    const out = html("> [!NOTE]\n> Mind the gap.\n\n```ruby\ndef a = 1\n```\n\n```mermaid\ngraph TD; A-->B\n```\n");
+    expect(out.querySelector("code.hljs.language-ruby .hljs-keyword")).not.toBeNull();
+    expect(out.querySelector("pre code.language-mermaid")).not.toBeNull();
+    expect(out.querySelector(".admonition.is-note .admonition-title")).not.toBeNull();
+  });
+
+  it("draws a task list's boxes as glyphs, not inputs", () => {
+    const out = html("- [x] done\n- [ ] to do\n");
+    expect(out.querySelector("input")).toBeNull();
+    expect([...out.querySelectorAll("li")].map((li) => li.textContent?.trim())).toEqual(["\u2611 done", "\u2610 to do"]);
+  });
 });
 
 describe("renderFrontmatter", () => {

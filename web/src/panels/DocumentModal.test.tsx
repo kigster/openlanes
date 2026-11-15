@@ -4,6 +4,13 @@ import { readFileSync } from "node:fs";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DocumentModal } from "./DocumentModal";
+import { renderMarkdown } from "./markdown";
+
+// The real renderer, watched: the modal must not run it again for a file it has already rendered.
+vi.mock("./markdown", async (original) => {
+  const actual = await original<typeof import("./markdown")>();
+  return { ...actual, renderMarkdown: vi.fn(actual.renderMarkdown) };
+});
 
 const SPEC = "---\ncreated: 2026-11-14\nstarts: planning\n---\n\n# Title here\n\nBody **text**.\n";
 const doc = { name: "spec.md", label: "Specification" };
@@ -61,6 +68,45 @@ describe("DocumentModal", () => {
     expect(onClose).toHaveBeenCalledTimes(2);
     await userEvent.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalledTimes(3);
+  });
+
+  it("renders the Markdown once, however often the lane re-renders it", async () => {
+    serve(SPEC);
+    const onClose = () => {};
+    const view = render(<DocumentModal ordinal="070.00" document={doc} onClose={onClose} />);
+    await screen.findByRole("heading", { name: "Title here" });
+    vi.mocked(renderMarkdown).mockClear();
+    for (let i = 0; i < 5; i++) view.rerender(<DocumentModal ordinal="070.00" document={{ ...doc }} onClose={() => {}} />);
+    expect(renderMarkdown).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets the keyboard scroll the body: it is focusable and named, and the close control keeps its visible [x] in its name", async () => {
+    serve(SPEC);
+    render(<DocumentModal ordinal="070.00" document={doc} onClose={() => {}} />);
+    await screen.findByRole("heading", { name: "Title here" });
+    const body = screen.getByRole("region", { name: "Specification of 070.00" });
+    expect(body).toHaveAttribute("tabindex", "0");
+    expect(body).toHaveClass("document-modal-body");
+    body.focus();
+    expect(body).toHaveFocus();
+    expect(screen.getByRole("button", { name: /\[x\]/ })).toHaveTextContent("[x]");
+  });
+
+  it("says a document is too large in the server's words for a 413", async () => {
+    const error = "research.md is 61440 KB; files over 1024 KB are not shown here";
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ error }), { status: 413 }));
+    render(<DocumentModal ordinal="070.00" document={doc} onClose={() => {}} />);
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(error));
+  });
+
+  it.each([
+    [413, "This document is too large to show here. Open it in an editor."],
+    [415, "This document is not text, so it cannot be shown here."],
+  ])("says so plainly when a %i carries no reason", async (status, message) => {
+    fetchMock.mockResolvedValue(new Response("<html>refused</html>", { status }));
+    render(<DocumentModal ordinal="070.00" document={doc} onClose={() => {}} />);
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(message));
   });
 
   it("shows the server's reason for a 404", async () => {
