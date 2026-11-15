@@ -1,1 +1,0 @@
-just web-install: exit 0

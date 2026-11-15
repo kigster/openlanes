@@ -1,1 +1,0 @@
-rspec 4014 examples 0 failures; rubocop no offenses

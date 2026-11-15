@@ -1,4 +1,0 @@
-$ cd web && npm run lint && npm run typecheck && npm run coverage
-Test Files 40 passed (40)
-Tests 456 passed (456)
-exit 0

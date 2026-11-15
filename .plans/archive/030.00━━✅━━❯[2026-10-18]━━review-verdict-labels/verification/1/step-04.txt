@@ -1,2 +1,0 @@
-Step 4: only security-reviewer counts bomb/unlock
-verdict_spec.rb: 0 failures
