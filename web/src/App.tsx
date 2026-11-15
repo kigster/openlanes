@@ -258,10 +258,13 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         stopAll={<StopAllDialog agents={busy.reduce((sum, n) => sum + n, 0)} plans={busy.length} onCommand={onCommand} />}
         help={<HelpDialog />}
       />
-      <Tabs.Root className="tabs-root" value={current} onValueChange={setTab} activationMode="manual">
+      {/* --side-width is set here, above both the status line and the layout: the line is as wide as the board
+          panel, which is whatever the right column leaves, and set on the layout alone it could not know that. */}
+      <Tabs.Root className="tabs-root" value={current} onValueChange={setTab} activationMode="manual" style={{ "--side-width": `${side.width}px` } as CSSProperties}>
         <GlobalLockBanner lock={me.global_lock ?? null} />
         <PausedCliBanner paused={me.paused_clis ?? []} />
         <BombNotice bombs={me.bombs} onCommand={onCommand} />
+        <StatusLine snapshot={me} counts={planCounts(me.plans, me.stations, life.gone)} />
         {/* A tablist may hold tabs only, so each machine's tab sits in a tablist of its own with its ▾ beside it (D3);
             the arrow keys still walk every tab as one row. */}
         <div className="tabs" onKeyDownCapture={e => acrossTabs(e, tab => tab.dataset.tab && setTab(tab.dataset.tab))}>
@@ -321,11 +324,10 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
                 </span>
               );
             })}
-          <StatusLine snapshot={me} counts={planCounts(me.plans, me.stations, life.gone)} />
         </div>
         <UnblockWidget plan={unblockPlan} onCommand={onCommand} onClose={closeUnblock} />
         <PlanDrawer plan={unblockPlan} />
-        <main className="layout" data-lanes={lanes.lanes} ref={layoutRef} style={{ "--side-width": `${side.width}px` } as CSSProperties}>
+        <main className="layout" data-lanes={lanes.lanes} ref={layoutRef}>
           <Tabs.Content value="board" className="board" forceMount hidden={current !== "board"}>
             <Board
               board={board}

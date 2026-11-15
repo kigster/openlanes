@@ -289,6 +289,26 @@ module OpenLanes
           granted
         end
 
+        # A line for the agent, through its clock so no warning lands on top
+        # of it (see {Clock#say!}).
+        #
+        # @param text [String]
+        # @return [Boolean] false with no clock running to say it through
+        def say!(text) = clock&.say!(text) || false
+
+        # At least +floor+ seconds on the clock, while the engine works out
+        # whether the agent gets more (see {Clock#hold!}). The moved deadline
+        # is written for a restarted engine, as an extension's is.
+        #
+        # @param floor [Integer] seconds
+        # @return [Boolean] whether the deadline moved
+        def hold!(floor)
+          clock = self.clock
+          moved = clock&.hold!(floor) || false
+          restart!(deadline: Executor.deadline(clock)) if moved
+          moved
+        end
+
         # Ask for the session to be compacted (W28): INTERRUPT, so the agent
         # leaves a resume note and ends its turn, and SIGKILL after +grace+
         # seconds if it has not. {Executor#call} then compacts the session and

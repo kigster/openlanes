@@ -1,23 +1,23 @@
-┌───────────────────┬───────────────────────────────────────────────────┬────────────────────────────┬───────────────┬──────────────────────────────┐
-│ Agent             │ Handles                                           │ Advances to                │ Runs on       │ Starts                       │
-├───────────────────┼───────────────────────────────────────────────────┼────────────────────────────┼───────────────┼──────────────────────────────┤
-│ arbitrator        │                                                   │ read-only                  │ opus/high     │ all                          │
-│ backend-coder     │ Planned, Building, Changes Requested              │ Ready for Review           │ opus/high     │ research, planning           │
-│ chores-coder      │ Planned, Building, Changes Requested              │ Ready for Review           │ haiku/medium  │ building                     │
-│ copilot           │                                                   │ read-only                  │ sonnet/low    │ all                          │
-│ curator           │                                                   │ read-only                  │ sonnet/medium │ all                          │
-│ deploy-assessor   │ Completed                                         │ Approved & Merged          │ opus/high     │ research, planning, building │
-│ design-reviewer   │ Ready for Review, In Review                       │ Approved & Merged          │ sonnet/high   │ research, planning           │
-│ frontend-coder    │ Planned, Building, Building UI, Changes Requested │ Ready for Review           │ sonnet/medium │ research, planning           │
-│ planner           │ Ready for Planning                                │ Planned                    │ opus/high     │ research, planning           │
-│ rebaser           │ stopped rebases, from the harness                 │ stages, never moves a plan │ sonnet/high   │ all                          │
-│ researcher        │ New                                               │ Researched                 │ haiku/medium  │ research                     │
-│ security-reviewer │ Ready for Review, In Review                       │ Approved & Merged          │ sonnet/high   │ research, planning           │
-│ spec-writer       │ Researched, Retroactive                           │ Ready for Planning         │ sonnet/medium │ research                     │
-│ staff-reviewer    │ Ready for Review, In Review                       │ Approved & Merged          │ opus/high     │ all                          │
-│ unblocker         │ Technical Block, Product Block, Bomb              │ by contents                │ opus/low      │ all                          │
-│ verifier          │ Verifying                                         │ Approved & Merged          │ sonnet/medium │ all                          │
-└───────────────────┴───────────────────────────────────────────────────┴────────────────────────────┴───────────────┴──────────────────────────────┘
+┌───────────────────┬───────────────────────────────────────────────────┬────────────────────────────┬───────────────┬──────────────────────────────┬────────┬─────────────┬────────────────┐
+│ Agent             │ Handles                                           │ Advances to                │ Runs on       │ Starts                       │ Rounds │ Timeout     │ Extension      │
+├───────────────────┼───────────────────────────────────────────────────┼────────────────────────────┼───────────────┼──────────────────────────────┼────────┼─────────────┼────────────────┤
+│ arbitrator        │                                                   │ read-only                  │ opus/high     │ all                          │ 1      │ 20m         │ 15m, up to 60m │
+│ backend-coder     │ Planned, Building, Changes Requested              │ Ready for Review           │ opus/high     │ research, planning           │ 1      │ 30m         │ 15m, up to 60m │
+│ chores-coder      │ Planned, Building, Changes Requested              │ Ready for Review           │ haiku/medium  │ building                     │ 1      │ 20m         │ 15m, up to 60m │
+│ copilot           │                                                   │ read-only                  │ sonnet/low    │ all                          │ 1      │ 3m          │ 15m, up to 60m │
+│ curator           │                                                   │ read-only                  │ sonnet/medium │ all                          │ 1      │ 20m         │ 15m, up to 60m │
+│ deploy-assessor   │ Completed                                         │ Approved & Merged          │ opus/high     │ research, planning, building │ 1      │ 20m         │ 15m, up to 60m │
+│ design-reviewer   │ Ready for Review, In Review                       │ Approved & Merged          │ sonnet/high   │ research, planning           │ 1      │ 15m         │ 15m, up to 60m │
+│ frontend-coder    │ Planned, Building, Building UI, Changes Requested │ Ready for Review           │ sonnet/medium │ research, planning           │ 1      │ 30m         │ 15m, up to 60m │
+│ planner           │ Ready for Planning                                │ Planned                    │ opus/high     │ research, planning           │ 1      │ 20m         │ 15m, up to 60m │
+│ rebaser           │ stopped rebases, from the harness                 │ stages, never moves a plan │ sonnet/high   │ all                          │ 1      │ 30m         │ 15m, up to 60m │
+│ researcher        │ New                                               │ Researched                 │ haiku/medium  │ research                     │ 1      │ 25m         │ 15m, up to 60m │
+│ security-reviewer │ Ready for Review, In Review                       │ Approved & Merged          │ sonnet/high   │ research, planning           │ 1      │ 15m         │ 15m, up to 60m │
+│ spec-writer       │ Researched, Retroactive                           │ Ready for Planning         │ sonnet/medium │ research                     │ 1      │ 25m         │ 15m, up to 60m │
+│ staff-reviewer    │ Ready for Review, In Review                       │ Approved & Merged          │ opus/high     │ all                          │ 1      │ 15m         │ 15m, up to 60m │
+│ unblocker         │ Technical Block, Product Block, Bomb              │ by contents                │ opus/low      │ all                          │ 1      │ run default │ 15m, up to 60m │
+│ verifier          │ Verifying                                         │ Approved & Merged          │ sonnet/medium │ all                          │ 1      │ 25m         │ 15m, up to 60m │
+└───────────────────┴───────────────────────────────────────────────────┴────────────────────────────┴───────────────┴──────────────────────────────┴────────┴─────────────┴────────────────┘
 
 ┌─────────┬─────────────────────────────────────┬─────────────────────────────────────────┬────────┐
 │ Adapter │ Available                           │ Can                                     │ Models │

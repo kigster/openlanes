@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -96,6 +97,24 @@ describe("under ?fixture", () => {
     expect(screen.getByRole("heading", { name: "Clean agent boundaries and transitions" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Action/ })).toBeInTheDocument();
     expect(screen.getByText("1 merged, 1 ready to merge, 3 blocked")).toBeInTheDocument();
+  });
+
+  // The status line is a panel of its own above the tabs, as wide as the board (shell.css), so it is no longer one of
+  // the tab row's items. In one column Needs you follows it, ahead of the tabs and the board: it is the same rail in
+  // the same place in the page, reordered by the stylesheet, so a resize never remounts it and replays its chime.
+  it("stands the status line above the tabs, and in one column puts Needs you between it and the board", async () => {
+    renderApp();
+    const line = await screen.findByTestId("statusline");
+    const tabs = document.querySelector<HTMLElement>(".tabs")!;
+    const rail = screen.getByRole("complementary", { name: /Needs you/ });
+    expect(line.parentElement).toBe(tabs.parentElement);
+    expect(line.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(rail.parentElement).toBe(document.querySelector("main.layout"));
+    const css = readFileSync("src/shell/shell.css", "utf8");
+    const oneColumn = css.slice(css.indexOf("@media (max-width: 960px) {\n  .tabs-root"));
+    const order = (selector: string) => Number(oneColumn.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} \\{[^}]*order: (\\d+)`))?.[1]);
+    expect([order(".layout > :is(.rail, .drawer)"), order(".tabs-root > .tabs, .tabs-root > .tabs ~ *, .layout > *")]).toEqual([1, 2]);
+    expect(oneColumn).toMatch(/^@media \(max-width: 960px\) \{\n {2}\.tabs-root \{ display: flex; flex-direction: column; \}\n {2}\.layout \{ display: contents; \}/);
   });
 
   it("switches tabs with the arrow keys and shows the Logs and test tabs", async () => {
@@ -229,7 +248,8 @@ describe("under ?fixture", () => {
 describe("the column divider", () => {
   const wide = () =>
     vi.stubGlobal("matchMedia", (query: string) => ({ matches: true, media: query, addEventListener() {}, removeEventListener() {} }));
-  const layout = () => document.querySelector<HTMLElement>("main.layout")!;
+  // The width is set on the tabs' root, which holds the status line as well as the layout (shell.css).
+  const layout = () => document.querySelector<HTMLElement>(".tabs-root")!;
   beforeEach(() => window.history.replaceState(null, "", "/?fixture"));
 
   it("renders a separator and applies the stored width when the window is wide", async () => {

@@ -89,8 +89,10 @@ classDiagram
   OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__WebRestart : uses
   OpenLanes__Supervision__WebRebuild ..> OpenLanes__Supervision__Host : uses
   OpenLanes__Supervision__WebRebuild ..> OpenLanes__Supervision__PageBackup : uses
+  OpenLanes__Supervision__WebRebuild ..> OpenLanes__Supervision__Shutdown : uses
   OpenLanes__Supervision__WebRebuild ..> OpenLanes__Web : uses
   OpenLanes__Supervision__WebRestart ..> OpenLanes__Log : uses
+  OpenLanes__Supervision__WebRestart ..> OpenLanes__Supervision__Slot : uses
   OpenLanes__Supervision__WebRestart ..> OpenLanes__Supervision__WebRebuild : uses
   OpenLanes__Supervision__WebRestart ..> OpenLanes__Supervision__WebRestartNote : uses
 ```

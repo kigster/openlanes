@@ -9,18 +9,21 @@ module OpenLanes
     # plan, `X<n>`, with three fixed choices, kept in the plan's `state.json`
     # so it survives a restart and can be answered from any control room.
     #
-    # - Time: asked while the agent still runs, {ASK_AT} seconds before its
-    #   clock's zero. A time choice answered then moves the live deadline, and
-    #   the agent carries on in the same session.
+    # - Time: a running agent whose clock is low is first given more without
+    #   any person ({Ladder}, E2): by the engine, then on its own estimate,
+    #   then by the arbitrator. Only what none of them settles is asked here,
+    #   {#ask_time}, {ASK_AT} seconds before the clock's zero or as soon as
+    #   the ladder gives up. A time choice answered while the agent still
+    #   runs moves the live deadline, and it carries on in the same session.
     # - Rounds: asked once the agent has used every round it had on the plan's
     #   state without finishing. Every choice gives it one more round; the
     #   time choices also lengthen that round's clock.
     #
-    # Nobody may be watching, so each kind is granted once without an answer:
-    # ten more minutes when the clock reaches {AUTO_AT}, and one more round at
-    # once on a run with no control room, or {AUTO_AFTER} seconds after asking
-    # on one that has one. After that the request waits for a person, and the
-    # limit applies as it always did: STOP at zero, no round past the last.
+    # Nobody may be watching, so a rounds request is granted once without an
+    # answer: one more round at once on a run with no control room, or
+    # {AUTO_AFTER} seconds after asking on one that has one. After that the
+    # request waits for a person, and the limit applies as it always did:
+    # STOP at zero, no round past the last.
     #
     # Nothing here starts, stops or renames anything; the dispatcher asks and
     # acts on the answers.
@@ -28,11 +31,6 @@ module OpenLanes
       # Seconds left on a clock when the time request is asked: the same
       # moment the agent itself is told "5 minutes left".
       ASK_AT = 300
-
-      # Seconds left when an unanswered time request is granted on its own:
-      # before the clock's WRAP_UP at 60, so the agent is not already
-      # wrapping up when the time arrives.
-      AUTO_AT = 120
 
       # Seconds a rounds request waits for a person on a staying run before
       # it is granted on its own.
@@ -77,8 +75,13 @@ module OpenLanes
         ].freeze
       }.freeze
 
-      # The choice granted without an answer, by what ran out.
+      # The choice the page recommends, by what ran out; a rounds request
+      # nobody answers is granted its one.
       DEFAULTS = { "time" => "b", "rounds" => "a" }.freeze
+
+      # A time request's stages before it is a person's (E2): the page shows
+      # no card for them, since the agent or the arbitrator is answering.
+      UNASKED = [Ladder::ESTIMATE, Ladder::ARBITRATION].freeze
 
       # @param stay [Boolean] whether a control room can answer at all
       # @param auto [Boolean] false to ask and never grant on its own
@@ -89,26 +92,28 @@ module OpenLanes
         @now = now
       end
 
-      # A running agent whose clock is nearly out: ask once per round, and
-      # grant ten minutes on its own once per agent and state.
+      # @return [Boolean] whether anything is granted without an answer; a
+      #   run built with `auto: false` asks a person and nothing else
+      def automatic? = @auto
+
+      # @return [Time] the wall clock every request here is stamped with
+      def now = @now.call
+
+      # The person's card for a round short of time (E1): asked once per
+      # round, and again after an answer that put time on the running clock,
+      # so a person can add to what was granted.
       #
-      # @param job [#task, #state, #handle] the dispatcher's job
       # @param path [String] the plan folder as it is named now
-      # @return [Hash, nil] the request, when there is one
-      def watch(job, path)
-        left = job.handle.remaining or return nil
-        return nil if left > ASK_AT
-
+      # @param agent [String]
+      # @param state [#to_s] the status key
+      # @param round [Integer]
+      # @return [Hash, nil] the open request, when there is one
+      def ask_time(path, agent:, state:, round:)
         plan = Plans::PlanState.for(path)
-        visit = Visit.of(plan, job.task.agent.name, job.state)
+        visit = Visit.of(plan, agent, state)
         all = plan.extensions
-        request = visit.pending(all) ||
-                  unless visit.asked?(all, job.task.round, "time")
-                    plan.ask_extension!(agent: visit.agent, state: visit.state, round: job.task.round, limit: "time", at: @now.call)
-                  end
-        return request unless @auto && request && left <= AUTO_AT && !visit.auto?(all, "live")
-
-        answer!(path, request["number"], DEFAULTS.fetch("time"), by: AUTO, live: job.handle)
+        visit.pending(all) ||
+          (plan.ask_extension!(agent:, state: visit.state, round:, limit: "time", at: @now.call) unless visit.asked?(all, round, "time"))
       end
 
       # An agent with no rounds left on the plan's state: ask once per
@@ -269,11 +274,19 @@ module OpenLanes
         def questions(subject, plan)
           state = subject.status.key.to_s
           moves = plan.moves
-          plan.extensions.reject { it.key?("settled_at") || it["state"] != state || (it.key?("moves") && it["moves"] != moves) }
-              .map { question(subject, it) }
+          plan.extensions.select { it["state"] == state && shown?(it, moves) }.map { question(subject, it) }
         end
 
         private
+
+        # @return [Boolean] whether a request is a person's to answer now:
+        #   open, past the stages the agent or the arbitrator answers (E2),
+        #   and asked on this visit or before requests named theirs
+        def shown?(request, moves)
+          return false if request.key?("settled_at") || UNASKED.include?(request["stage"])
+
+          !request.key?("moves") || request["moves"] == moves
+        end
 
         # @return [Hash]
         def question(subject, request)

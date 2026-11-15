@@ -26,6 +26,11 @@ module OpenLanes
       # The clock's warnings start with this; the agent's prompt explains them.
       WARN = "WARN"
 
+      # From the engine, to one agent whose clock is nearly out (E2): say how
+      # much more time the work needs, with `openlanes state estimate`, and
+      # carry on meanwhile. The prompt gives the command.
+      ESTIMATE = "ESTIMATE"
+
       # From the page, to one agent: stop at the next safe point, read the
       # plan's mailbox, and wait there for the next message before going on.
       # A person holds an agent to say something to it.

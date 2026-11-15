@@ -211,6 +211,7 @@ module OpenLanes
       prefix.register "sign", State::Sign
       prefix.register "show", State::Show
       prefix.register "resume", State::Resume
+      prefix.register "estimate", State::Estimate
     end
 
     # Copies the skills bundled with the gem; see {OpenLanes::Skills}.

@@ -3,7 +3,7 @@
 # The note is written and read through Supervision::WebRestartNote, the one
 # place that knows its format, so the two sides cannot drift apart (F203).
 RSpec.describe OpenLanes::Live::Copilot::RestartNote do
-  subject(:note) { described_class.new(take: -> { OpenLanes::Supervision::WebRestartNote.take(path) }, copilot:) }
+  subject(:note) { described_class.new(take: -> { OpenLanes::Supervision::WebRestartNote.take(path, now: Time.utc(2026, 11, 13, 10, 0, 5)) }, copilot:) }
 
   let(:dir) { Dir.mktmpdir("restart-note") }
   let(:path) { File.join(dir, "pids", "web-restart.json") }

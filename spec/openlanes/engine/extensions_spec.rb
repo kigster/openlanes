@@ -27,63 +27,52 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
     handle.clock = clock
   end
 
-  describe "#watch, a running agent's clock" do
-    it "asks nothing while more than five minutes are left" do
-      expect(extensions.watch(job, path)).to be_nil
-      expect(plan.extensions).to eq([])
+  describe "#ask_time, the person's card for a round short of time" do
+    def ask(round: 1) = extensions.ask_time(path, agent: "backend-coder", state: :building, round:)
+
+    it "asks once for the round, and keeps asking the same request" do
+      2.times { ask }
+      expect(plan.extensions).to contain_exactly(include("number" => 1,
+        "agent" => "backend-coder",
+        "state" => "building",
+        "round" => 1,
+        "limit" => "time",
+        "asked_at" => now.iso8601))
     end
 
-    context "with five minutes left" do
-      let(:left) { 300 }
-
-      it "asks once for the round, and keeps asking the same request" do
-        2.times { extensions.watch(job, path) }
-        expect(plan.extensions).to contain_exactly(include("number" => 1,
-          "agent" => "backend-coder",
-          "state" => "building",
-          "round" => 1,
-          "limit" => "time",
-          "asked_at" => now.iso8601))
-      end
+    # Time on the running clock is not the end of it: a person can add more.
+    it "asks again once the request was answered with time on the running clock" do
+      extensions.answer!(path, ask["number"], "b", by: "pat", live: handle)
+      expect(ask).to include("number" => 2).and(satisfy { !it.key?("settled_at") })
     end
 
-    context "with two minutes left and nobody answering" do
-      let(:left) { 120 }
+    it "does not ask again in a round that was answered with another round" do
+      extensions.answer!(path, ask["number"], "a", by: "pat", live: handle)
+      expect(ask).to be_nil
+    end
 
-      it "gives ten more minutes on its own, to the clock that is running" do
-        extensions.watch(job, path)
-        aggregate_failures do
-          expect(plan.extensions.first).to include("answer" => "b", "by" => "auto", "grant" => "live", "seconds" => 600)
-          expect(handle.remaining).to eq(720)
-        end
+    it "says whether it grants on its own, and what time it is" do
+      aggregate_failures do
+        expect(extensions.automatic?).to be(true)
+        expect(described_class.new(stay:, auto: false).automatic?).to be(false)
+        expect(extensions.now).to eq(now)
       end
+    end
+  end
 
-      # The automatic grant is spent; a person can still add to it.
-      it "asks again when the granted time runs low, and leaves that one to a person" do
-        extensions.watch(job, path)
-        clock.extend!(-600)
-        extensions.watch(job, path)
-        aggregate_failures do
-          expect(plan.extensions.map { it["number"] }).to eq([1, 2])
-          expect(plan.extensions.last).to include("limit" => "time").and(satisfy { !it.key?("settled_at") })
-        end
-      end
+  describe ".questions, with a request the engine is still working out" do
+    let(:subject_now) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")) }
 
-      it "gives it once per agent and state: the next round's request waits for a person" do
-        extensions.watch(job, path)
-        job.task.round = 2
-        handle.clock = OpenLanes::Execution::Clock.new(seconds: 60, control: File.join(path, "control"), on_expire: -> {}, now: -> { 0 })
-        extensions.watch(job, path)
-        aggregate_failures do
-          expect(plan.extensions.last).to include("round" => 2).and(satisfy { !it.key?("settled_at") })
-          expect(handle.remaining).to eq(60)
-        end
-      end
+    def staged(stage) = plan.ask_extension!(agent: "backend-coder", state: "building", round: 1, limit: "time", stage:)
 
-      it "only asks, when told never to grant on its own" do
-        described_class.new(stay:, auto: false, now: -> { now }).watch(job, path)
-        expect(plan.extensions.first).not_to have_key("settled_at")
-      end
+    it "shows a person no card while the agent or the arbitrator is answering" do
+      staged("estimate")
+      expect(described_class.questions(subject_now, plan)).to eq([])
+    end
+
+    it "shows the card once the request is a person's" do
+      plan.amend_extension!(staged("arbitration")["number"], stage: "person")
+      expect(described_class.questions(subject_now, plan).map { it[:id] }).to eq(["001.00/X1"])
     end
   end
 
@@ -236,17 +225,13 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
       expect(plan.extensions.first).not_to have_key("settled_at")
     end
 
-    context "with five minutes left on the clock of the same round number" do
-      let(:left) { 300 }
+    it "asks a person about the clock of the same round number again" do
+      plan.ask_extension!(agent: "backend-coder", state: :building, round: 1, limit: "time", at: now)
+      plan.settle_extension!(2, closed: "finished", at: now)
+      revisit
+      extensions.ask_time(path, agent: "backend-coder", state: :building, round: 1)
 
-      it "asks about that clock again" do
-        plan.ask_extension!(agent: "backend-coder", state: :building, round: 1, limit: "time", at: now)
-        plan.settle_extension!(2, closed: "finished", at: now)
-        revisit
-        extensions.watch(job, path)
-
-        expect(plan.extensions.map { it.values_at("limit", "moves") }).to eq([["rounds", 0], ["time", 0], ["time", 2]])
-      end
+      expect(plan.extensions.map { it.values_at("limit", "moves") }).to eq([["rounds", 0], ["time", 0], ["time", 2]])
     end
   end
 

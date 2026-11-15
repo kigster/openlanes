@@ -1,7 +1,7 @@
 project: openlanes
 starts: research
 frontend: true
-jobs: 3
+jobs: 5
 desired_codebase_quality: high
 merge:
   by: auto

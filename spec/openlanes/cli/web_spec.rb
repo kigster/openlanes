@@ -88,6 +88,39 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
     end
   end
 
+  # Issue 253: the note is left beside the supervisor's PID files, under
+  # the project root. With `-D docs/plans` the parent of the plans
+  # directory is `docs`, where it was looked for and never found.
+  describe "the note /restart-web left, with the plans directory nested" do
+    let(:nested) { File.join(Dir.pwd, "docs", "plans") }
+    let(:note) { File.join(Dir.pwd, "tmp", "pids", OpenLanes::Supervision::WebRestart::NOTE) }
+    let(:told) { [] }
+
+    around do |example|
+      shared = ENV.delete(OpenLanes::Supervision::PidDir::ENV_NAME)
+      example.run
+    ensure
+      ENV[OpenLanes::Supervision::PidDir::ENV_NAME] = shared
+    end
+
+    before do
+      FileUtils.mkdir_p(nested)
+      outcome = OpenLanes::Supervision::WebRebuild::Outcome.new(status: "ok", message: "the page was rebuilt")
+      OpenLanes::Supervision::WebRestartNote.new(outcome:, at: Time.now).write(note)
+      allow(OpenLanes::Live::Copilot::RestartNote).to receive(:new).and_wrap_original do |original, **keywords|
+        original.call(**keywords, take: -> { keywords.fetch(:take).call.tap { told << it } })
+      end
+      run(dir: nested)
+    end
+
+    it "is taken from the project root and told" do
+      aggregate_failures do
+        expect(told.map { it&.outcome&.message }).to eq(["the page was rebuilt"])
+        expect(File.exist?(note)).to be(false)
+      end
+    end
+  end
+
   describe "logging" do
     let(:default_log) { File.join(File.dirname(plans_root), "log", "development.log") }
 

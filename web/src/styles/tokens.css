@@ -46,6 +46,14 @@
      translucent wash rather than a colour, because the same buttons sit on enamel in Needs you and on plate elsewhere. */
   --choice-bg: rgb(0 0 0 / 6%);
   --choice-bg-hover: rgb(0 0 0 / 10%);
+  /* The top bars stand a shade off the page, toward the text: darker than --enamel here, lighter in the dark theme.
+     Mixed from --enamel, so a palette that changes the page changes the bars with it and none can forget to. The
+     alarm red was chosen against --plate and drops under 4.5:1 on this (3.8:1 in Daylight, 3.9:1 in Azure), so the
+     bars' red is the scheme's pushed the same way as the text. */
+  --nav-bg: color-mix(in srgb, #000 5%, var(--enamel));
+  --nav-alarm: color-mix(in srgb, #000 22%, var(--alarm));
+  /* The status line's panel: a step below the page in both themes, so it reads as set into it, not laid on it. */
+  --status-bg: color-mix(in srgb, #000 8%, var(--enamel));
   /* A sub-agent's tile, beside its parent's: a ghost of a car, 80% transparent. One knob, so it is easy to tune. */
   --subagent-opacity: 0.2;
 
@@ -87,6 +95,9 @@
     --focus: #8DB2FF;
     --choice-bg: rgb(255 255 255 / 7%);
     --choice-bg-hover: rgb(255 255 255 / 12%);
+    --nav-bg: color-mix(in srgb, #fff 7%, var(--enamel));
+    --nav-alarm: color-mix(in srgb, #fff 30%, var(--alarm));
+    --status-bg: color-mix(in srgb, #000 30%, var(--enamel));
     color-scheme: dark;
   }
 }
@@ -118,6 +129,9 @@
   --focus: #8DB2FF;
   --choice-bg: rgb(255 255 255 / 7%);
   --choice-bg-hover: rgb(255 255 255 / 12%);
+  --nav-bg: color-mix(in srgb, #fff 7%, var(--enamel));
+  --nav-alarm: color-mix(in srgb, #fff 30%, var(--alarm));
+  --status-bg: color-mix(in srgb, #000 30%, var(--enamel));
   color-scheme: dark;
 }
 

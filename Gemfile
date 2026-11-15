@@ -19,6 +19,10 @@ group :test do
   gem "simplecov"
 end
 
+group :development do
+  gem "newrelic_rpm"
+end
+
 group :development, :test do
   # Already installed at run time through dry-cli-ui -> binding_of_caller; this only pins it for development.
   gem "debug_inspector", "~> 1.2"

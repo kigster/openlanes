@@ -54,6 +54,16 @@ module OpenLanes
   #     command: bundle exec rspec
   #     report_command: jq '.total.lines.percent' coverage/coverage.json
   #     minimum: 95             # or report: + format: instead of report_command:
+  #   agents:                   # one machine's changes to an agent, by its name; each key
+  #     backend-coder:          # replaces the same key of agents/<name>.md and nothing else
+  #       rounds: 3             # rounds on one plan state, 1 to 5
+  #       timeout: 3600         # seconds on a round's clock; `--timeout` still only tightens it
+  #       model: opus           # where the frontmatter's `model:` and `effort:` stand in
+  #       effort: high          # {Agents::Profile}'s order: spec.md `phases:`, `sizing:` and
+  #                             # `depth` still outrank them, as they outrank the frontmatter
+  #       extension_cap: 900    # seconds the engine adds to a round's clock on its own, and
+  #                             # the largest estimate of the agent's own it grants (E2)
+  #       extension_ceiling: 3600  # seconds, the most the arbitrator may add to a round (E2)
   #
   # Precedence, loudest first: a flag typed on the command line, the plan's
   # spec.md frontmatter, this file, the built-in default. The file supplies
@@ -145,6 +155,9 @@ module OpenLanes
   #   @return [Float, nil] `budget.plan_usd`: the most a plan may spend, in
   #     estimated dollars, before no new round starts on it; nil is no cap.
   #     Read through {Events::PlanSpend.cap_for}, the one place that asks
+  # @!attribute [r] agents
+  #   @return [OpenLanes::Agents::Overrides] `agents:`: what this machine
+  #     changes about an agent's frontmatter; {Agents::Registry} applies it
   Config = Data.define(:path,
     :project,
     :starts,
@@ -173,10 +186,11 @@ module OpenLanes
     :refactor_lock_hours,
     :chime,
     :budget_plan_usd,
-    :sizing) do
+    :sizing,
+    :agents) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil, sizing: Agents::Sizing.new) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil, sizing: Agents::Sizing.new, agents: Agents::Overrides.new) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -287,6 +301,7 @@ module OpenLanes
       settings["budget"] = { "plan_usd" => budget_plan_usd } if budget_plan_usd
       settings["chime"] = chime unless chime.nil?
       settings["sizing"] = sizing.to_settings unless sizing.to_settings.empty?
+      settings["agents"] = agents.to_settings unless agents.table.empty?
       settings.compact
     end
 
@@ -457,7 +472,8 @@ module OpenLanes
           **refactor(settings["refactor"], path),
           chime:     chime(settings, path),
           **budget(settings["budget"], path),
-          sizing:    Agents::Sizing.parse(settings["sizing"], path:))
+          sizing:    Agents::Sizing.parse(settings["sizing"], path:),
+          agents:    Agents::Overrides.parse(settings["agents"], path:))
         conflicts!(config, path)
         schema!(config.to_settings.except("commands"), path)
         config
