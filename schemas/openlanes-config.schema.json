@@ -1876,6 +1876,11 @@
               "description": "The .plans directory",
               "default": ".plans"
             },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Start nothing; say whether it would start the factory or restart its control room",
+              "default": false
+            },
             "git_push": {
               "type": "boolean",
               "description": "With --isolation worktree, a finished branch is pushed and its pull request opened as soon as it lands, titled [NNN.MM](X). --no-git-push turns that off and leaves it uncommitted.",
