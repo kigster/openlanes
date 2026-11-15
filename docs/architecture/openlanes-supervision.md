@@ -4,7 +4,9 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Container["OpenLanes::Container"]
+  class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Execution__AgentProcess["OpenLanes::Execution::AgentProcess"]
   class OpenLanes__Execution__AgentSupervisor["OpenLanes::Execution::AgentSupervisor"]
   class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
@@ -12,6 +14,8 @@ classDiagram
   <<module>> OpenLanes__Execution__Control
   class OpenLanes__Log["OpenLanes::Log"]
   <<module>> OpenLanes__Log
+  class OpenLanes__Project["OpenLanes::Project"]
+  <<module>> OpenLanes__Project
   class OpenLanes__Refusal["OpenLanes::Refusal"]
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   <<module>> OpenLanes__Supervision
@@ -87,6 +91,9 @@ classDiagram
   OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__Slot : uses
   OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__Title : uses
   OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__WebRestart : uses
+  OpenLanes__Supervision__WebRebuild ..> OpenLanes__Config : uses
+  OpenLanes__Supervision__WebRebuild ..> OpenLanes__Error : uses
+  OpenLanes__Supervision__WebRebuild ..> OpenLanes__Project : uses
   OpenLanes__Supervision__WebRebuild ..> OpenLanes__Supervision__Host : uses
   OpenLanes__Supervision__WebRebuild ..> OpenLanes__Supervision__PageBackup : uses
   OpenLanes__Supervision__WebRebuild ..> OpenLanes__Web : uses

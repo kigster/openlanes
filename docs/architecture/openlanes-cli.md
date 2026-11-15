@@ -66,6 +66,8 @@ classDiagram
   class OpenLanes__CLI__Preview__Stop["Preview::Stop"]
   class OpenLanes__CLI__Programs["Programs"]
   class OpenLanes__CLI__RemovalCommand["RemovalCommand"]
+  class OpenLanes__CLI__Rerun["Rerun"]
+  <<module>> OpenLanes__CLI__Rerun
   class OpenLanes__CLI__Resync__Dirs["Resync::Dirs"]
   class OpenLanes__CLI__Resync__Prs["Resync::Prs"]
   class OpenLanes__CLI__Review["Review"]
@@ -362,6 +364,7 @@ classDiagram
   OpenLanes__CLI__RemovalCommand ..> OpenLanes__Lifecycle : uses
   OpenLanes__CLI__RemovalCommand ..> OpenLanes__Plans : uses
   OpenLanes__CLI__RemovalCommand ..> OpenLanes__Setup : uses
+  OpenLanes__CLI__Rerun ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Resync__Dirs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Resync__Dirs ..> OpenLanes__Lifecycle : uses
   OpenLanes__CLI__Resync__Prs --|> OpenLanes__CLI__Base : inherits
@@ -386,6 +389,7 @@ classDiagram
   OpenLanes__CLI__Start ..> OpenLanes__CLI__Argv : uses
   OpenLanes__CLI__Start --|> OpenLanes__CLI__EngineCommand : inherits
   OpenLanes__CLI__Start ..> OpenLanes__CLI__Programs : uses
+  OpenLanes__CLI__Start ..|> OpenLanes__CLI__Rerun : includes
   OpenLanes__CLI__Start ..> OpenLanes__Live : uses
   OpenLanes__CLI__Start ..> OpenLanes__Log : uses
   OpenLanes__CLI__Start ..> OpenLanes__Log__Invalid : uses
