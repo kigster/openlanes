@@ -854,9 +854,53 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       it "asks it exactly once, for this project, and says the restart has started" do
         reply = apply.first
         aggregate_failures do
-          expect(asked).to eq([File.dirname(dispatcher.runner.tree.dir)])
+          expect(asked).to eq([Dir.pwd])
           expect(reply.status).to eq("done")
           expect(reply.reason).to start_with("restarting the control room: supervisor 4242")
+        end
+      end
+    end
+
+    # Issue 253: `-D docs/plans` and PLANS_DIR=docs/plans put the plans a
+    # level below the project root, where `openlanes start` keeps its PID
+    # files. The parent of the plans directory is then `docs`.
+    context "with the plans directory nested below the project root" do
+      subject(:commands) { described_class.new(store:, keys:, node:, run_state:, claims:, clock: -> { Time.utc(2026, 10, 13, 9) }) }
+
+      let(:tree) { OpenLanes::Plans::Tree.new(dir: File.join(Dir.pwd, "docs", "plans")) }
+      let(:pid_dir) { OpenLanes::Supervision.dir(Dir.pwd) }
+      let(:signalled) { [] }
+
+      # The suite keeps every PID file in one directory of its own, which
+      # would hide which root the lookup started from.
+      around do |example|
+        shared = ENV.delete(OpenLanes::Supervision::PidDir::ENV_NAME)
+        example.run
+      ensure
+        ENV[OpenLanes::Supervision::PidDir::ENV_NAME] = shared
+      end
+
+      before do
+        FileUtils.mkdir_p(tree.dir)
+        pid_dir.write(OpenLanes::Supervision::PidFile.new(role: "supervisor", pid: 4242, started: "x", root: Dir.pwd, url: "http://127.0.0.1:11000"))
+        allow(OpenLanes::Supervision::Probe).to receive(:new).and_return(instance_double(OpenLanes::Supervision::Probe, verified?: true))
+        allow(Process).to receive(:kill) { |*args| signalled << args }
+      end
+
+      it "finds the supervisor under the project root and signals it" do
+        aggregate_failures do
+          expect(apply.first).to have_attributes(status: "done", reason: start_with("restarting the control room: supervisor 4242"))
+          expect(signalled).to eq([["USR2", 4242]])
+          expect(pid_dir.path).to eq(File.join(Dir.pwd, "tmp", "pids"))
+        end
+      end
+
+      it "keeps the chime in the project's config, not in docs/" do
+        send_command("set_chime", on: true)
+        apply
+        aggregate_failures do
+          expect(File.read(File.join(Dir.pwd, OpenLanes::Config::FILE))).to include("chime: true")
+          expect(File.exist?(File.join(Dir.pwd, "docs", OpenLanes::Config::FILE))).to be(false)
         end
       end
     end
