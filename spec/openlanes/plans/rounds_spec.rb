@@ -81,6 +81,44 @@ RSpec.describe OpenLanes::Plans::Rounds do
     end
   end
 
+  # An agent that `starts_as` is picked up in one state and works in the
+  # next: `from` names the first, and the round is counted for the second.
+  context "with a round whose start renamed the folder" do
+    let(:stages) { [stage(1, from: "planned", state: "building"), stage(2, state: "building")] }
+
+    it "counts it for the state it worked in" do
+      expect([rounds.used("backend-coder", "building", moves: 1), rounds.next("backend-coder", "building", moves: 1)])
+        .to eq([2, 3])
+    end
+
+    it "does not count it for the state the plan was picked up in" do
+      expect(rounds.used("backend-coder", "planned", moves: 1)).to eq(0)
+    end
+
+    it "counts a failed start on it towards the cap" do
+      failing = described_class.new(stages: [stage(1, from: "planned", state: "building", status: failed)], signatures:)
+      expect(failing.failed_starts("backend-coder", "building", moves: 1)).to eq(1)
+    end
+  end
+
+  # What the release before wrote for the same round: `from` and `visit`,
+  # and no `state`.
+  context "with a renaming round written before stages named their state" do
+    let(:stages) do
+      [stage(1, from: "planned", to: "building", moves: 1),
+       stage(2, to: "ready_for_review", moves: 2),
+       stage(3, from: "planned")]
+    end
+
+    it "reads one that settled without the plan moving as worked where it left the plan" do
+      expect(rounds.visit("backend-coder", "building", moves: 1).map { it["round"] }).to eq([1, 2])
+    end
+
+    it "reads one that never settled as worked where it was picked up" do
+      expect(rounds.used("backend-coder", "planned", moves: 1)).to eq(1)
+    end
+  end
+
   context "with stages an older release wrote" do
     let(:stages) do
       [{ "agent" => "backend-coder", "round" => 1, "status" => "Completed", "to" => "building", "moves" => 4 },

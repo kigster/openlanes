@@ -108,13 +108,26 @@ module OpenLanes
       # read as the visit those imply, so an old plan's round never goes down.
       # A round that moved the plan settled one move later than it arrived.
       def visit?(stage, state, moves)
-        return stage["visit"] == moves && stage["from"] == state if stage.key?("visit")
+        return stage["visit"] == moves && worked_in(stage) == state if stage.key?("visit")
 
         from = stage["from"] || stage["to"]
         return false unless from == state
 
         settled = stage["moves"]
         settled.nil? || settled == moves || (stage["to"] && stage["to"] != from && settled == moves + 1)
+      end
+
+      # The state a round worked in, which is the one it is counted for. A
+      # stage says so in `state`. One written before that field names only
+      # `from`, the state the plan was picked up in, and an agent that
+      # `starts_as` renames the folder first: matched on `from`, its first
+      # round was counted for no state at all, and a restart handed the round
+      # out again. Such a stage that settled without the plan moving worked
+      # in the state it left the plan in.
+      def worked_in(stage)
+        return stage["state"] if stage.key?("state")
+
+        stage["to"] && stage["moves"] == stage["visit"] ? stage["to"] : stage["from"]
       end
 
       # The highest round the agent signed since this visit's first stage
