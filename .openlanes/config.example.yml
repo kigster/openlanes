@@ -83,6 +83,27 @@ coverage:
   report_command: jq '.total.lines.percent' coverage/coverage.json
   minimum: 95
 
+# The application openlanes is working on. `openlanes init` writes this
+# section with the name filled in and the rest empty.
+application:
+  name: Demo App
+  description: Books appointments for small clinics
+  current_phase: beta              # mvp | alpha | beta | in-production
+  commands:                        # shell commands, run from the project root
+    setup: bin/setup               # installs what the application needs, once per checkout
+    before_start: bin/rails db:prepare
+    start:                         # a list, because several things may start together
+      - bin/rails server
+      - bin/vite dev
+    stop:                          # a list, one command for each thing to stop
+      - pkill -f "rails server"
+      - pkill -f "vite dev"
+    after_stop: bin/rails tmp:clear
+    backend_tests: bundle exec rspec
+    frontend_tests: npm test
+    other_tests: npx cypress run
+    ci_tests: just ci              # the nearest local equivalent of everything CI runs
+
 # How to run the app a plan builds, for the control room's Preview tab.
 # Each process gets a port in $PORT_<NAME>.
 app:

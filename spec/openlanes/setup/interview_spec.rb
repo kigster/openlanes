@@ -106,6 +106,15 @@ RSpec.describe OpenLanes::Setup::Interview do
       )
     end
 
+    it "names the application after the project, and fills in nothing else" do
+      expect(unasked.call.application).to have_attributes(name: "acme", description: nil, current_phase: nil, commands: {})
+    end
+
+    it "keeps the application the current file describes" do
+      application = OpenLanes::Config::Application.new(name: "Acme Books", current_phase: :beta, commands: { setup: "bin/setup" })
+      expect(unasked(defaults: OpenLanes::Config.new(application:)).call.application).to eq(application)
+    end
+
     it "builds no extractor's worth of questions" do
       expect(unasked.call.architecture_decisions).to be_nil
     end

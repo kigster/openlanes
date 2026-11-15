@@ -5,6 +5,21 @@ jobs: 5
 desired_codebase_quality: high
 merge:
   by: auto
+application:
+  name: openlanes
+  description: A command-line software factory that drives plan folders through spec, plan, build and review with specialist agents
+  current_phase: alpha
+  commands:
+    setup: bin/setup
+    before_start: just web-build
+    start:
+    - just start
+    stop:
+    - openlanes stop
+    backend_tests: just test
+    frontend_tests: just web-test
+    other_tests: just web-e2e
+    ci_tests: just ci
 coverage:
   command: bundle exec rspec
   minimum: 95
