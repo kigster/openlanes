@@ -275,6 +275,42 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
     end
   end
 
+  describe "#stalled, an agent whose starts keep failing" do
+    let(:subject_of) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")) }
+    let(:question) { described_class.questions(subject_of, plan).first }
+
+    before { extensions.stalled(path, "backend-coder", :building, 1, after: now - 60) }
+
+    it "asks once for the run of failures, saying what it is about" do
+      extensions.stalled(path, "backend-coder", :building, 1, after: now - 60)
+
+      expect(plan.extensions.map { it.values_at("limit", "cause") }).to eq([%w[rounds failed_starts]])
+    end
+
+    it "says on the card that its starts failed, not that it is out of rounds" do
+      aggregate_failures do
+        expect(question[:heading]).to eq("backend-coder keeps failing to start")
+        expect(question[:body]).to start_with("Its starts on #{subject_of.status} kept failing before it spent anything")
+      end
+    end
+
+    it "offers the choices of a rounds request" do
+      expect(question[:options].map { it[:letter] }).to eq(%w[a b c])
+    end
+
+    it "does not ask again once the request was closed after the last failure" do
+      extensions.close!(path, "backend-coder", :building)
+
+      expect(extensions.stalled(path, "backend-coder", :building, 1, after: now - 60)).to be_nil
+    end
+
+    it "writes a request the schema accepts" do
+      schema = JSONSchemer.schema(Pathname.new(OpenLanes::Plans::PlanState::SCHEMA_PATH))
+
+      expect(schema.validate(JSON.parse(File.read(plan.path))).map { it["error"] }).to eq([])
+    end
+  end
+
   describe "#answer! on a time request" do
     before { plan.ask_extension!(agent: "backend-coder", state: :building, round: 1, limit: "time", at: now) }
 

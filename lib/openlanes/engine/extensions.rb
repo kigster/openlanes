@@ -41,6 +41,9 @@ module OpenLanes
       # Who answered a request nobody else did.
       AUTO = "auto"
 
+      # The `cause` of a rounds request raised for failed starts ({#stalled}).
+      FAILED_STARTS = "failed_starts"
+
       # Why a request was closed when the plan left the visit it asked in.
       MOVED = "the plan moved on"
 
@@ -200,8 +203,9 @@ module OpenLanes
       end
 
       # A request for an agent whose starts keep failing: asked once per run
-      # of failures, so a person sees the agent is stuck and why. Granting it
-      # a round lifts the cap ({#lifted_at}); closing it leaves the agent
+      # of failures, so a person sees the agent is stuck and why: the request
+      # carries {FAILED_STARTS} as its `cause`, which the card reads. Granting
+      # it a round lifts the cap ({#lifted_at}); closing it leaves the agent
       # parked without asking again until it fails anew.
       #
       # @param path [String]
@@ -218,7 +222,7 @@ module OpenLanes
         return open if open
         return nil if all.any? { it["agent"] == agent && it["state"] == visit.state && settled_after?(it, after) }
 
-        plan.ask_extension!(agent:, state: visit.state, round:, limit: "rounds", at: @now.call)
+        plan.ask_extension!(agent:, state: visit.state, round:, limit: "rounds", at: @now.call, cause: FAILED_STARTS)
       end
 
       # The extra seconds a round granted on this visit runs on, handed out once.
@@ -273,13 +277,13 @@ module OpenLanes
 
         # @return [Hash]
         def question(subject, request)
-          time = request["limit"] == "time"
+          card = Card.new(subject:, request:)
           recommended = DEFAULTS.fetch(request["limit"])
           { id:       "#{subject.feature.ordinal}/X#{request["number"]}",
             number:   request["number"],
             kind:     "extension",
-            heading:  time ? "#{request["agent"]} is running out of time" : "#{request["agent"]} is out of rounds",
-            body:     body(subject, request, time),
+            heading:  card.heading,
+            body:     card.body,
             agent:    request["agent"],
             owner:    "technical",
             options:  choices(request).map do |choice|
@@ -290,17 +294,6 @@ module OpenLanes
             end,
             held:     false,
             asked_at: request["asked_at"] }
-        end
-
-        # @return [String]
-        def body(subject, request, time)
-          if time
-            "Round #{request["round"]} on #{subject.status} has under #{ASK_AT / 60} minutes left on its clock. " \
-              "More time lets it carry on where it is; another round starts it again from its resume note."
-          else
-            "It has used every round it had on #{subject.status} without finishing. " \
-              "Each choice gives it one more round; the time choices also lengthen that round's clock."
-          end
         end
       end
 

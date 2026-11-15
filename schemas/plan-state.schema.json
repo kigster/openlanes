@@ -254,6 +254,7 @@
           "round": { "type": "integer", "minimum": 1 },
           "limit": { "enum": ["time", "rounds"], "description": "What ran out: the round's clock, or the agent's rounds." },
           "asked_at": { "type": "string", "format": "date-time" },
+          "cause": { "enum": ["failed_starts"], "description": "Why a rounds request was raised when the agent did not run out: its starts kept failing before it spent anything." },
           "moves": { "type": "integer", "minimum": 0, "description": "The plan's moves when it was asked: the visit the request belongs to, and expires with." },
           "answer": { "enum": ["a", "b", "c"], "description": "On a rounds request every choice is a round, b) and c) with 10 or 20 more minutes on it; on a time request a) is a round, b) and c) 10 or 20 more minutes on the running clock." },
           "by": { "type": "string", "minLength": 1, "description": "Who answered: a person's user name, or auto." },

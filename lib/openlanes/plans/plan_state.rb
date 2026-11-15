@@ -570,13 +570,16 @@ module OpenLanes
       # @param round [Integer]
       # @param limit [String] "time" or "rounds", whichever ran out
       # @param at [Time]
+      # @param cause [String, nil] why it is asked when nothing ran out, so
+      #   the card does not say "out of rounds" of an agent that never ran
       # @return [Hash] the request as written, with its `number`
-      def ask_extension!(agent:, state:, round:, limit:, at: Time.now)
+      def ask_extension!(agent:, state:, round:, limit:, at: Time.now, cause: nil)
         record = nil
         update do |data|
           all = (data["extensions"] ||= [])
           record = { "number" => (all.map { it["number"] }.max || 0) + 1, "agent" => agent, "state" => state.to_s,
-                     "round" => Integer(round), "limit" => limit, "asked_at" => at.iso8601, "moves" => data["moves"].to_i }
+                     "round" => Integer(round), "limit" => limit, "asked_at" => at.iso8601, "moves" => data["moves"].to_i,
+                     "cause" => cause }.compact
           all << record
         end
         record
