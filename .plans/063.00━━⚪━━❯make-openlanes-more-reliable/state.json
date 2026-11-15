@@ -6,7 +6,7 @@
     "slug": "make-openlanes-more-reliable"
   },
   "state": null,
-  "updated_at": "2026-11-15T09:44:47-08:00",
+  "updated_at": "2026-11-15T11:16:38-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -49,6 +49,62 @@
       "note": "failed start: claude exited 1: Credit balance is too low - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-094443-063.00-researcher-58349-d882.ndjson",
       "session": "f93781a0-4170-4c88-8484-99267472a052",
       "moves": 0
+    },
+    {
+      "agent": "researcher",
+      "round": 2,
+      "status": "Failed start",
+      "started_at": "2026-11-15T09:57:39-08:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/063.00-make-openlanes-more-reliable",
+      "from": "new",
+      "state": "new",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "visit": 0,
+      "to": "new",
+      "finished_at": "2026-11-15T09:57:45-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 3.5,
+      "note": "failed start: claude exited 1: Credit balance is too low - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-095739-063.00-researcher-84919-9532.ndjson",
+      "session": "2ad1f67f-3312-407f-aae5-67a49729ea77",
+      "moves": 0
+    },
+    {
+      "agent": "researcher",
+      "round": 2,
+      "status": "Failed start",
+      "started_at": "2026-11-15T09:58:52-08:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/063.00-make-openlanes-more-reliable",
+      "from": "new",
+      "state": "new",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "visit": 0,
+      "to": "new",
+      "finished_at": "2026-11-15T09:58:58-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 3.5,
+      "note": "failed start: claude exited 1: Credit balance is too low - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-095853-063.00-researcher-84919-4623.ndjson",
+      "session": "5f67a067-b87d-4e8e-b23b-fd83bffebd7f",
+      "moves": 0
+    },
+    {
+      "agent": "researcher",
+      "round": 2,
+      "status": "Started",
+      "started_at": "2026-11-15T11:16:36-08:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/063.00-make-openlanes-more-reliable",
+      "from": "new",
+      "state": "new",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "visit": 0,
+      "session": "b9246caf-80a4-445a-877e-7be2aea5b027"
     }
   ],
   "signatures": [
@@ -83,15 +139,26 @@
       "grant": "round",
       "seconds": 0,
       "settled_at": "2026-11-15T09:44:37-08:00"
+    },
+    {
+      "number": 2,
+      "agent": "researcher",
+      "state": "new",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-11-15T09:58:59-08:00",
+      "moves": 0,
+      "cause": "failed_starts",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-15T11:16:27-08:00"
     }
   ],
   "memory": {
     "researcher": {
-      "rounds": {},
-      "held": {
-        "session": "f93781a0-4170-4c88-8484-99267472a052",
-        "through": 0
-      }
+      "rounds": {}
     }
   }
 }

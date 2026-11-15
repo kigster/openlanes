@@ -6,7 +6,7 @@
     "slug": "speed-up-openlanes"
   },
   "state": null,
-  "updated_at": "2026-11-15T09:45:14-08:00",
+  "updated_at": "2026-11-15T11:16:38-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -66,6 +66,48 @@
       "note": "failed start: claude exited 1: Credit balance is too low - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-094508-061.00-researcher-58349-8c51.ndjson",
       "session": "fa3b54b3-9dbe-43fc-ae4f-ee298166ce70",
       "moves": 0
+    },
+    {
+      "agent": "researcher",
+      "round": 1,
+      "status": "Failed start",
+      "started_at": "2026-11-15T09:57:36-08:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/061.00-speed-up-openlanes",
+      "from": "new",
+      "state": "new",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "visit": 0,
+      "to": "new",
+      "finished_at": "2026-11-15T09:57:45-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 3.7,
+      "note": "failed start: claude exited 1: Credit balance is too low - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-095736-061.00-researcher-84919-e6cc.ndjson",
+      "session": "378fa3c3-71dc-46fd-a440-d6dbf409a7a9",
+      "moves": 0
+    },
+    {
+      "agent": "researcher",
+      "round": 1,
+      "status": "Failed start",
+      "started_at": "2026-11-15T11:16:32-08:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/061.00-speed-up-openlanes",
+      "from": "new",
+      "state": "new",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "visit": 0,
+      "to": "new",
+      "finished_at": "2026-11-15T11:16:38-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 3.7,
+      "note": "failed start: claude exited 1: Credit balance is too low - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-111632-061.00-researcher-84919-b8c0.ndjson",
+      "session": "8de5696f-52dd-44ba-b2ef-0b902f439974",
+      "moves": 0
     }
   ],
   "signatures": [
@@ -114,9 +156,26 @@
     "researcher": {
       "rounds": {},
       "held": {
-        "session": "fa3b54b3-9dbe-43fc-ae4f-ee298166ce70",
+        "session": "8de5696f-52dd-44ba-b2ef-0b902f439974",
         "through": 0
       }
     }
-  }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "researcher",
+      "state": "new",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-15T09:57:48-08:00",
+      "moves": 0,
+      "cause": "failed_starts",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-15T11:16:27-08:00"
+    }
+  ]
 }
