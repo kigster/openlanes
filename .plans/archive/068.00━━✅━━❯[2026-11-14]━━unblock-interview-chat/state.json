@@ -6,7 +6,7 @@
     "slug": "unblock-interview-chat"
   },
   "state": "approved",
-  "updated_at": "2026-11-14T15:40:00-08:00",
+  "updated_at": "2026-11-15T10:54:32-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -310,6 +310,12 @@
       "started_at": "2026-11-14T13:57:14-08:00",
       "note": "⚖️ Ruling (cap): no_go",
       "finished_at": "2026-11-14T13:57:46-08:00"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -760,6 +766,13 @@
       "held": {
         "session": "6551954d-35d7-488c-bd92-aa84a6ab76f7",
         "through": 1
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "ebe64b95-c6cb-40ec-ad3c-5c33d62d1553",
+        "through": 0
       }
     }
   },

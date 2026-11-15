@@ -6,7 +6,7 @@
     "slug": "config-schema-and-main-checkout"
   },
   "state": "approved",
-  "updated_at": "2026-11-13T03:27:57-08:00",
+  "updated_at": "2026-11-15T10:54:20-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -1026,6 +1026,12 @@
       "seconds": 43.0,
       "note": "completed - 5 tool calls; passed; waiting for security-reviewer, staff-reviewer",
       "moves": 15
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -2096,6 +2102,13 @@
       "held": {
         "session": "f2be857b-1afb-41ae-b89f-8885f7c818c5",
         "through": 1
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "5fdf6df5-5079-48df-b911-35409a47eb77",
+        "through": 0
       }
     }
   },

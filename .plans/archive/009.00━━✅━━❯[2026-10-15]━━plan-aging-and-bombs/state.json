@@ -6,7 +6,7 @@
     "slug": "plan-aging-and-bombs"
   },
   "state": "rejected",
-  "updated_at": "2026-10-18T04:44:22-07:00",
+  "updated_at": "2026-11-15T10:53:42-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -127,6 +127,12 @@
       "down": 1555,
       "seconds": 68.0,
       "note": "Almost completed; no rounds left"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -349,6 +355,15 @@
       "round": 1,
       "status": "Interrupted",
       "note": "harness died; last ledger line: Started, round 1"
+    }
+  },
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "9c05946e-5a49-4449-94de-0cd4fe97880d",
+        "through": 0
+      }
     }
   }
 }

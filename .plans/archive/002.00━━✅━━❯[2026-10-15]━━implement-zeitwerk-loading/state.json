@@ -230,7 +230,11 @@
     "curator": {
       "rounds": {},
       "held": {
+<<<<<<< Updated upstream
         "session": "c9364597-ceb2-4853-927c-9c6e7386f6a3",
+=======
+        "session": "1787d946-aaae-4ffb-bac6-f3dc5318294e",
+>>>>>>> Stashed changes
         "through": 0
       }
     }

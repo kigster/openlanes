@@ -6,7 +6,7 @@
     "slug": "chat-between-machines"
   },
   "state": "approved",
-  "updated_at": "2026-10-18T04:44:22-07:00",
+  "updated_at": "2026-11-15T10:53:38-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -123,6 +123,12 @@
       "down": 9933,
       "seconds": 108.0,
       "note": "completed - 16 tool calls; approved, awaiting merge"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -271,6 +277,15 @@
       "round": 1,
       "status": "Interrupted",
       "note": "harness died; last ledger line: Completed, round 1"
+    }
+  },
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "0088ba99-1e21-49d8-aa5a-7403419ce386",
+        "through": 0
+      }
     }
   }
 }

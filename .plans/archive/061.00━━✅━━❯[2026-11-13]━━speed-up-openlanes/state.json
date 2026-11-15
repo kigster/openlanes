@@ -6,7 +6,7 @@
     "slug": "speed-up-openlanes"
   },
   "state": "approved",
-  "updated_at": "2026-11-13T03:19:23-08:00",
+  "updated_at": "2026-11-15T10:54:23-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -580,6 +580,12 @@
       "seconds": 158.0,
       "note": "completed - 5 tool calls; passed; waiting for security-reviewer, staff-reviewer",
       "moves": 16
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -1662,6 +1668,13 @@
       "rounds": {},
       "held": {
         "session": "969f368a-25d3-4343-92d4-bf74b75bd5ec",
+        "through": 0
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "eb33075e-e60c-43bc-8c8e-a8d2130efa2c",
         "through": 0
       }
     }

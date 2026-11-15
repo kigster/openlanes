@@ -6,7 +6,7 @@
     "slug": "ability-to-view-markdowns"
   },
   "state": "approved",
-  "updated_at": "2026-10-19T02:02:49-07:00",
+  "updated_at": "2026-11-15T10:53:48-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -314,6 +314,12 @@
       "seconds": 499.6,
       "note": "completed - 22 tool calls; verified PR #79; final.png pushed in 6f62e44; waiting on CI",
       "moves": 7
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -990,5 +996,14 @@
   "finished": {
     "kind": "merged",
     "at": "2026-10-19T09:02:49Z"
+  },
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "e11ead2c-088e-41c0-9850-496863db6c24",
+        "through": 0
+      }
+    }
   }
 }

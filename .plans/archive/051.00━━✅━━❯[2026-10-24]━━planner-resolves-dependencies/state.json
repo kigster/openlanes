@@ -6,9 +6,25 @@
     "slug": "planner-resolves-dependencies"
   },
   "state": "approved",
-  "updated_at": "2026-10-24T22:51:19-07:00",
-  "stages": [],
+  "updated_at": "2026-11-15T10:54:16-08:00",
+  "stages": [
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
+    }
+  ],
   "signatures": [],
   "messages": [],
-  "moves": 2
+  "moves": 2,
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "4a2a8d77-6607-4c8b-b9d6-40bc7f389a9e",
+        "through": 0
+      }
+    }
+  }
 }

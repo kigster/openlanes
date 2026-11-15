@@ -6,7 +6,7 @@
     "slug": "durable-round-ledger"
   },
   "state": "approved",
-  "updated_at": "2026-11-14T16:15:46-08:00",
+  "updated_at": "2026-11-15T10:54:28-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -235,6 +235,12 @@
       "seconds": 239.1,
       "note": "completed - 11 tool calls; next: names design-reviewer, who does not handle 🔴 Changes Requested",
       "moves": 7
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -705,6 +711,13 @@
       "held": {
         "session": "e6747aa5-ea46-4c89-b995-df607bdbd8f6",
         "through": 3
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "7efd9454-47c8-468c-80c1-329d2834a42d",
+        "through": 0
       }
     }
   },

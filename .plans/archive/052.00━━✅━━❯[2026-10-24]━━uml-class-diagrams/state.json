@@ -6,9 +6,25 @@
     "slug": "uml-class-diagrams"
   },
   "state": "approved",
-  "updated_at": "2026-10-24T22:51:19-07:00",
-  "stages": [],
+  "updated_at": "2026-11-15T10:54:17-08:00",
+  "stages": [
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
+    }
+  ],
   "signatures": [],
   "messages": [],
-  "moves": 2
+  "moves": 2,
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "9165f46d-46c4-41ee-aa27-c679c230ccf3",
+        "through": 0
+      }
+    }
+  }
 }

@@ -6,7 +6,7 @@
     "slug": "project-settings-page"
   },
   "state": "approved",
-  "updated_at": "2026-11-14T14:29:59-08:00",
+  "updated_at": "2026-11-15T10:54:21-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -384,6 +384,12 @@
       "seconds": 38.1,
       "note": "completed - 5 tool calls; review review-passed; approved, awaiting merge; stays 👀: PR #240 is labelled review-in-progress, and only review-approved goes on to verification",
       "moves": 13
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -1016,6 +1022,13 @@
       "held": {
         "session": "534838fd-d203-4edb-aa6d-e671c6a393e7",
         "through": 8
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "1e23e027-032a-4bef-99a2-a94c7a5c02ae",
+        "through": 0
       }
     }
   },

@@ -6,7 +6,7 @@
     "slug": "solid-sweep"
   },
   "state": "approved",
-  "updated_at": "2026-11-13T02:23:54-08:00",
+  "updated_at": "2026-11-15T10:54:10-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -319,6 +319,12 @@
       "seconds": 50.9,
       "note": "completed - 5 tool calls; passed; waiting for security-reviewer, staff-reviewer",
       "moves": 12
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -1001,6 +1007,13 @@
       "rounds": {},
       "held": {
         "session": "fae7534c-b475-46d9-b6bb-06de396d887c",
+        "through": 0
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "b875501d-b97c-416e-b53b-f0ef4140de61",
         "through": 0
       }
     }

@@ -6,7 +6,7 @@
     "slug": "gemini-and-grok-adapters"
   },
   "state": "approved",
-  "updated_at": "2026-11-12T22:41:42-08:00",
+  "updated_at": "2026-11-15T10:54:07-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -698,6 +698,12 @@
       "seconds": 26.4,
       "note": "completed - 2 tool calls; passed; waiting for design-reviewer",
       "moves": 5
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -1490,6 +1496,13 @@
             }
           ]
         }
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "11c61636-7e5f-4ade-a153-7b3c3b18fe91",
+        "through": 0
       }
     }
   },

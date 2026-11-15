@@ -6,7 +6,7 @@
     "slug": "lanes-with-no-active-agents"
   },
   "state": "approved",
-  "updated_at": "2026-10-18T20:04:14-07:00",
+  "updated_at": "2026-11-15T10:53:50-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -287,6 +287,12 @@
       "session": "e4c3df9b-7684-4897-985a-3f01c27f7da1",
       "note": "harness died",
       "finished_at": "2026-10-18T20:03:54-07:00"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -723,5 +729,14 @@
   "finished": {
     "kind": "merged",
     "at": "2026-10-19T03:04:14Z"
+  },
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "365c06e7-758a-4219-b360-de9413cfc0f3",
+        "through": 0
+      }
+    }
   }
 }

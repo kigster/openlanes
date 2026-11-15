@@ -6,7 +6,7 @@
     "slug": "progress-journal"
   },
   "state": "approved",
-  "updated_at": "2026-10-21T11:16:41-07:00",
+  "updated_at": "2026-11-15T10:54:06-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -140,6 +140,12 @@
       "seconds": 210.4,
       "note": "completed - 11 tool calls; approved, awaiting merge; stays 👀: PR #112 is labelled review-in-progress, and only review-approved goes on to verification",
       "moves": 10
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -313,6 +319,13 @@
             }
           ]
         }
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "59f83445-ceab-4d8f-a019-78dc154b91a4",
+        "through": 0
       }
     }
   },

@@ -6,7 +6,7 @@
     "slug": "add-restart-web-command-to-copilot"
   },
   "state": "approved",
-  "updated_at": "2026-11-14T15:52:05-08:00",
+  "updated_at": "2026-11-15T10:54:33-08:00",
   "stages": [
     {
       "agent": "spec-writer",
@@ -291,6 +291,12 @@
       "started_at": "2026-11-14T13:58:18-08:00",
       "note": "⚖️ Ruling (cap): no_go",
       "finished_at": "2026-11-14T13:59:03-08:00"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -806,6 +812,13 @@
       "rounds": {},
       "held": {
         "session": "3c5c5667-eaeb-4080-b114-7c1bf40b4ff6",
+        "through": 0
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "baad579e-4cff-4883-87de-8a7789897ca2",
         "through": 0
       }
     }

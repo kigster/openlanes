@@ -6,7 +6,7 @@
     "slug": "config-into-openlanes-folder"
   },
   "state": "approved",
-  "updated_at": "2026-11-14T15:40:05-08:00",
+  "updated_at": "2026-11-15T10:54:31-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -215,6 +215,12 @@
       "started_at": "2026-11-14T13:56:20-08:00",
       "note": "⚖️ Ruling (cap): no_go",
       "finished_at": "2026-11-14T13:56:55-08:00"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -553,6 +559,13 @@
       "held": {
         "session": "307c980d-d633-4ca8-85f4-526a92085b66",
         "through": 3
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "42cbfb96-c7d1-47e2-903c-00ab78d438f3",
+        "through": 0
       }
     }
   },

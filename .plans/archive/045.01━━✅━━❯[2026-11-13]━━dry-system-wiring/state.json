@@ -6,7 +6,7 @@
     "slug": "dry-system-wiring"
   },
   "state": "approved",
-  "updated_at": "2026-11-13T02:41:52-08:00",
+  "updated_at": "2026-11-15T10:54:11-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -165,6 +165,12 @@
       "seconds": 925.4,
       "note": "completed - 40 tool calls; pushed to https://github.com/kigster/openlanes/pull/236",
       "moves": 8
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -365,6 +371,13 @@
       "held": {
         "session": "ce0d6dfc-385d-413f-8cae-dfe4bea662d2",
         "through": 2
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "0df79fd7-af18-489e-8625-6a89e987145c",
+        "through": 0
       }
     }
   },

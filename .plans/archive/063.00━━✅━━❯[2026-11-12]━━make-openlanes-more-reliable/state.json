@@ -6,7 +6,7 @@
     "slug": "make-openlanes-more-reliable"
   },
   "state": "approved",
-  "updated_at": "2026-11-12T23:19:03-08:00",
+  "updated_at": "2026-11-15T10:54:26-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -347,6 +347,12 @@
       "seconds": 68.9,
       "note": "Interrupted; no rounds left",
       "moves": 12
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -920,6 +926,13 @@
             }
           ]
         }
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "79f4a2fa-c56c-48f6-8a4c-e4af80c5dde2",
+        "through": 0
       }
     }
   },

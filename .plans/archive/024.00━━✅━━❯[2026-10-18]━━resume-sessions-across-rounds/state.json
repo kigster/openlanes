@@ -6,7 +6,7 @@
     "slug": "resume-sessions-across-rounds"
   },
   "state": "approved",
-  "updated_at": "2026-10-18T14:24:07-07:00",
+  "updated_at": "2026-11-15T10:53:57-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -117,6 +117,12 @@
       "seconds": 35.9,
       "note": "completed - 5 tool calls",
       "moves": 7
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -228,5 +234,14 @@
   "finished": {
     "kind": "merged",
     "at": "2026-10-18T13:35:22Z"
+  },
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "f72cef3f-3204-4e62-acb2-8d9d41fef67f",
+        "through": 0
+      }
+    }
   }
 }

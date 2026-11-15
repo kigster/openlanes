@@ -6,7 +6,7 @@
     "slug": "agent-memory-journal"
   },
   "state": "discarded",
-  "updated_at": "2026-10-18T20:03:18-07:00",
+  "updated_at": "2026-11-15T10:54:35-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -117,6 +117,12 @@
       "session": "1211c15e-dc6f-4e23-ab32-3fe67a59132d",
       "note": "harness died",
       "finished_at": "2026-10-18T20:02:55-07:00"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "discarded"
     }
   ],
   "signatures": [
@@ -227,6 +233,15 @@
       "round": 1,
       "status": "Interrupted",
       "note": "harness died; last ledger line: Started, round 1"
+    }
+  },
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "a7d7e831-d648-4d3d-af95-31f0386465ce",
+        "through": 0
+      }
     }
   }
 }

@@ -6,7 +6,7 @@
     "slug": "desired-codebase-quality"
   },
   "state": "approved",
-  "updated_at": "2026-10-19T14:59:25-07:00",
+  "updated_at": "2026-11-15T10:54:01-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -176,6 +176,12 @@
       "seconds": 124.7,
       "note": "completed - 8 tool calls (rejected 2/2)",
       "moves": 8
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -445,6 +451,13 @@
             }
           ]
         }
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "9475f279-8bd3-4870-a19e-6f88a118a8c6",
+        "through": 0
       }
     }
   },

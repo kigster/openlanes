@@ -180,3 +180,37 @@ From the checkout, with Ruby activated (`eval "$(rbenv init -)"`):
 - `bundle exec rspec spec/openlanes/docs/architecture_doc_spec.rb`: passes.
 - `wc -l lib/openlanes/execution/executor.rb lib/openlanes/execution/executor/*.rb | gawk '$1>100'`: prints only `total`.
 - `./exe/openlanes run -n` in a project with a `.plans` folder shows the same board and assignments as before.
+
+## Decisions
+
+### B1 (answered) — Which comparison scenarios the split-executor fixture must hold
+
+The recording holds six scenarios (success, confinement refusal, dry run, throttled wait and restart, CLI exit failure, token-budget kill). Timeout kill, reattach and compaction cannot be recorded within the fixture unit's limits: the timeout clock is built inside the launcher with no test hook, a reattach needs a real process, and a compaction stops the first process from a thread after a grace period, so recordings would not agree.
+
+### D1 (decision) — Six scenarios are the fixture; the plan is complete
+
+Answered:
+
+- 2026-11-15
+- By hermes
+
+Accept the six recorded scenarios as the fixture and mark the plan complete. Timeout kill, reattach and compaction stay covered by the existing executor unit specs; no change under `lib/` for an injectable clock.
+
+______________________________________________________________________
+
+---
+
+### B1 (answered) — Arbitrator ruled no_go at the rejection cap over the line-count check
+
+At f4d52abe, `wc -l` gives `executor.rb` 103 lines and `executor/handle.rb` 114, failing the `wc -l` check required by spec.md In-scope item 1 and plan U7, although round 8 reported it passed (F1). F2 (`spent_nothing?` from 065.00) stays minor. Options: a) one more builder round to trim both files, b) close the pull request and replan.
+
+### D1 (decision) — Close the pull request and replan
+
+Answered:
+
+- 2026-11-15
+- By root
+
+Close the current pull request and replan the split-executor work, rather than sending it back to the builders for another trimming round.
+
+_Folded from blocked.md by the unblocker on 2026-11-15._
