@@ -1,13 +1,13 @@
 import type { PanelColors } from "../floating";
 
-/** design.md: a translucent blue header and composer, a sage conversation, black text on both, in either theme. */
+/** The palette's own colours (styles/tokens.css): its accent for the header and composer, its panel for the conversation. */
 export const COPILOT_COLORS: PanelColors = {
   head: "var(--copilot-head)",
-  headInk: "#000",
+  headInk: "var(--copilot-head-ink)",
   body: "var(--copilot-body)",
-  bodyInk: "#000",
+  bodyInk: "var(--copilot-body-ink)",
   foot: "var(--copilot-head)",
-  footInk: "#000",
+  footInk: "var(--copilot-head-ink)",
   tab: "var(--ink)",
   tabInk: "var(--plate)",
 };

@@ -1,5 +1,13 @@
 /* The copilot's conversation and composer (design.md, "Header and copilot"). The panel itself, its header, dragging
    and tab are floating.css's; the colours come in through COPILOT_COLORS. */
+/* The panel is the page's own panel colour now, so its edge is the accent, or it would vanish into a dark page. */
+.copilot.fp { border-color: var(--copilot-head); }
+/* floating.css assumes a light panel: a white wash for wells, a dark blue focus ring, a faded ink for small text.
+   On the accent small text keeps the full ink (Paper's pair is 4.7:1, with nothing to spare), and a ring is the ink. */
+.copilot :is(.fp-head, .fp-foot) { --ink-soft: var(--ink); --enamel: color-mix(in srgb, var(--ink) 14%, transparent); }
+.copilot .fp-body { --ink-soft: color-mix(in srgb, var(--ink) 78%, transparent); --enamel: color-mix(in srgb, var(--ink) 10%, transparent); }
+.copilot :is(.fp-head, .fp-foot) :focus-visible { outline-color: var(--ink); }
+.copilot .fp-body :focus-visible, .copilot .fp-body:focus-visible { outline-color: var(--focus); }
 .copilot .fp-body { display: flex; flex-direction: column; gap: 14px; }
 .cp-intro { margin: 0; color: var(--ink-soft); }
 .cp-who { margin: 0 0 2px; font-size: 12px; font-weight: 800; color: var(--ink-soft); }
@@ -7,25 +15,23 @@
 .cp-turn.is-you .cp-said { padding: 8px 12px; border-radius: 10px; background: var(--enamel); }
 .cp-turn.is-thinking .cp-said { color: var(--ink-soft); }
 
-/* Cards. Red to confirm what cannot be undone; quiet for a draft. Darker alarm red than the page's, for black text on sage. */
-.cp-card { --alarm: #A3161C; margin-top: 8px; padding: 12px; border-radius: 10px;
+/* Cards. Red to confirm what cannot be undone; quiet for a draft. The red is the palette's, chosen against its panel. */
+.cp-card { margin-top: 8px; padding: 12px; border-radius: 10px;
            border: 1px solid color-mix(in srgb, var(--alarm) 35%, transparent); background: color-mix(in srgb, var(--alarm) 10%, transparent); }
-.cp-card .btn-alarm { --alarm: #A3161C; background: rgb(255 255 255 / 70%); }
+.cp-card .btn-alarm { background: var(--copilot-body); }
 .cp-card.is-draft { border-color: var(--hairline); background: var(--enamel); }
 .cp-draft { margin: 0 0 10px; font-style: italic; }
 .cp-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .cp-card-note { margin: 8px 0 0; font-weight: 600; }
-.cp-card-note.is-refused { color: #A3161C; }
+.cp-card-note.is-refused { color: var(--alarm); }
 
-/* The composer sits on the header's blue; its text box and Send keep the inverted surface's colours. */
-.cp-composer { --plate: var(--inv-plate); --enamel: var(--inv-enamel); --ink: var(--inv-ink); --ink-soft: var(--inv-ink-soft);
-               --hairline: var(--inv-hairline); color-scheme: var(--inv-scheme); }
+/* The composer sits on the accent; its text box is the conversation's panel, so what is typed reads as it will be said. */
 .cp-composer textarea { box-sizing: border-box; width: 100%; min-height: 64px; resize: none; padding: 10px; border-radius: 8px;
-                        border: 1px solid var(--hairline); background: var(--enamel); color: var(--ink); font: inherit; }
-.cp-composer textarea::placeholder { color: var(--ink-soft); }
-.cp-composer textarea:focus-visible { outline: 2px solid var(--inv-focus); outline-offset: 1px; }
+                        border: 1px solid var(--ink); background: var(--copilot-body); color: var(--copilot-body-ink); font: inherit; }
+.cp-composer textarea::placeholder { color: color-mix(in srgb, var(--copilot-body-ink) 70%, var(--copilot-body)); }
+.cp-composer textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .cp-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
-.cp-error { margin: 6px 0 0; color: #7A0D12; font-weight: 700; }
+.cp-error { margin: 6px 0 0; color: var(--ink); font-weight: 700; }
 .cp-command { font-family: var(--mono, ui-monospace, monospace); }
 .cp-slash-hint { margin: 6px 0 0; font-size: 0.85em; color: var(--ink-soft); }
 .cp-slash-hint code { font-family: var(--mono, ui-monospace, monospace); }

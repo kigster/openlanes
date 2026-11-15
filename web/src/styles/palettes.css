@@ -1,8 +1,8 @@
 /* Palettes beyond the built-in light and dark, chosen in the header's Theme menu (shell/usePalette.ts).
    Each sets data-palette on <html>, and data-theme to its scheme, so everything that keys off light or dark (the
    editor, code highlighting, the copilot's inverted surface) follows without knowing the palette exists. A palette
-   therefore only overrides surfaces, text, lines and accents; the lane, alarm and go colours stay the scheme's.
-   The five are the themes of kig.re: page background -> --enamel, panel -> --plate, text -> --ink.
+   therefore only overrides surfaces, text, lines and accents; the lane, alarm and go colours stay the scheme's
+   (High Contrast, below, is the exception). Five are the themes of kig.re: page background -> --enamel, panel -> --plate, text -> --ink.
    Muted text and the alarm red are adjusted where the site's or the scheme's value fell under 4.5:1 on these
    surfaces; web/cypress/e2e/board.cy.ts runs axe over each palette. */
 
@@ -22,6 +22,19 @@
   --focus: #E5BA41; --highlight: #E87F24; --on-highlight: #1B1408; --alarm: #FF8A8E;
   --inv-plate: #F4F1E8; --inv-enamel: #E6E1D2; --inv-ink: #26334D; --inv-ink-soft: #55627D;
   --inv-hairline: #CFC8B4; --inv-focus: #A85A10;
+}
+
+/* High Contrast: pure black with white text, for low vision. Dark. Nothing here is a tint: text is white on black
+   (21:1) or black on a solid yellow or orange (13:1 and up), lines are light enough to see (6:1), and the lane
+   colours are brightened. The cars become solid blocks; that rule sits with the cars in board/board.css. */
+:root[data-palette="contrast"] {
+  --enamel: #000000; --plate: #0A0A0A; --ink: #FFFFFF; --ink-soft: #E2E2E2;
+  --hairline: #8C8C8C; --road: #B4B4B4;
+  --focus: #FFE600; --highlight: #FFB000; --on-highlight: #000000;
+  --starts-research: #7FB2FF; --starts-planning: #FFD23C; --starts-building: #5EE87E;
+  --alarm: #FF8A8A; --go: #5CFF9D; --go-solid: #5CFF9D; --go-solid-ink: #000000; --merged: #CBA8FF;
+  --inv-plate: #FFFFFF; --inv-enamel: #F2F2F2; --inv-ink: #000000; --inv-ink-soft: #333333;
+  --inv-hairline: #555555; --inv-alarm: #A30010; --inv-go: #00612C; --inv-focus: #0038B8;
 }
 
 /* Paper: off-white page, cream panels, brown secondary text. Light. */
@@ -50,3 +63,8 @@
   --inv-plate: #06241B; --inv-enamel: #03170F; --inv-ink: #C9F3E6; --inv-ink-soft: #8AD3BC;
   --inv-hairline: #145A45; --inv-focus: #FFD400;
 }
+
+/* High Contrast, where a bright token lands under text. --hairline is light here, so the chip that sits on it takes a
+   dark fill; the status bar's solid pills mix their colour further toward black, since the colours are brighter. */
+:root[data-palette="contrast"] .run-chip { background: #2A2A2A; color: #FFFFFF; }
+:root[data-palette="contrast"] .statusbar.statusbar { --solid: 38%; }

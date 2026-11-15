@@ -104,13 +104,13 @@ it("presses All Machines", async () => {
 
 it("offers the palettes in a menu, applies the one chosen, and remembers it", async () => {
   const { unmount } = render(<Header {...props()} />);
-  await userEvent.click(screen.getByRole("button", { name: "Theme: Daylight. Change theme" }));
+  await userEvent.click(screen.getByRole("button", { name: "Theme: Ember. Change theme" }));
   expect(screen.getAllByRole("menuitemradio").map(i => i.textContent?.replace(/Light:.*|Dark:.*|✓/g, "")))
-    .toEqual(["Daylight", "Paper", "Earth", "Forest", "Midnight", "Ember", "Azure"]);
-  await userEvent.click(screen.getByRole("menuitemradio", { name: /Ember/ }));
+    .toEqual(["Ember", "Azure", "Midnight", "High Contrast", "Daylight", "Paper", "Earth", "Forest"]);
+  await userEvent.click(screen.getByRole("menuitemradio", { name: /Azure/ }));
   const { dataset } = document.documentElement;
-  expect([dataset.theme, dataset.palette, localStorage.getItem(PALETTE_KEY)]).toEqual(["dark", "ember", "ember"]);
-  expect(screen.getByRole("button", { name: "Theme: Ember. Change theme" })).toBeInTheDocument();
+  expect([dataset.theme, dataset.palette, localStorage.getItem(PALETTE_KEY)]).toEqual(["dark", "azure", "azure"]);
+  expect(screen.getByRole("button", { name: "Theme: Azure. Change theme" })).toBeInTheDocument();
   unmount();
 });
 
@@ -128,15 +128,16 @@ it("restores the stored palette before anything renders", () => {
   expect([document.documentElement.dataset.theme, document.documentElement.dataset.palette]).toEqual(["dark", "azure"]);
 });
 
-it("starts on what the operating system prefers when nothing is stored, or the stored one is unknown", () => {
-  const media = vi.spyOn(window, "matchMedia").mockImplementation(query => ({ matches: query.includes("dark"), media: query }) as MediaQueryList);
+it("starts on Ember when nothing is stored, or the stored one is unknown, whatever the system prefers", () => {
+  const media = vi.spyOn(window, "matchMedia").mockImplementation(query => ({ matches: false, media: query }) as MediaQueryList);
   localStorage.setItem(PALETTE_KEY, "neon");
   restorePalette();
-  const dark = [document.documentElement.dataset.theme, document.documentElement.dataset.palette];
-  media.mockImplementation(query => ({ matches: false, media: query }) as MediaQueryList);
+  const unknown = [document.documentElement.dataset.theme, document.documentElement.dataset.palette];
   localStorage.clear();
+  delete document.documentElement.dataset.palette;
   restorePalette();
-  expect([dark, document.documentElement.dataset.theme]).toEqual([["dark", undefined], "light"]);
+  expect([unknown, document.documentElement.dataset.theme, document.documentElement.dataset.palette])
+    .toEqual([["dark", "ember"], "dark", "ember"]);
   media.mockRestore();
 });
 
