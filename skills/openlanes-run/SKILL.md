@@ -17,6 +17,7 @@ openlanes start --no-open    # print the URL only
 openlanes start --background # detached; prints the URL once the page answers, output in log/openlanes-start.log
 openlanes status             # supervisor, engine, web and runs: up or crashed, and the plans by state
 openlanes stop               # stops the factory; --all stops every `openlanes run` too
+openlanes stop --web         # stops the control room's server alone; the engine and its agents stay up
 ```
 
 - It takes `run`'s flags except `-n` and `--until`, plus `--plan` to narrow it. It needs Redis and refuses without it (exit 69). `--no-web` leaves the page to an `openlanes web` served apart, as `just start` does.
