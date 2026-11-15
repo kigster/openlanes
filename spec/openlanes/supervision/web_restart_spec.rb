@@ -10,6 +10,8 @@ RSpec.describe OpenLanes::Supervision::WebRestart do
 
   let(:root) { Dir.mktmpdir("web-restart") }
   let(:gem_root) { File.join(root, "gem") }
+  # The project the factory runs in: OpenLanes itself, the only one a restart builds the page for.
+  let(:project) { File.join(root, "project") }
   let(:dist) { File.join(gem_root, "web", "dist") }
   let(:page) { File.join(dist, "index.html") }
   let(:dir) { OpenLanes::Supervision::PidDir.new(File.join(root, "pids")) }
@@ -67,10 +69,19 @@ RSpec.describe OpenLanes::Supervision::WebRestart do
     FileUtils.mkdir_p(dist)
     File.write(File.join(gem_root, "web", "package.json"), "{}")
     File.write(page, "old page")
+    FileUtils.mkdir_p(File.join(project, ".openlanes"))
+    File.write(File.join(project, "justfile"), "web-build:\n    cd web && npm run build\n")
+    File.write(File.join(project, ".openlanes", "config.yml"), "project: openlanes\n")
     allow(OpenLanes::Supervision::WebRebuild).to receive(:new).and_wrap_original do |original, **keywords|
       original.call(root: gem_root, npm: -> { true }, **keywords)
     end
     registration.claim
+  end
+
+  # The supervisor runs in the project root, and that is where the build looks.
+  around do |example|
+    FileUtils.mkdir_p(project)
+    Dir.chdir(project) { example.run }
   end
 
   after { FileUtils.rm_rf(root) }

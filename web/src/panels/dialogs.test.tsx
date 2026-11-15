@@ -1,7 +1,7 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
-import { HelpDialog, StopAllDialog } from "./dialogs";
+import { HelpDialog, RESTART_UNSEEN_MS, RestartWebDialog, StopAllDialog } from "./dialogs";
 import { IdeaDialog } from "./IdeaDialog";
 import { findInline, recorder, renderPanel, snapshot, typeInEditor } from "./testing";
 import { postInterview } from "../api/client";
@@ -43,6 +43,86 @@ describe("StopAllDialog", () => {
     renderPanel(<StopAllDialog open agents={2} plans={1} onOpenChange={onOpenChange} onCommand={recorder("refused", "nothing is running").onCommand} />);
     await user.click(screen.getByRole("button", { name: "Stop them" }));
     expect(await findInline("Refused: nothing is running.")).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("RestartWebDialog", () => {
+  it("asks first, Cancel focused, and passes axe", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    const { container } = renderPanel(<RestartWebDialog connection="live" onCommand={onCommand} />);
+    await user.click(screen.getByRole("button", { name: "Restart Control Room" }));
+    const dialog = await screen.findByRole("dialog", { name: "Restart the control room?" });
+    expect(dialog).toHaveAccessibleDescription(/The engine and its agents keep working, and this page reconnects by itself/);
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+    expect(await axe(container.ownerDocument.body)).toHaveNoViolations();
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(sent).toEqual([]);
+    expect(screen.getByRole("button", { name: "Restart Control Room" })).toHaveFocus();
+  });
+
+  it("sends restart_web, the copilot's /restart-web command, and closes", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    renderPanel(<RestartWebDialog connection="live" onCommand={onCommand} />);
+    await user.click(screen.getByRole("button", { name: "Restart Control Room" }));
+    await user.click(await screen.findByRole("button", { name: "Restart it" }));
+    expect(sent).toEqual([{ kind: "restart_web", plan: null, agent: null, payload: {} }]);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByTestId("announcer")).toHaveTextContent("Restarting the control room. This page reconnects when it is back.");
+  });
+
+  it("says Restarting… until the stream has dropped and come back", async () => {
+    const user = userEvent.setup();
+    const { onCommand } = recorder();
+    const { rerender } = renderPanel(<RestartWebDialog connection="live" onCommand={onCommand} />);
+    await user.click(screen.getByRole("button", { name: "Restart Control Room" }));
+    await user.click(await screen.findByRole("button", { name: "Restart it" }));
+    expect(await screen.findByRole("button", { name: "Restarting Control Room…" })).toBeDisabled();
+    rerender(<RestartWebDialog connection="reconnecting" onCommand={onCommand} />);
+    expect(screen.getByRole("button", { name: "Restarting Control Room…" })).toBeDisabled();
+    rerender(<RestartWebDialog connection="live" onCommand={onCommand} />);
+    expect(await screen.findByRole("button", { name: "Restart Control Room" })).toBeEnabled();
+  });
+
+  it("reads a stream that drops before the reply as the restart under way: closes, and waits for it to come back", async () => {
+    const user = userEvent.setup();
+    const onCommand = vi.fn(() => new Promise<never>(() => {})); // the reply was lost with the server
+    const { rerender } = renderPanel(<RestartWebDialog connection="live" onCommand={onCommand} />);
+    await user.click(screen.getByRole("button", { name: "Restart Control Room" }));
+    await user.click(await screen.findByRole("button", { name: "Restart it" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    rerender(<RestartWebDialog connection="reconnecting" onCommand={onCommand} />);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByRole("button", { name: "Restarting Control Room…" })).toBeDisabled();
+    rerender(<RestartWebDialog connection="live" onCommand={onCommand} />);
+    expect(await screen.findByRole("button", { name: "Restart Control Room" })).toBeEnabled();
+  });
+
+  it("stops waiting when the stream never drops", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      renderPanel(<RestartWebDialog connection="live" onCommand={recorder().onCommand} />);
+      await user.click(screen.getByRole("button", { name: "Restart Control Room" }));
+      await user.click(await screen.findByRole("button", { name: "Restart it" }));
+      expect(await screen.findByRole("button", { name: "Restarting Control Room…" })).toBeDisabled();
+      act(() => { vi.advanceTimersByTime(RESTART_UNSEEN_MS); });
+      expect(await screen.findByRole("button", { name: "Restart Control Room" })).toBeEnabled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stays open with the reason when refused, and can be controlled", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    renderPanel(<RestartWebDialog open connection="live" onOpenChange={onOpenChange} onCommand={recorder("refused", "no supervisor is running").onCommand} />);
+    await user.click(screen.getByRole("button", { name: "Restart it" }));
+    expect(await findInline("Refused: no supervisor is running.")).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalled();
   });

@@ -13,7 +13,7 @@ RSpec.describe OpenLanes::CLI::Stop do
   def file(role, pid, **) = OpenLanes::Supervision::PidFile.new(role:, pid:, started: "x", root: Dir.pwd, **)
 
   def stop(**)
-    out, err, = CapturedStream.capture { command.call(dry_run: false, all: false, **) }
+    out, err, = CapturedStream.capture { command.call(dry_run: false, all: false, web: false, **) }
     [strip_ansi(out), strip_ansi(err)]
   end
 
@@ -74,6 +74,73 @@ RSpec.describe OpenLanes::CLI::Stop do
     it "signals nothing" do
       stop(dry_run: true)
       expect(signals).to be_empty
+    end
+  end
+
+  context "with a factory and --web" do
+    let(:live) { [10, 11, 12] }
+
+    before { [file("supervisor", 10), file("engine", 11), file("web", 12, url: "http://127.0.0.1:11000")].each { dir.write(it) } }
+
+    it("stops the control room") { expect(stop(web: true).first).to match(/web\s+│\s+12\s+│\s+stopped/) }
+    it("lists nothing else") { expect(stop(web: true).first).not_to match(/supervisor|engine/) }
+
+    it "signals the control room alone" do
+      stop(web: true)
+      expect(signals).to eq([["TERM", 12]])
+    end
+
+    it "leaves the supervisor's and the engine's PID files" do
+      stop(web: true)
+      expect(dir.entries.map { it.file.role }).to eq(%w[supervisor engine])
+    end
+
+    it "previews under --dry-run, and signals nothing" do
+      out, err = stop(web: true, dry_run: true)
+      expect([out, err, signals]).to match([/web\s+│\s+12\s+│\s+would stop/, include("1 process pending"), []])
+    end
+  end
+
+  context "with a factory whose control room is down and --web" do
+    let(:live) { [10, 11] }
+
+    before { [file("supervisor", 10), file("engine", 11)].each { dir.write(it) } }
+
+    it("says no control room is running") { expect(stop(web: true).last).to include("No control room is running in") }
+
+    it "signals nothing" do
+      stop(web: true)
+      expect(signals).to be_empty
+    end
+  end
+
+  context "with a stale control room file and --web" do
+    let(:live) { [11] }
+
+    before { [file("engine", 11), file("web", 12)].each { dir.write(it) } }
+
+    it("removes it and says so") { expect(stop(web: true).first).to match(/web\s+│\s+12\s+│\s+not running: stale PID file removed/) }
+  end
+
+  context "with --web and --all" do
+    let(:live) { [10] }
+
+    before { dir.write(file("supervisor", 10)) }
+
+    it "refuses with exit 64, and signals nothing" do
+      _out, err, status = CapturedStream.capture { command.call(dry_run: false, all: true, web: true) }
+      expect([strip_ansi(err), status, signals]).to match([include("Pass --web or --all, not both"), 64, []])
+    end
+  end
+
+  context "with -w on the command line" do
+    let(:live) { [10, 12] }
+
+    before { [file("supervisor", 10), file("web", 12)].each { dir.write(it) } }
+
+    it "stops the control room alone" do
+      CapturedStream.capture { Dry::CLI.new(OpenLanes::CLI).call(arguments: %w[stop -w]) }
+      expect(signals).to eq([["TERM", 12]])
     end
   end
 

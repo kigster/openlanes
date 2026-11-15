@@ -789,7 +789,8 @@ module OpenLanes
       end
 
       # `/restart-web` (plan 069.00): the supervisor that `openlanes start`
-      # runs stops the control room, rebuilds its page and starts it again.
+      # runs stops the control room, rebuilds its page (only where OpenLanes
+      # works on itself, {Supervision::WebRebuild}) and starts it again.
       # The engine only asks; the page's server goes away and comes back,
       # and the new one reports how the build went.
       #
@@ -798,8 +799,8 @@ module OpenLanes
         pid = @restart_web.call(@root)
         raise Refusal, Supervision::RESTART_WEB_REFUSAL unless pid
 
-        "restarting the control room: supervisor #{pid} stops it, rebuilds the page and starts it again; " \
-          "the page reconnects when it is back"
+        "restarting the control room: supervisor #{pid} stops it, rebuilds the page where the project is OpenLanes itself, " \
+          "and starts it again; the page reconnects when it is back"
       end
 
       # The rail's "Ding when a question needs you" box, kept in

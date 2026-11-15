@@ -22,6 +22,8 @@ Separately, the web server outlived the engine more than once. `Web::Launcher` s
 | `openlanes start --background` | The same, detached from the terminal (one spawn, `setsid` in the child, parent PID 1 once `start` returns) |
 | `openlanes stop`             | Stops the factory                                                                        |
 | `openlanes stop --all`       | Stops the factory and every `openlanes run`                                              |
+| `openlanes stop --web`       | Stops the web alone; the supervisor, the engine and the agents stay up (added later)     |
+| `openlanes start` after it  | Restarts the web alone when the factory is up and its web is down (added later)          |
 | `openlanes status`           | Which processes are up, with PIDs, ports, URL and uptime, any crashed one, every `run`, and plan counts by state |
 
 ### C2. `app` becomes `project`, alias `preview`

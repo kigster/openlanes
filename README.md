@@ -109,6 +109,7 @@ Starting top left and going clockwise:
 * Next is the button: "All Machines" → if other nodes join your project, there user@hostname
   * Action button that offers you to create a "New Idea" which it turns into a `.plans/<idea-folder>`  or to select from existing plans not already taken by remote nodes.
 * Further is the dark/light switch.
+* The button "Restart Control Room", just before it, restarts the page's server and nothing else: it asks first, then sends the same command as the copilot's `/restart-web`, so the engine and its agents keep working and the page reconnects by itself.
 * The button "Stop Local Workers"  terminates local openlanes instance and the web. It's a "oh-shit" button. Finally, a small circled ? pops up a bit of help to provide the context for what you are seeing.
 
 ### Secondary Nav
@@ -391,7 +392,7 @@ The copilot runs on Sonnet (`agents/copilot.md`). Every message resumes its sess
 | `/status [NNN]` | an optional plan number | show every plan on the board, or plan NNN's agents and what each is doing; changes nothing |
 | `/stats` | none | show the run's tokens, cost and agents so far; changes nothing |
 
-`/restart-web` touches the control room and nothing else: no engine, no agent, no plan. The engine sends `USR2` to the supervisor that `openlanes start` runs; the supervisor stops the web server, runs `npm run build` in the gem's `web/` (in the background, for up to five minutes), and starts the server again on the same port. When `npm` or the page sources are missing, or the build fails, the old page stays and the server restarts anyway. The page reconnects by itself, and the new server says in the panel how the build went. Without a supervisor, for example `openlanes web` started alone or `openlanes start --no-web`, the command is refused. A deliberate restart is not counted as a crash.
+`/restart-web`, and the **Restart Control Room** button in the top bar which sends the same command, touches the control room and nothing else: no engine, no agent, no plan. The engine sends `USR2` to the supervisor that `openlanes start` runs; the supervisor stops the web server, rebuilds the page when OpenLanes is working on itself (a `justfile` at the project root and `project: openlanes` in the config: `npm run build` in the gem's `web/`, in the background, for up to five minutes; skipped silently in any other project), and starts the server again on the same port. When `npm` or the page sources are missing, or the build fails, the old page stays and the server restarts anyway. The page reconnects by itself, and the new server says in the panel how the build went. Without a supervisor, for example `openlanes web` started alone or `openlanes start --no-web`, the command is refused. A deliberate restart is not counted as a crash.
 
 ## Configuration
 

@@ -86,7 +86,7 @@ module OpenLanes
     #
     # @param root [String]
     # @return [Integer, nil] the supervisor's pid once signalled, else nil
-    def restart_web(root) = RestartRequest.new(dir: dir(root), probe:).call
+    def restart_web(root) = RestartRequest.new(dir: dir(root), probe:, host:).call
 
     # Takes the note a restarted control room tells on boot.
     #

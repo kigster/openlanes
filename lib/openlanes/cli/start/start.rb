@@ -12,7 +12,13 @@ module OpenLanes
     # typed; the port, the listen addresses and the login are the page's.
     # `--background` starts the same factory detached from the terminal
     # (C1, S4), and returns once the page answers.
+    #
+    # Run again while the factory is up, it is refused, with one exception:
+    # a factory whose control room is down (`openlanes stop --web`, or given
+    # up on) has it restarted, and nothing else is touched.
     class Start < EngineCommand
+      include Rerun
+
       desc "The factory: the engine and its control room, kept up until `openlanes stop`, Stop All Local or Ctrl-C"
 
       # Where `--background` sends what would have gone to the terminal (S4).
@@ -31,6 +37,8 @@ module OpenLanes
         default: false,
         desc:    "Detach from the terminal, write its output to #{LOG}, and return once the control room answers"
 
+      dry_run_option "Start nothing; say whether it would start the factory or restart its control room"
+
       example [
         "                       # engine and control room, until `openlanes stop`, Stop All Local or Ctrl-C",
         "--background           # the same, detached; prints the control room's URL",
@@ -38,6 +46,7 @@ module OpenLanes
         "--port 4848 -j 4       # somewhere other than 11000, four agents at a time",
         "--plan 005             # only plan 005, until stopped",
         "--no-web               # the engine alone, for a page `openlanes web` serves apart",
+        "--web                  # with the factory up and its control room stopped: restart the control room alone",
         "-I --admin-credentials admin:s3cret # the control room on every interface, behind a login"
       ]
 
@@ -49,7 +58,9 @@ module OpenLanes
         page = page_for(options)
         tree = tree_for(options)
         supervisor_logging(options, root)
-        running(Supervision.registration(Supervision::SUPERVISOR, root:).holder)
+        running(Supervision.registration(Supervision::SUPERVISOR, root:).holder, options, root)
+        return would_start(options) if dry_run?(options)
+
         web = launcher_for(options, root, tree, page)
         return background(options, root, page.credentials) if options[:background]
 
@@ -80,16 +91,6 @@ module OpenLanes
         Log.setup(Log::Settings.from(options, root:), name: Supervision::SUPERVISOR)
       rescue Log::Invalid => e
         refuse(e.message, 64)
-      end
-
-      # @param holder [OpenLanes::Supervision::PidFile, nil]
-      # @return [void]
-      def running(holder)
-        return unless holder
-
-        refuse("The factory is already running here (pid #{holder.pid})#{" at #{holder.url}" if holder.url}.\n" \
-               "`openlanes stop` stops it; `openlanes status` shows it.",
-          75)
       end
 
       # The page's server, on the first free port from `--port`, fixed from

@@ -24,4 +24,4 @@ export { LastKnownTable } from "./LastKnownTable";
 export { ActionMenu, type ActionMenuProps } from "./ActionMenu";
 export { IdeaDialog, FrontmatterForm, type IdeaDialogProps } from "./IdeaDialog";
 export { IDEA_DEFAULTS, type IdeaFrontmatter } from "./frontmatter";
-export { StopAllDialog, HelpDialog, type StopAllDialogProps } from "./dialogs";
+export { RestartWebDialog, StopAllDialog, HelpDialog, type RestartWebDialogProps, type StopAllDialogProps } from "./dialogs";

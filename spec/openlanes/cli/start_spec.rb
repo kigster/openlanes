@@ -122,11 +122,87 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
     before do
       allow(OpenLanes::Supervision).to receive(:probe).and_return(probe)
       dir.write(OpenLanes::Supervision::PidFile.new(role: "supervisor", pid: 777, started: "x", root: Dir.pwd, url: "http://127.0.0.1:11001"))
+      dir.write(OpenLanes::Supervision::PidFile.new(role: "web", pid: 778, started: "x", root: Dir.pwd, url: "http://127.0.0.1:11001"))
       result
     end
 
     it("refuses, with its URL") { expect([result.last, result[1]]).to match([75, include("already running here (pid 777) at http://127.0.0.1:11001")]) }
     it("starts nothing") { expect(handed).to be_empty }
+  end
+
+  # `openlanes stop --web`, then `openlanes start`: the supervisor is asked
+  # for its control room back, as `/restart-web` asks, and nothing is started.
+  context "when the factory is already running and its control room is down" do
+    let(:probe) { instance_double(OpenLanes::Supervision::Probe) }
+    let(:live) { [777] }
+    let(:signals) { [] }
+    let(:host) { OpenLanes::Supervision::Host.new(spawner:, signaller: ->(*args) { signals << args }, clock: OpenLanes::Clock::Fake.new) }
+    let(:supervisor_url) { "http://127.0.0.1:11001" }
+
+    before do
+      allow(probe).to receive(:verified?) { live.include?(it.pid) }
+      allow(OpenLanes::Supervision).to receive(:probe).and_return(probe)
+      dir.write(OpenLanes::Supervision::PidFile.new(role: "supervisor", pid: 777, started: "x", root: Dir.pwd, url: supervisor_url))
+    end
+
+    context "with nothing typed" do
+      let!(:result) { start }
+
+      it("asks the supervisor to restart it") { expect(signals).to eq([[OpenLanes::Supervision::RESTART_WEB_SIGNAL, 777]]) }
+      it("says so on STDERR, and exits 0") { expect(result.values_at(1, 2)).to match([include("pid 777", "restarting the control room"), 0]) }
+      it("prints the URL on STDOUT") { expect(result.first).to eq("http://127.0.0.1:11001\n") }
+      it("starts nothing") { expect(handed).to be_empty }
+    end
+
+    context "with a crashed web's PID file left behind" do
+      before { dir.write(OpenLanes::Supervision::PidFile.new(role: "web", pid: 778, started: "x", root: Dir.pwd)) }
+
+      it "restarts it too" do
+        start
+        expect(signals).to eq([[OpenLanes::Supervision::RESTART_WEB_SIGNAL, 777]])
+      end
+    end
+
+    context "with --dry-run" do
+      let!(:result) { start(dry_run: true) }
+
+      it("signals nothing") { expect(signals).to be_empty }
+      it("says what it would do, and exits 0") { expect(result.values_at(1, 2)).to match([include("would restart it at http://127.0.0.1:11001", "1 restart pending"), 0]) }
+    end
+
+    context "with --no-web" do
+      let!(:result) { start(web: false) }
+
+      it("refuses as before") { expect(result.values_at(1, 2)).to match([include("already running here (pid 777)"), 75]) }
+      it("signals nothing") { expect(signals).to be_empty }
+    end
+
+    context "when the control room is up" do
+      let(:live) { [777, 778] }
+
+      before { dir.write(OpenLanes::Supervision::PidFile.new(role: "web", pid: 778, started: "x", root: Dir.pwd, url: supervisor_url)) }
+
+      it("refuses, with its URL") { expect(start.values_at(1, 2)).to match([include("already running here (pid 777) at http://127.0.0.1:11001"), 75]) }
+
+      it "signals nothing, with or without --dry-run" do
+        start
+        start(dry_run: true)
+        expect(signals).to be_empty
+      end
+    end
+
+    context "when the factory was started with --no-web" do
+      let(:supervisor_url) { nil }
+
+      it("refuses: it has no control room to restart") { expect(start.values_at(1, 2)).to match([include("already running here (pid 777)"), 75]) }
+    end
+  end
+
+  context "with --dry-run and nothing running" do
+    let!(:result) { start(dry_run: true) }
+
+    it("says it would start the factory") { expect(result.values_at(1, 2)).to match([include("Would start the factory", "1 start pending"), 0]) }
+    it("starts nothing, and claims no PID file") { expect([handed, dir.entries]).to eq([{}, []]) }
   end
 
   context "when a crash left a supervisor's PID file" do

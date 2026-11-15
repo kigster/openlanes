@@ -20,6 +20,27 @@ describe("the controls", () => {
     cy.boardEventually((me) => me.run.status === "quitting" && me.plans.every((p) => p.cars.every((c) => c.state !== "running")));
   });
 
+  it("offers Restart Control Room just before Stop Local Workers, and sends restart_web once confirmed", () => {
+    // Watched, not stubbed: the demo has no supervisor, so it refuses the command and no server goes away.
+    cy.intercept("POST", "/api/commands").as("command");
+    cy.contains("button", "Stop Local Workers").prev().should("have.text", "Restart Control Room").click();
+    cy.get(MODAL).should("contain", "The engine and its agents keep working");
+    cy.get(MODAL).contains("button", "Restart it").click();
+    cy.wait("@command").its("request.body").should("deep.include", { kind: "restart_web", plan: null, agent: null });
+    cy.get(MODAL).should("contain", "Refused: the demo cannot restart_web.");
+    cy.get(MODAL).contains("button", "Cancel").click();
+    cy.contains("button", "Restart Control Room").should("be.enabled");
+    cy.request("/api/board").its("body.me.run.status").should("eq", "running");
+  });
+
+  it("cancels Restart Control Room without sending anything", () => {
+    cy.intercept("POST", "/api/commands", cy.spy().as("command"));
+    cy.contains("button", "Restart Control Room").click();
+    cy.get(MODAL).contains("button", "Cancel").click();
+    cy.get(MODAL).should("not.exist");
+    cy.get("@command").should("not.have.been.called");
+  });
+
   it("cancels Stop Local Workers without stopping anything", () => {
     cy.contains("button", "Stop Local Workers").click();
     cy.get(MODAL).contains("button", "Cancel").click();

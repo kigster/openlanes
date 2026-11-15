@@ -1,9 +1,10 @@
-// Stop Local Workers and the help pill: the header's two dialogs. Each brings its own trigger, so focus returns to it.
-import { useRef, useState, type ReactNode } from "react";
+// Restart Control Room, Stop Local Workers and the help pill: the header's dialogs. Each brings its own trigger, so focus returns to it.
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useCommand } from "./command";
 import { Feedback } from "./feedback";
 import type { SendCommand } from "./support";
+import type { ConnectionState } from "../api/events";
 
 /** Controlled when `open` is given; otherwise the trigger opens it. */
 interface Openable {
@@ -67,6 +68,78 @@ export function StopAllDialog({ agents, plans, onCommand, ...openable }: StopAll
         <div className="help-foot">
           <Dialog.Close className="btn btn-quiet" ref={cancel}>Cancel</Dialog.Close>
           <button type="button" className="btn btn-alarm" disabled={command.pending} onClick={stop}>Stop them</button>
+        </div>
+      </Frame>
+    </Dialog.Root>
+  );
+}
+
+export interface RestartWebDialogProps extends Openable {
+  /** The event stream's state: it drops when the server goes away and is live again once the new one answers. */
+  connection: ConnectionState;
+  onCommand: SendCommand;
+}
+
+/** How long a restart that was answered may go without the stream dropping before the pill stops waiting: the drop was missed, or nothing went down. */
+export const RESTART_UNSEEN_MS = 30000;
+
+/**
+ * Restart Control Room: asks first, then sends `restart_web`, the command the copilot's /restart-web sends, so there
+ * is one restart and two ways to ask for it. The supervisor stops this page's server, rebuilds the page when the project is OpenLanes itself and
+ * starts the server again; the engine and its agents never stop.
+ *
+ * The engine's reply travels through the server being stopped, so it can be lost. A stream that drops while the
+ * command is still unanswered is therefore read as the restart under way, not as a failure: the dialog closes and
+ * the pill says Restarting… until the stream is live again.
+ */
+export function RestartWebDialog({ connection, onCommand, ...openable }: RestartWebDialogProps) {
+  const [open, setOpen] = useOpen(openable);
+  const command = useCommand(onCommand);
+  const cancel = useRef<HTMLButtonElement>(null);
+  // asked: answered, the server still up. down: the stream dropped, so the restart is under way.
+  const [phase, setPhase] = useState<"idle" | "asked" | "down">("idle");
+  const down = connection !== "live";
+  useEffect(() => {
+    if (down && (phase === "asked" || command.pending)) {
+      setPhase("down");
+      setOpen(false);
+    }
+    if (!down && phase === "down") setPhase("idle");
+    // setOpen is a new function each render; the three values above are what this reacts to.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, down, command.pending]);
+  useEffect(() => {
+    if (phase !== "asked") return;
+    const id = setTimeout(() => setPhase("idle"), RESTART_UNSEEN_MS);
+    return () => clearTimeout(id);
+  }, [phase]);
+  const restart = async () => {
+    const reply = await command.send({ kind: "restart_web", plan: null, agent: null, payload: {} }, "Restarting the control room. This page reconnects when it is back.");
+    if (reply && reply.status !== "refused") {
+      // A reply that outlived the restart finds the stream already back: there is nothing left to wait for.
+      setPhase((was) => (was === "idle" && open ? "asked" : was));
+      setOpen(false);
+    }
+  };
+  const busy = phase !== "idle";
+  return (
+    <Dialog.Root open={open} onOpenChange={(next) => { if (next) command.setOutcome(null); setOpen(next); }}>
+      <Dialog.Trigger className="btn nav-pill" disabled={busy} title="Stops this page's server and starts it again, rebuilding the page first when the project is OpenLanes itself. The engine and its agents keep working.">
+        {busy ? "Restarting Control Room…" : "Restart Control Room"}
+      </Dialog.Trigger>
+      <Frame
+        className="confirm" title="Restart the control room?"
+        onOpenAutoFocus={(e) => { e.preventDefault(); cancel.current?.focus(); }}
+      >
+        <div className="help-body">
+          <Dialog.Description>
+            This stops the page's server and starts it again on the same port, rebuilding the page first when the project is OpenLanes itself. The engine and its agents keep working, and this page reconnects by itself when the server is back.
+          </Dialog.Description>
+          <Feedback outcome={command.outcome?.tone === "refused" ? command.outcome : null} announced={command.announced} />
+        </div>
+        <div className="help-foot">
+          <Dialog.Close className="btn btn-quiet" ref={cancel}>Cancel</Dialog.Close>
+          <button type="button" className="btn btn-primary" disabled={command.pending} onClick={restart}>Restart it</button>
         </div>
       </Frame>
     </Dialog.Root>

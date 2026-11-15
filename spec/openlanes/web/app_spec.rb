@@ -173,6 +173,25 @@ RSpec.describe OpenLanes::Web::App, :tree do
       end
     end
 
+    # Restart Control Room (the header's button) sends the kind the
+    # copilot's /restart-web sends. The server it restarts only queues it
+    # and answers; the engine asks the supervisor, so the reply is out
+    # before anything is signalled.
+    context "with restart_web, from the Restart Control Room button" do
+      before do
+        allow(OpenLanes::Supervision).to receive(:restart_web)
+        post_command(command.merge(kind: "restart_web"))
+      end
+
+      it "queues it for the engine, answers 202, and asks no supervisor itself" do
+        queued = store.xrange(keys.commands).map { JSON.parse(it.fields["json"])["kind"] }
+        aggregate_failures do
+          expect([last_response.status, body["status"], queued]).to eq([202, "accepted", %w[restart_web]])
+          expect(OpenLanes::Supervision).not_to have_received(:restart_web)
+        end
+      end
+    end
+
     context "without a token" do
       before { post_command(command, token: nil) }
 

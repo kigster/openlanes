@@ -31,12 +31,13 @@ afterEach(() => {
 it("is a bar of pills: the toggles carry a checkbox, the theme and help stand apart, accessibly", async () => {
   const { container } = render(
     <Header {...props({ merged: true, narrow: false, onToggleNarrow: vi.fn(), hideInactive: false, onToggleHideInactive: vi.fn() })}
-      actionMenu={<button type="button">Actions</button>} stopAll={<button type="button">Stop Local Workers</button>}
+      actionMenu={<button type="button">Actions</button>} restartWeb={<button type="button">Restart Control Room</button>}
+      stopAll={<button type="button">Stop Local Workers</button>}
       help={<button type="button" aria-label="How this works">?</button>} />,
   );
   expect(screen.getByRole("heading", { level: 1, name: "OpenLanes control room" })).toHaveClass("sr-only");
   const nav = within(screen.getByRole("navigation", { name: "Run controls" }));
-  expect(nav.getAllByRole("button").map(b => b.textContent)).toEqual(["Menu", "✓All Machines", "Narrow Lanes", "Hide Inactive", "Actions", "Stop Local Workers"]);
+  expect(nav.getAllByRole("button").map(b => b.textContent)).toEqual(["Menu", "✓All Machines", "Narrow Lanes", "Hide Inactive", "Actions", "Restart Control Room", "Stop Local Workers"]);
   expect(nav.queryByRole("button", { name: /theme/i })).toBeNull();
   expect(nav.queryByRole("button", { name: "How this works" })).toBeNull();
   expect(screen.queryByText("Fixture data")).toBeNull();

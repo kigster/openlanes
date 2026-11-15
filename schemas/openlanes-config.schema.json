@@ -11,7 +11,7 @@
         "string",
         "null"
       ],
-      "description": "Heading for INDEX.md; null takes the root's name",
+      "description": "Heading for INDEX.md; null takes the root's name. `openlanes` (any case) marks OpenLanes working on itself: only there does restarting the control room rebuild its page",
       "default": null,
       "minLength": 1
     },
@@ -1876,6 +1876,11 @@
               "description": "The .plans directory",
               "default": ".plans"
             },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Start nothing; say whether it would start the factory or restart its control room",
+              "default": false
+            },
             "git_push": {
               "type": "boolean",
               "description": "With --isolation worktree, a finished branch is pushed and its pull request opened as soon as it lands, titled [NNN.MM](X). --no-git-push turns that off and leaves it uncommitted.",
@@ -2313,7 +2318,7 @@
         },
         "stop": {
           "type": "object",
-          "description": "Stop the factory: its supervisor, engine and control room; --all stops every `openlanes run` too",
+          "description": "Stop the factory: its supervisor, engine and control room; --all stops every `openlanes run` too, --web the control room alone",
           "default": {},
           "additionalProperties": false,
           "properties": {
@@ -2338,6 +2343,11 @@
             "quiet": {
               "type": "boolean",
               "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "web": {
+              "type": "boolean",
+              "description": "Only the control room's server; the engine and its agents stay up",
               "default": false
             }
           }

@@ -9,6 +9,12 @@ module OpenLanes
     # The {Supervisor} ticks every {Supervisor::TICK} seconds and must not
     # block on a build, so {#start} spawns it and {#poll} asks after it.
     #
+    # Only OpenLanes working on itself builds: the project root holds a
+    # `justfile` and `.openlanes/config.yml` says `project: openlanes`.
+    # Anywhere else the page is the one the gem shipped, a build would
+    # rewrite the installed gem, and the restart goes on without one
+    # ({Outcome#skipped?}), saying nothing.
+    #
     # A build that cannot run or fails leaves `web/dist` as it was (D3):
     # a {PageBackup} keeps the old page and puts it back on any outcome
     # but `ok`. The build's output goes to a log in a private directory,
@@ -26,18 +32,28 @@ module OpenLanes
       # What one build came to.
       #
       # @!attribute [r] status
-      #   @return [String] ok, no_npm, no_sources, failed or timeout
+      #   @return [String] ok, skipped, no_npm, no_sources, failed or timeout
       # @!attribute [r] message
       #   @return [String] a sentence a person reads in the copilot
       Outcome = Data.define(:status, :message) do
         # @return [Boolean]
         def ok? = status == "ok"
+
+        # @return [Boolean] whether no build was called for, so there is nothing to tell
+        def skipped? = status == "skipped"
       end
 
       # Whether `npm` is on PATH.
       NPM_ON_PATH = lambda do
         ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { File.executable?(File.join(it, "npm")) }
       end
+
+      # The `project:` that marks OpenLanes working on itself, compared
+      # without case, as the page's header does.
+      OWN_PROJECT = "openlanes"
+
+      # The file whose `web-build` recipe this build is.
+      JUSTFILE = "justfile"
 
       # @param root [String] the gem's root, whose `web/` holds the page sources
       # @param host [OpenLanes::Supervision::Host]
@@ -111,9 +127,23 @@ module OpenLanes
       #
       # @return [Outcome, nil]
       def unbuildable
+        return settle("skipped", "the page was not rebuilt: this project is not OpenLanes itself") unless own_project?
         return settle("no_sources", "the page was not rebuilt: #{@web}/package.json is missing") unless File.exist?(File.join(@web, "package.json"))
 
         settle("no_npm", "the page was not rebuilt: npm is not on PATH") unless @npm.call
+      end
+
+      # Asked of the project the supervisor runs in, which `openlanes start`
+      # has already moved to, through the same {Config.current} every
+      # command reads. A config that cannot be read is not ours to build
+      # for, and must not raise: this runs on the supervisor's tick (F1).
+      #
+      # @return [Boolean]
+      def own_project?
+        root = Project.root || Dir.pwd
+        File.file?(File.join(root, JUSTFILE)) && Config.current.project.to_s.casecmp?(OWN_PROJECT)
+      rescue OpenLanes::Error, SystemCallError
+        false
       end
 
       # @return [void]
