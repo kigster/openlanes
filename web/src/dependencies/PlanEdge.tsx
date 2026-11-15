@@ -1,7 +1,8 @@
-import { getBezierPath, type EdgeProps } from "@xyflow/react";
+import type { EdgeProps } from "@xyflow/react";
+import { useEdgePath } from "./useEdgePath";
 
 /** A real depends_on: arrow between two shown plans. */
-export function PlanEdge({ source, target, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd }: EdgeProps) {
-  const [d] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition });
-  return <path className="react-flow__edge-path dep-edge" data-from={source} data-to={target} d={d} markerEnd={markerEnd} />;
+export function PlanEdge(props: EdgeProps) {
+  const d = useEdgePath(props);
+  return <path className="react-flow__edge-path dep-edge" data-from={props.source} data-to={props.target} d={d} markerEnd={props.markerEnd} />;
 }

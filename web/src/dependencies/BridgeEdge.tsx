@@ -1,17 +1,21 @@
 import { useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { getBezierPath, type Edge, type EdgeProps } from "@xyflow/react";
+import type { Edge, EdgeProps } from "@xyflow/react";
+import { useEdgePath } from "./useEdgePath";
 
 export interface BridgeData extends Record<string, unknown> {
   from: string;
   to: string;
   /** "NNN.MM Title" for each hidden plan the bridge passes over, in walking order. */
   names: string[];
+  /** Drawn straight from box to box, for an arrangement with no direction. */
+  floating?: boolean;
 }
 
 /** A dashed arrow over hidden plans; hovering it names them. */
-export function BridgeEdge({ data, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd }: EdgeProps<Edge<BridgeData>>) {
-  const [d] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition });
+export function BridgeEdge(props: EdgeProps<Edge<BridgeData>>) {
+  const { data, markerEnd } = props;
+  const d = useEdgePath(props);
   const names = data?.names ?? [];
   const [open, setOpen] = useState(false);
   return (

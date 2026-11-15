@@ -3,34 +3,37 @@ import { MarkerType, type Edge, type Node } from "@xyflow/react";
 import type { DependencyPlan, DependencyState } from "../api/types";
 import type { BridgeData } from "./BridgeEdge";
 import type { PlanNodeData } from "./PlanNode";
+import { flowOf, type LayoutKey } from "./layouts";
 import { NODE_HEIGHT, NODE_WIDTH, layout, type Visible } from "./model";
 
 const arrow = { type: MarkerType.ArrowClosed, width: 14, height: 14 };
 
-/** The React Flow nodes for the shown plans, placed by dagre. Fixed width and height, so edges need no measuring. */
-export function toNodes(shown: Visible, states: Map<string, DependencyState>): Node<PlanNodeData>[] {
-  return layout(shown.plans, [...shown.edges, ...shown.bridges]).map(p => ({
+/** The React Flow nodes for the shown plans, placed by the arrangement picked. Fixed width and height, so edges need no measuring. */
+export function toNodes(shown: Visible, states: Map<string, DependencyState>, kind: LayoutKey = "adaptive"): Node<PlanNodeData>[] {
+  return layout(shown.plans, [...shown.edges, ...shown.bridges], kind).map(p => ({
     id: p.plan.ordinal,
     type: "plan",
     position: { x: p.x, y: p.y },
     width: NODE_WIDTH,
     height: NODE_HEIGHT,
-    data: { plan: p.plan, state: states.get(p.plan.state) },
+    data: { plan: p.plan, state: states.get(p.plan.state), flow: flowOf(kind) },
   }));
 }
 
 /** A real arrow per depends_on: edge, and a dashed bridge per chain of hidden plans. */
-export function toEdges(shown: Visible, plans: Map<string, DependencyPlan>): Edge[] {
+export function toEdges(shown: Visible, plans: Map<string, DependencyPlan>, kind: LayoutKey = "adaptive"): Edge[] {
   const name = (o: string) => `${o} ${plans.get(o)?.title ?? ""}`.trim();
+  // A ring or a grid has no direction for arrows to follow, so there they run straight from box to box.
+  const floating = flowOf(kind) === "free";
   return [
-    ...shown.edges.map(e => ({ id: `${e.from}>${e.to}`, source: e.from, target: e.to, type: "plan", markerEnd: arrow })),
+    ...shown.edges.map(e => ({ id: `${e.from}>${e.to}`, source: e.from, target: e.to, type: "plan", markerEnd: arrow, data: { floating } })),
     ...shown.bridges.map(b => ({
       id: `${b.from}>${b.to}`,
       source: b.from,
       target: b.to,
       type: "bridge",
       markerEnd: arrow,
-      data: { from: b.from, to: b.to, names: b.via.map(name) } satisfies BridgeData,
+      data: { from: b.from, to: b.to, names: b.via.map(name), floating } satisfies BridgeData,
     })),
   ];
 }

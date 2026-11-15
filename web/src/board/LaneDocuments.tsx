@@ -11,16 +11,21 @@ export interface LaneDocumentsProps {
   ordinal: string;
   /** "narrow" fetches nothing and shows no menu. A document already open stays open. */
   lanes?: "wide" | "narrow";
+  /** Ask the server for the list only when the menu first opens: a page of sixty boxes must not make sixty requests. */
+  lazy?: boolean;
+  /** The class of the strip around the trigger, where the lane's own does not fit. */
+  className?: string;
 }
 
-export function LaneDocuments({ ordinal, lanes = "wide" }: LaneDocumentsProps) {
+export function LaneDocuments({ ordinal, lanes = "wide", lazy = false, className = "plan-actions" }: LaneDocumentsProps) {
   const enabled = lanes === "wide";
-  const { documents, loading, error, refetch } = useDocuments(ordinal, enabled);
+  const [asked, setAsked] = useState(!lazy);
+  const { documents, loading, error, refetch } = useDocuments(ordinal, enabled && asked);
   const [open, setOpen] = useState<Document | null>(null);
   // One line when there is nothing to list, so the menu never opens empty. The trigger stays enabled throughout:
   // opening it reads the list again, which is the only retry a failed or empty lane has.
   const note =
-    loading && documents.length === 0 ? "Loading\u2026"
+    (loading || !asked) && documents.length === 0 ? "Loading\u2026"
     : error ? `Could not list the documents: ${error.message}`
     : documents.length === 0 ? "This plan has no documents yet"
     : null;
@@ -29,8 +34,8 @@ export function LaneDocuments({ ordinal, lanes = "wide" }: LaneDocumentsProps) {
   return (
     <>
       {enabled && (
-        <div className="plan-actions">
-          <Menu.Root onOpenChange={(opened) => { if (opened) refetch(); }}>
+        <div className={className}>
+          <Menu.Root onOpenChange={(opened) => { if (opened) { setAsked(true); refetch(); } }}>
             <Menu.Trigger className="btn doc-trigger" aria-label={`Documents of ${ordinal}`} title="Read this plan's documents">
               Documents <span aria-hidden="true">▾</span>
             </Menu.Trigger>
