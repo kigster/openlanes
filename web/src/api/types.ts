@@ -551,6 +551,12 @@ export interface InterviewTurn {
   kind: "text" | "question" | "decision";
   text: string;
   at: string;
+  /**
+   * The turn's place in the conversation: the id of its entry in the server's stream, `<milliseconds>-<n>`, which
+   * only ever grows. The page draws by it and by nothing else: `at` is whole seconds and `id` is random, so two turns
+   * of one reply cannot be told apart by those (issue 252).
+   */
+  seq: string;
   /** `question` turns only: 2 to 5, exactly one recommended. */
   options?: InterviewOption[];
   /** `decision` turns only: what Confirm writes to blocked.md as the answer. */

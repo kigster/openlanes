@@ -10,14 +10,28 @@ export const interviewPath = (plan: string, number: number): string => `/api/pla
 /** The cache key of one question's conversation. */
 export const interviewKey = (plan: string, number: number) => ["interview", plan, number] as const;
 
-const byTime = (a: InterviewTurn, b: InterviewTurn): number =>
-  a.at < b.at ? -1 : a.at > b.at ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+/** A stream id as two numbers. One that is missing or malformed reads as zero, so it sorts first and never throws. */
+const place = (seq: string | undefined): [number, number] => {
+  const [ms, n] = (seq ?? "").split("-").map(Number);
+  return [ms || 0, n || 0];
+};
 
-/** Turns in any order, at most one per id (the first seen wins), oldest first. */
+/**
+ * The server's order, and only that. Sorting by `at` and then `id` drew a reply of two turns in either order, since
+ * both carry one second and random ids, and when the words sorted after the question or the decision, the buttons
+ * were not drawn at all (issue 252). Compared as numbers: as text, "9-0" would sort after "10-0".
+ */
+const bySeq = (a: InterviewTurn, b: InterviewTurn): number => {
+  const [ams, an] = place(a.seq);
+  const [bms, bn] = place(b.seq);
+  return ams - bms || an - bn;
+};
+
+/** Turns in any order, at most one per id (the first seen wins), in the order the server stored them. */
 export function settle(turns: Iterable<InterviewTurn>): InterviewTurn[] {
   const unique = new Map<string, InterviewTurn>();
   for (const turn of turns) if (!unique.has(turn.id)) unique.set(turn.id, turn);
-  return [...unique.values()].sort(byTime);
+  return [...unique.values()].sort(bySeq);
 }
 
 /** The turns with `turn` in its place, unless one with its id is there already. */
@@ -42,11 +56,23 @@ export function openQuestion(turns: InterviewTurn[]): InterviewTurn | null {
   return last?.from === "unblocker" && last.kind === "question" ? last : null;
 }
 
-/** `GET`: the conversation so far, seeded with the opening question when there is none. */
+/** The server's own words for a refusal, when it sent any. */
+async function reasonIn(res: Response): Promise<string | undefined> {
+  try {
+    return ((await res.json()) as { error?: string }).error;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * `GET`: the conversation so far, seeded with the opening question when there is none. A question that is answered
+ * or gone answers 409 with why, which is what the panel then says.
+ */
 export async function fetchInterview(plan: string, number: number): Promise<InterviewTurn[]> {
   const path = interviewPath(plan, number);
   const res = await fetch(path, { headers: { Accept: "application/json" }, credentials: "same-origin" });
-  if (!res.ok) throw new ApiError(`GET ${path} answered ${res.status}`, res.status);
+  if (!res.ok) throw new ApiError((res.status === 409 ? await reasonIn(res) : undefined) ?? `GET ${path} answered ${res.status}`, res.status);
   const body = (await res.json()) as { turns?: InterviewTurn[] };
   return Array.isArray(body.turns) ? body.turns : [];
 }
@@ -56,7 +82,7 @@ export async function sendInterview(plan: string, number: number, text: string):
   const path = interviewPath(plan, number);
   const res = await postJson(path, { id: ulid(), text });
   if (res.status === 202) return ((await res.json()) as { turn: InterviewTurn }).turn;
-  const reason = res.status === 422 || res.status === 409 ? ((await res.json()) as { error?: string }).error : undefined;
+  const reason = res.status === 422 || res.status === 409 ? await reasonIn(res) : undefined;
   throw new ApiError(reason ?? `POST ${path} answered ${res.status}`, res.status);
 }
 
