@@ -9,6 +9,7 @@ RSpec.describe OpenLanes::Memory::Secrets do
     "a GitHub token"                          => "ghp_#{"a1" * 18}",
     "an AWS access key"                       => "AKIA#{"A1" * 8}",
     "a URL carrying credentials"              => "redis://deploy:#{"pw" * 3}@cache.internal:6379/0",
+    "a Linear API key"                        => "lin_api_#{"a1B2" * 5}",
     "a key, token or password set to a value" => "DB_PASSWORD=#{"hunter" * 2}",
     "an email address"                        => "ask dana.reyes@example.test about it",
     "a long random-looking string"            => "aB3#{"xY9k" * 12}"
@@ -16,6 +17,10 @@ RSpec.describe OpenLanes::Memory::Secrets do
     it "finds #{kind}" do
       expect(described_class.scan("first line\n#{text}\n").map { [it.kind, it.line] }).to include([kind, 2])
     end
+  end
+
+  it "finds a URL whose password has no user name before it" do
+    expect(described_class.scan("redis://:#{"pw" * 3}@cache.internal:6379/0").map(&:kind)).to include("a URL carrying credentials")
   end
 
   it "names the kind and the line, and never the text that matched" do

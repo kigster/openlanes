@@ -5,7 +5,7 @@ import { Pane } from "./Pane";
 import { errorsByPath, panesOf, prune, sameValues, setAt, shownPaths } from "./model";
 import "./settings.css";
 
-/** The project's `.openlanes.yml`, as one form: a pane per section, saved, committed and pushed to main in one click. */
+/** The project's config file (`.openlanes/config.yml`), as one form: a pane per section, saved, committed and pushed to main in one click. */
 export function SettingsPage() {
   const { data, error, isLoading } = useSettings();
   const save = useSaveSettings();
@@ -71,7 +71,7 @@ function SettingsForm({ doc, save, messages, setMessages }: FormProps) {
       )}
       <div className="set-actions">
         <button type="button" className="set-save" disabled={save.isPending} onClick={onSave}>Save, commit and push to main</button>
-        <span className="set-note">Writes .openlanes.yml, commits it alone and pushes {doc.branch ?? "main"}.</span>
+        <span className="set-note">Writes {doc.file}, commits it alone and pushes {doc.branch ?? "main"}.</span>
         {refusal && <p className="set-refusal" role="alert">{refusal}</p>}
         {note && <p className="set-status" role="status">{note}</p>}
       </div>

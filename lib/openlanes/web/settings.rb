@@ -26,7 +26,10 @@ module OpenLanes
       #   @return [String] sha256 of the file's bytes
       # @!attribute [r] branch
       #   @return [String, nil] the checkout's branch, nil when detached
-      View = Data.define(:schema, :keys, :values, :defaults, :etag, :branch) do
+      # @!attribute [r] file
+      #   @return [String] the file a save writes, relative to the root, so
+      #     the page names the legacy file on a project that still has it
+      View = Data.define(:schema, :keys, :values, :defaults, :etag, :branch, :file) do
         # @return [Hash{Symbol => Object}]
         def to_json_hash = to_h
       end
@@ -37,7 +40,17 @@ module OpenLanes
         def to_json_hash = { path:, message: }
       end
 
+      # Both places a project file can sit, the current one first. The remote
+      # may add or move the file at the one a checkout does not use, so a
+      # save looks at both.
+      FILES = [Project::FILE, Project::LEGACY_FILE].freeze
+
       module_function
+
+      # @param root [String]
+      # @return [Boolean] whether the root holds the file at both paths, the
+      #   state every command refuses
+      def both?(root) = FILES.all? { File.file?(File.join(root, it)) }
 
       # @param root [String] the project root, the main checkout
       # @return [View]
@@ -47,22 +60,26 @@ module OpenLanes
           values: file_values(root),
           defaults: Config::Schema.defaults,
           etag: etag(root),
-          branch: branch(root))
+          branch: branch(root),
+          file: file(root))
       end
 
       # @param values [Hash] the whole file as the page would have it
+      # @param path [String] the file a save would write, as {.file} names it
       # @return [Array<Problem>] empty when {Config.parse} accepts it
-      def validate(values)
-        parse(values)
+      def validate(values, path: Config::FILE)
+        parse(values, path:)
         []
       rescue Error => e
-        problems(compact(values), e.message)
+        problems(compact(values), e.message, path)
       end
 
       # @param values [Hash] the whole file, already {.validate}d
+      # @param path [String] the file a save would write: the parser names it
+      #   in what it says, and a legacy project is not saving {Config::FILE}
       # @return [Config]
       # @raise [OpenLanes::Error] when it does not parse
-      def parse(values) = Config.parse(text(values), path: Config::FILE)
+      def parse(values, path: Config::FILE) = Config.parse(text(values), path:)
 
       # @param values [Hash]
       # @return [String] the YAML {Config.parse} is given
@@ -138,19 +155,21 @@ module OpenLanes
       #
       # @param values [Hash]
       # @param message [String] {Config.parse}'s refusal
+      # @param file [String] the path that refusal starts with
       # @return [Array<Problem>]
-      def problems(values, message)
+      def problems(values, message, file = Config::FILE)
         schema = Config::Schema.errors(Config::Schema.jsonable(values)).map do |error|
           path = error.fetch("data_pointer").split("/").drop(1).map { it.gsub("~1", "/").gsub("~0", "~") }
           Problem.new(path:, message: error.fetch("error"))
         end
-        schema.empty? ? [parser_problem(message)] : schema
+        schema.empty? ? [parser_problem(message, file)] : schema
       end
 
       # @param message [String] e.g. ".openlanes/config.yml: merge.by: \"x\" is not one of …"
+      # @param file [String] the path the parser was given
       # @return [Problem]
-      def parser_problem(message)
-        text = message.delete_prefix("#{Config::FILE}: ")
+      def parser_problem(message, file = Config::FILE)
+        text = message.delete_prefix("#{file}: ")
         dotted = text[/\A([a-z_]+(?:\.[\w-]+)*)[: ]/, 1]
         path = if dotted && Config::KEYS.include?(dotted.split(".").first)
                  dotted.split(".")
