@@ -141,6 +141,9 @@ lib/openlanes/
                          NamespaceMap and ClassDiagram render Mermaid, Writer fills docs/architecture/
   skills/                OpenLanes::Skills — the bundled skills/*/SKILL.md, and the installer that copies them
   linear/                one-way export of .plans to Linear projects and issues
+  slack/                 OpenLanes::Slack — questions asked in a channel as polls: API (the seam), Poll (drawing and reading
+                         one), Room (the channel, its workspace checked), Bridge (snapshot in, `answer` commands out, on its own
+                         thread), Asker (one pass over Slack), Outbox (what it learned, written by the loop)
   evals/                 OpenLanes::Evals — per-agent cases (evals/cases/<agent>/<id>.yml), deterministic
                          checks per depth, offline scoring of recordings, --live runs in a temp repo
   cli.rb                 the dry-cli registry, and the dry-cli-help `help` block that titles it
@@ -188,7 +191,7 @@ Raw NDJSON traces land in `Dir.tmpdir/openlanes-traces` on purpose, outside the 
 - `Data.define` for value objects, everywhere. Endless method definitions (`def open? = state.match?(...)`) are idiomatic here.
 - YARD on public methods, with `@param` and `@return`. Comments explain why, usually by naming the specific failure the code prevents. Match that density; it is the house style, not decoration.
 - Project commands find the root (`OpenLanes::Project.root`) and `chdir` there before `call` runs; a command that needs no project says `standalone!`. `.openlanes/config.yml` reaches a command through `Base.default_params`, so dry-cli's own merge keeps a typed flag above the file.
-- `GitHub` and `Linear::API` are seams. The suite injects doubles into both and never reaches the network.
+- `GitHub`, `Linear::API` and `Slack::API` are seams. The suite injects doubles into all three and never reaches the network.
 - Specs build real `.plans` trees in temp directories through `PlansFixture` and the `:tree` tag. Do not mock the filesystem. Faking it would test the fake.
 - `spec_helper.rb` forces `NO_COLOR=1` so assertions test content on every machine. Cover the colored path deliberately, by stubbing `UI.color?`.
 - `lib/openlanes.rb` loads everything through Zeitwerk. File path and constant must agree; `support/` and the `cli/<command>/` directories are collapsed.
