@@ -129,6 +129,41 @@ module OpenLanes
         end
       end
 
+      # One line into the control file from somebody other than the clock:
+      # the engine asking the agent how much more time it needs (E2). Taken
+      # under the clock's own lock, and any warning due this second is
+      # counted as said: the ask goes out at the five-minute mark, where the
+      # clock's "5 minutes left" a second later would have overwritten the
+      # question before the agent read it.
+      #
+      # @param text [String]
+      # @return [Boolean] false once STOP is out: that agent is exiting
+      def say!(text)
+        @mutex.synchronize do
+          next false if @closed || %i[stopped expired].include?(@phase)
+
+          @fired |= WARNINGS.map(&:first).select { |before| before >= @deadline - @now.call }
+          Control.write(@control, text)
+          true
+        end
+      end
+
+      # Keep at least +floor+ seconds on the clock while a decision about
+      # more time is still being worked out (E2), so the agent is never told
+      # WRAP_UP or STOP for a wait that is not its own. Says nothing to the
+      # agent: the question it was asked is still the line in its file.
+      #
+      # @param floor [Integer] seconds
+      # @return [Boolean] whether the deadline moved
+      def hold!(floor)
+        @mutex.synchronize do
+          next false if @closed || %i[stopped expired].include?(@phase) || @deadline - @now.call >= floor
+
+          arm(floor)
+          true
+        end
+      end
+
       private
 
       # While agents are paused (W32) the clock stands still: no warning

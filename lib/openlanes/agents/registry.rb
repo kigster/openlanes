@@ -13,10 +13,13 @@ module OpenLanes
       #   default) loads every definition in `dir`
       # @param whole [OpenLanes::Agents::Registry, nil] the roster this one
       #   was narrowed from; nil when it is not narrowed
-      def initialize(dir: DEFAULT_DIR, roster: nil, whole: nil)
+      # @param overrides [OpenLanes::Agents::Overrides, nil] what this machine
+      #   changes about an agent; nil reads `.openlanes/config.yml` `agents:`
+      def initialize(dir: DEFAULT_DIR, roster: nil, whole: nil, overrides: nil)
         @dir = File.expand_path(dir)
         @all = roster
         @whole = whole
+        @overrides = overrides
       end
 
       # @return [String]
@@ -30,9 +33,20 @@ module OpenLanes
       # @return [OpenLanes::Agents::Registry]
       def whole = @whole || self
 
+      # What `.openlanes/config.yml` `agents:` changes on this machine, read
+      # once, when the roster loads, as the definitions themselves are: a run
+      # keeps the limits it started with, so a round is never counted
+      # against two different numbers.
+      #
+      # @return [OpenLanes::Agents::Overrides]
+      def overrides = @overrides ||= Config.current.agents
+
+      # Each definition with this machine's {#overrides} laid over it, so
+      # every reader sees the value in force.
+      #
       # @return [Array<OpenLanes::Agents::Agent>] in name order
       def all
-        @all ||= Dir.glob(File.join(dir, "*.md")).sort.filter_map { |path| parse(path) }
+        @all ||= Dir.glob(File.join(dir, "*.md")).sort.filter_map { |path| parse(path) }.map { overrides.apply(it) }
       end
 
       # @param name [String]
@@ -47,7 +61,7 @@ module OpenLanes
       # @return [OpenLanes::Agents::Registry]
       def only(*names)
         wanted = names.flatten.map(&:to_s)
-        self.class.new(dir:, roster: all.select { |a| wanted.include?(a.name) }, whole:)
+        self.class.new(dir:, roster: all.select { |a| wanted.include?(a.name) }, whole:, overrides:)
       end
 
       # A roster without the agents named — what `run --skip` hands the loop.
@@ -58,7 +72,7 @@ module OpenLanes
       # @return [OpenLanes::Agents::Registry]
       def without(*names)
         unwanted = names.flatten.map(&:to_s)
-        self.class.new(dir:, roster: all.reject { |a| unwanted.include?(a.name) }, whole:)
+        self.class.new(dir:, roster: all.reject { |a| unwanted.include?(a.name) }, whole:, overrides:)
       end
 
       # Every agent the query could mean. An exact name wins outright; failing
@@ -139,9 +153,17 @@ module OpenLanes
           confined_to:   confined_to(meta["confined_to"], path),
           small_diff:    SmallDiff.parse(meta["small_diff"], path),
           review_stage:  review_stage(meta["review_stage"], path),
-          watches:       watches(meta, path)
+          watches:       watches(meta, path),
+          **extension(meta)
         )
       end
+
+      # `extension_cap:` and `extension_ceiling:`, in seconds, when the
+      # definition names them; {Agent} holds the defaults.
+      #
+      # @param meta [Hash]
+      # @return [Hash{Symbol => Integer}]
+      def extension(meta) = %i[extension_cap extension_ceiling].to_h { [it, meta[it.to_s].to_i] }.select { _2.positive? }
 
       # A definition is checked in with the code, so a bad value in one is a
       # bug to stop on, not a preference to work around.

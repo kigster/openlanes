@@ -16,7 +16,14 @@ module OpenLanes
     # a copy that drifts from the frontmatter the loop actually routes on.
     class Roster
       # Columns, so the header and the rows cannot drift apart.
-      HEADINGS = ["Agent", "Handles", "Advances to", "Runs on", "Starts"].freeze
+      HEADINGS = ["Agent", "Handles", "Advances to", "Runs on", "Starts", "Rounds", "Timeout", "Extension"].freeze
+
+      # What marks a value `.openlanes/config.yml` `agents:` set on this
+      # machine, and the line under the table that says so. Without it the
+      # table would show a number the definition file does not hold, and
+      # nobody could tell where it came from.
+      MARK = "*"
+      OVERRIDDEN = "#{MARK} set for this machine in #{Project::FILE} `agents:`, over the agent's definition".freeze
 
       # What an agent with no `advances_to` is, in the one word that explains why
       # `run` never offers it work.
@@ -49,7 +56,21 @@ module OpenLanes
         all = agents.all
         return "No agent definitions in #{agents.dir}\n" if all.empty?
 
-        UI.table(all.map { |agent| row(agent) }, header: HEADINGS)
+        table = UI.table(all.map { |agent| row(agent) }, header: HEADINGS)
+        agents.overrides.table.empty? ? table : "#{table}#{OVERRIDDEN}\n"
+      end
+
+      # One agent's values this machine changed, in a sentence: what
+      # `agents describe` says before it opens a definition file that still
+      # holds the old ones.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @return [String, nil] nil for an agent the file leaves alone
+      def overridden(agent)
+        set = agents.overrides.for(agent.name)
+        return nil if set.empty?
+
+        "#{agent.name}: #{Project::FILE} `agents:` sets #{set.map { |key, value| "#{key} #{value}" }.join(", ")} over its definition"
       end
 
       private
@@ -97,11 +118,32 @@ module OpenLanes
         [UI.paint(agent.name, :bright_cyan),
          handles(agent),
          UI.paint(advances(agent), agent.read_only? ? :bright_black : :green),
-         UI.paint(runs_on(agent), :bright_black),
-         UI.paint(agent.starts.empty? ? "all" : agent.starts.join(", "), :bright_black)]
+         UI.paint(marked(agent, runs_on(agent), :model, :effort), :bright_black),
+         UI.paint(agent.starts.empty? ? "all" : agent.starts.join(", "), :bright_black),
+         *limits(agent)]
       end
 
-      # The agent's own settings, before any spec.md overrides them: the
+      # The rounds, the clock, and what may be added to it: the automatic
+      # extension, then the most the arbitrator may grant (E2).
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @return [Array<String>]
+      def limits(agent)
+        [marked(agent, agent.rounds.to_s, :rounds),
+         marked(agent, agent.timeout ? minutes(agent.timeout) : "run default", :timeout),
+         "#{marked(agent, minutes(agent.extension_cap), :extension_cap)}, " \
+         "#{marked(agent, "up to #{minutes(agent.extension_ceiling)}", :extension_ceiling)}"]
+      end
+
+      # @param seconds [Integer]
+      # @return [String] e.g. `30m`
+      def minutes(seconds) = "#{(seconds / 60.0).round}m"
+
+      # @param keys [Array<Symbol>] the {Agent} attributes the cell shows
+      # @return [String] the cell, marked when this machine set any of them
+      def marked(agent, cell, *keys) = agents.overrides.for(agent.name).keys.intersect?(keys) ? "#{cell}#{MARK}" : cell
+
+      # The agent's settings on this machine, before any spec.md overrides them: the
       # model, the effort, and the adapter when it is not the default.
       #
       # @param agent [OpenLanes::Agents::Agent]

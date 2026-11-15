@@ -67,6 +67,12 @@ module OpenLanes
     # @!attribute [r] small_diff
     #   @return [OpenLanes::Agents::SmallDiff, nil] the model it runs on for a
     #     small diff; nil when it has none
+    # @!attribute [r] extension_cap
+    #   @return [Integer] seconds the engine may add to one round's clock on
+    #     its own, and the most it grants on the agent's own estimate (E2)
+    # @!attribute [r] extension_ceiling
+    #   @return [Integer] seconds: the most the arbitrator may grant a round
+    #     that asked for more than {#extension_cap} (E2)
     Agent = Data.define(:name,
       :description,
       :handles,
@@ -92,10 +98,12 @@ module OpenLanes
       :confined_to,
       :small_diff,
       :review_stage,
-      :watches) do
+      :watches,
+      :extension_cap,
+      :extension_ceiling) do
       def initialize(covers: [], ledger: [], rounds: Agent::DEFAULT_ROUNDS, effort: nil, starts_as: nil, holds_at: nil, adapter: nil,
         phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], small_diff: nil, review_stage: 1, watches: [],
-        **rest)
+        extension_cap: Agent::DEFAULT_EXTENSION_CAP, extension_ceiling: Agent::DEFAULT_EXTENSION_CEILING, **rest)
         super
       end
 
@@ -144,5 +152,16 @@ module OpenLanes
     # and nearly every agent then stopped at "no rounds left" with the work
     # half done and waited for a person to grant one more, over and over.
     Agent::DEFAULT_ROUNDS = 4
+
+    # Seconds the engine adds to a round's clock without asking anybody, and
+    # the largest estimate of its own an agent is simply given (E2). Fifteen
+    # minutes: the builders kept running out a few minutes short, and a
+    # person was woken for each of them.
+    Agent::DEFAULT_EXTENSION_CAP = 900
+
+    # Seconds the arbitrator may add to one round (E2). An hour: past that
+    # the round is not short of time, it is the wrong size, and a person
+    # should see it.
+    Agent::DEFAULT_EXTENSION_CEILING = 3600
   end
 end

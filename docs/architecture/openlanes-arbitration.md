@@ -15,7 +15,10 @@ classDiagram
   class OpenLanes__Arbitration__Ruling__Ambiguous["Ruling::Ambiguous"]
   class OpenLanes__Arbitration__Ruling__IllegalOutcome["Ruling::IllegalOutcome"]
   class OpenLanes__Arbitration__Ruling__Missing["Ruling::Missing"]
+  class OpenLanes__Arbitration__TimeRuling["TimeRuling"]
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Plans__Estimate["OpenLanes::Plans::Estimate"]
+  <<module>> OpenLanes__Plans__Estimate
   class OpenLanes__Plans__Findings["OpenLanes::Plans::Findings"]
   <<module>> OpenLanes__Plans__Findings
   class OpenLanes__Plans__Ledger["OpenLanes::Plans::Ledger"]
@@ -31,6 +34,7 @@ classDiagram
   OpenLanes__Arbitration ..> OpenLanes__Agents__Names : uses
   OpenLanes__Arbitration ..> OpenLanes__Arbitration__Counter : uses
   OpenLanes__Arbitration ..> OpenLanes__Arbitration__Ruling : uses
+  OpenLanes__Arbitration ..> OpenLanes__Arbitration__TimeRuling : uses
   OpenLanes__Arbitration ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Arbitration ..> OpenLanes__Plans__StateMachine__Refused : uses
   OpenLanes__Arbitration__Counter ..> OpenLanes__Plans__Ledger : uses
@@ -55,4 +59,8 @@ classDiagram
   OpenLanes__Arbitration__Ruling__Ambiguous --|> OpenLanes__Error : inherits
   OpenLanes__Arbitration__Ruling__IllegalOutcome --|> OpenLanes__Error : inherits
   OpenLanes__Arbitration__Ruling__Missing --|> OpenLanes__Error : inherits
+  OpenLanes__Arbitration__TimeRuling ..> OpenLanes__Arbitration__Ruling__Ambiguous : uses
+  OpenLanes__Arbitration__TimeRuling ..> OpenLanes__Arbitration__Ruling__IllegalOutcome : uses
+  OpenLanes__Arbitration__TimeRuling ..> OpenLanes__Arbitration__Ruling__Missing : uses
+  OpenLanes__Arbitration__TimeRuling ..> OpenLanes__Plans__Estimate : uses
 ```

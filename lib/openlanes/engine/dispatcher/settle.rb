@@ -77,6 +77,7 @@ module OpenLanes
 
         # An ended round needs no more time: its open request is closed, not left on the page.
         def close_extension(job)
+          ladder.forget(job)
           return if runner.dry_run?
 
           subject = fresh(job.task) or return

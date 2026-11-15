@@ -27,12 +27,13 @@ module OpenLanes
           @idle = @wake = false
           @registers = Registers.fresh
           @extensions = setup.extensions || Extensions.new(stay: setup.stay)
+          @ladder = Extensions::Ladder.new(extensions: @extensions, overtime: method(:overtime))
           @feed = EventJournal::Feed.new(setup.journal)
           @guards = Guards.for(setup.runner, clock)
           build_collaborators
         end
 
-        attr_reader :clock, :feed, :extensions
+        attr_reader :clock, :feed, :extensions, :ladder
 
         # Mail over Redis, the drain of answered blocks (set once the
         # dispatcher has built it, since it needs {#untouchable}), whether the
@@ -85,6 +86,13 @@ module OpenLanes
         end
 
         private
+
+        # The arbitrator's side call for time (E2); nil on a run without an
+        # arbitrator, where a large estimate goes straight to a person.
+        def overtime
+          arbitration = runner.arbitration
+          arbitration.overtime if arbitration.respond_to?(:overtime)
+        end
 
         def build_collaborators
           @profiles = Profiles.new(runner:, rounds_cap:, extensions:)
