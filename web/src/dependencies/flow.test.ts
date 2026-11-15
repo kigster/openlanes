@@ -1,6 +1,6 @@
 import { toEdges, toNodes } from "./flow";
 import { graph } from "./fixture";
-import { visible } from "./model";
+import { NODE_HEIGHT, NODE_WIDTH, visible } from "./model";
 
 const states = new Map(graph.states.map(s => [s.key, s]));
 const plans = new Map(graph.plans.map(p => [p.ordinal, p]));
@@ -8,7 +8,7 @@ const plans = new Map(graph.plans.map(p => [p.ordinal, p]));
 it("makes a fixed-size plan node per shown plan, placed left to right along the chain", () => {
   const nodes = toNodes(visible(graph, new Set(["building", "planned"])), states);
   expect(nodes.map(n => n.id)).toEqual(["001.00", "002.00", "003.00", "004.00"]);
-  expect(nodes.every(n => n.type === "plan" && n.width === 220 && n.height === 72)).toBe(true);
+  expect(nodes.every(n => n.type === "plan" && n.width === NODE_WIDTH && n.height === NODE_HEIGHT)).toBe(true);
   const x = Object.fromEntries(nodes.map(n => [n.id, n.position.x]));
   expect(x["001.00"]!).toBeLessThan(x["002.00"]!);
   expect(x["002.00"]!).toBeLessThan(x["003.00"]!);

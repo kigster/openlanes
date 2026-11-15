@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { Position, type Edge, type EdgeProps } from "@xyflow/react";
+import { Position, ReactFlowProvider, type Edge, type EdgeProps } from "@xyflow/react";
 import { BridgeEdge, type BridgeData } from "./BridgeEdge";
 
 const props = {
@@ -12,9 +12,11 @@ const props = {
 const draw = () =>
   render(
     <Tooltip.Provider delayDuration={0}>
-      <svg>
-        <BridgeEdge {...props} />
-      </svg>
+      <ReactFlowProvider>
+        <svg>
+          <BridgeEdge {...props} />
+        </svg>
+      </ReactFlowProvider>
     </Tooltip.Provider>,
   );
 

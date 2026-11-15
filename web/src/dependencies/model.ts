@@ -1,6 +1,6 @@
 // The Plan dependencies page's logic, pure: which plans show, which dashed bridges stand in for the hidden ones,
 // and where each box sits. No React in here, so the tests need no DOM.
-import dagre from "@dagrejs/dagre";
+import { arrange, type LayoutKey } from "./layouts";
 import type { DependencyEdge, DependencyGraph, DependencyPlan } from "../api/types";
 
 /** A dashed arrow standing in for a chain of hidden plans; `via` names them, in walking order. */
@@ -24,8 +24,7 @@ export interface Placed {
   group: string;
 }
 
-export const NODE_WIDTH = 220;
-export const NODE_HEIGHT = 72;
+export { NODE_HEIGHT, NODE_WIDTH } from "./layouts";
 
 const edgeKey = (e: { from: string; to: string }) => `${e.from}>${e.to}`;
 
@@ -84,17 +83,9 @@ export function groups(plans: DependencyPlan[], links: Array<{ from: string; to:
   return new Map(plans.map(p => [p.ordinal, find(p.ordinal)]));
 }
 
-/** Left-to-right layout through dagre; run again on every filter change so the boxes close up. */
-export function layout(plans: DependencyPlan[], links: Array<{ from: string; to: string }>): Placed[] {
-  const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: "LR", nodesep: 28, ranksep: 90 });
-  g.setDefaultEdgeLabel(() => ({}));
-  for (const p of plans) g.setNode(p.ordinal, { width: NODE_WIDTH, height: NODE_HEIGHT });
-  for (const l of links) if (g.hasNode(l.from) && g.hasNode(l.to)) g.setEdge(l.from, l.to);
-  dagre.layout(g);
+/** Where each box sits under the arrangement picked; run again on every filter change so the boxes close up. */
+export function layout(plans: DependencyPlan[], links: Array<{ from: string; to: string }>, kind: LayoutKey = "adaptive"): Placed[] {
   const group = groups(plans, links);
-  return plans.map(plan => {
-    const n = g.node(plan.ordinal);
-    return { plan, x: n.x - NODE_WIDTH / 2, y: n.y - NODE_HEIGHT / 2, group: group.get(plan.ordinal)! };
-  });
+  const corners = arrange(kind, plans, links, group);
+  return plans.map(plan => ({ plan, ...corners.get(plan.ordinal)!, group: group.get(plan.ordinal)! }));
 }

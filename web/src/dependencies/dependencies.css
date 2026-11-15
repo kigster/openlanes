@@ -1,21 +1,38 @@
 .dep-page { padding: 20px 24px; }
 .dep-page h1 { margin: 0 0 12px; font-size: 22px; }
-.dep-filter { display: flex; flex-wrap: wrap; gap: 6px 16px; border: 1px solid var(--hairline); border-radius: 8px; padding: 8px 12px; margin: 0 0 16px; }
+.dep-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; }
+.dep-legend-toggle { display: inline-flex; align-items: center; gap: 6px; }
+.dep-legend-count { font-weight: 400; font-size: 12px; color: var(--ink-soft); }
+.dep-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; border: 1px solid var(--hairline); border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; }
+.dep-controls .dep-filter { margin: 0; }
+.dep-layout { gap: 6px; }
+.dep-layout label { position: relative; padding: 3px 10px; border: 1px solid var(--hairline); border-radius: 999px; cursor: pointer; }
+.dep-layout input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.dep-layout label:has(input:checked) { background: var(--ink); border-color: var(--ink); color: var(--plate); }
+.dep-layout label:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: 2px; }
 .dep-filter label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
-.dep-canvas { height: calc(100vh - 170px); min-height: 320px; border: 1px solid var(--hairline); border-radius: 8px; color: var(--ink-soft); }
+.dep-canvas { height: calc(100vh - 210px); min-height: 320px; border: 1px solid var(--hairline); border-radius: 8px; color: var(--ink-soft); }
 .dep-handle { opacity: 0; width: 1px; height: 1px; min-width: 0; min-height: 0; }
-.dep-canvas .react-flow__node { width: 220px; height: 72px; }
+.dep-canvas .react-flow__node { width: 248px; height: 72px; }
 .dep-edge { fill: none; stroke: currentColor; stroke-width: 1.5; }
 .dep-edge.is-dashed { stroke-dasharray: 6 5; }
 .dep-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; }
 .dep-bridge { cursor: help; }
+/* The canvas is set a step below the page and the boxes stand on it: a firm edge and a shadow, as the board's cars have. */
+.dep-canvas .react-flow { --xy-background-color: color-mix(in srgb, var(--ink) 7%, var(--enamel)); }
+.dep-node-wrap { position: relative; width: 100%; height: 100%; }
 .dep-node {
   width: 100%; height: 100%; display: flex; flex-direction: column; gap: 2px; text-align: left; overflow: hidden;
-  padding: 6px 10px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--plate); color: var(--ink); cursor: pointer;
+  padding: 6px 10px; border: 1px solid color-mix(in srgb, var(--ink) 55%, var(--plate)); border-left: 4px solid var(--ink-soft);
+  border-radius: 8px; background: var(--plate); color: var(--ink); cursor: pointer;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 18%), 0 6px 16px rgb(0 0 0 / 14%);
 }
-.dep-node[aria-pressed="true"] { border-color: var(--ink); }
+.dep-node:hover, .dep-node[aria-pressed="true"] { border-color: var(--ink); }
+.dep-node-docs { position: absolute; right: 6px; bottom: 6px; }
+.dep-node-docs .doc-trigger { min-height: 0; padding: 0 6px; border-radius: 6px; font-size: 11px; line-height: 18px; }
 .dep-node[data-archived] { opacity: 0.7; }
 .dep-node-id { font-size: 11px; color: var(--ink-soft); }
 .dep-node-title { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dep-node-state { font-size: 12px; color: var(--ink-soft); }
+/* The state shares its row with the Documents menu, and stops short of it. */
+.dep-node-state { font-size: 12px; color: var(--ink-soft); padding-right: 88px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dep-tip { max-width: 360px; padding: 8px 10px; border-radius: 6px; background: var(--ink); color: var(--plate); font-size: 13px; line-height: 1.4; z-index: 50; }
