@@ -2264,7 +2264,7 @@
         },
         "stop": {
           "type": "object",
-          "description": "Stop the factory: its supervisor, engine and control room; --all stops every `openlanes run` too",
+          "description": "Stop the factory: its supervisor, engine and control room; --all stops every `openlanes run` too, --web the control room alone",
           "default": {},
           "additionalProperties": false,
           "properties": {
@@ -2289,6 +2289,11 @@
             "quiet": {
               "type": "boolean",
               "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "web": {
+              "type": "boolean",
+              "description": "Only the control room's server; the engine and its agents stay up",
               "default": false
             }
           }

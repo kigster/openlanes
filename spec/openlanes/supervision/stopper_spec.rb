@@ -37,6 +37,28 @@ RSpec.describe OpenLanes::Supervision::Stopper do
     it("leaves every run") { expect(dir.entries.map { it.file.role }).to eq(%w[run]) }
   end
 
+  context "with only the web asked for" do
+    let!(:outcomes) { stopper.web }
+
+    it("TERMs the web alone") { expect(signals).to eq([["TERM", 12]]) }
+    it("reports it stopped") { expect(outcomes.map { [it.file.role, it.result] }).to eq([["web", :stopped]]) }
+    it("leaves every other file") { expect(dir.entries.map { it.file.role }).to eq(%w[supervisor engine run]) }
+  end
+
+  context "with only the web asked for, under a dry run" do
+    let!(:outcomes) { stopper.web(dry_run: true) }
+
+    it("signals nothing") { expect(signals).to be_empty }
+    it("reports what it would stop") { expect(outcomes.map(&:result)).to eq(%i[would_stop]) }
+    it("removes no file") { expect(dir.entries.size).to eq(4) }
+  end
+
+  context "with only the web asked for and none running" do
+    before { FileUtils.rm_f(File.join(dir.path, "web.pid")) }
+
+    it("stops nothing") { expect([stopper.web, signals]).to eq([[], []]) }
+  end
+
   context "with --all" do
     before { stopper.call(runs: true) }
 

@@ -68,6 +68,16 @@ module OpenLanes
         stop_named(dry_run:) { runs || !OWNED.include?(it) }
       end
 
+      # `stop --web`: the control room's server and nothing else. Under a
+      # supervisor it traps TERM, removes its own PID file and exits 0, which
+      # {Supervisor#ended} reads as stopped on purpose and leaves stopped,
+      # so the engine and its agents never notice. A file that cannot be
+      # read is left alone here: it may be the engine's.
+      #
+      # @param dry_run [Boolean]
+      # @return [Array<Outcome>] empty when no web has a PID file
+      def web(dry_run: false) = @dir.entries.select { it.file&.role == WEB }.map { stop(it, dry_run:) }
+
       private
 
       # @param dry_run [Boolean]
