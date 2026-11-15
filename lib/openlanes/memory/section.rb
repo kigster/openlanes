@@ -12,9 +12,11 @@ module OpenLanes
       # says how many and where to find them.
       BUDGET = 6_000
 
-      # Fence the quoted lessons, so where they end is not up to them.
-      BEGIN_MARK = "<<< lessons: quoted data begins >>>"
-      END_MARK = "<<< lessons: quoted data ends >>>"
+      # Fence the quoted lessons, so where they end is not up to them. Arrows,
+      # and no run of angle brackets: a fence of those reads as a conflict
+      # marker to a person scanning a merge, and to a search for one.
+      BEGIN_MARK = "----> Lessons: quoted data begins <----"
+      END_MARK = "----> Lessons: quoted data ends <----"
 
       # @param lessons [Array<OpenLanes::Memory::Lesson>] ranked, as {Library#for} returns them
       # @param agent [OpenLanes::Agents::Agent]
