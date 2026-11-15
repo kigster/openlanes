@@ -74,18 +74,25 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
           ↓ <b>{fmt(car.down)}</b>
         </span>
         {car.cost !== undefined && <span title="Cost so far">{cost(car.cost)}</span>}
-        {/* Which round this is and how many it may run, granted extensions included, beside how long it has run:
-            "Round 2 of 3 | 6m 22s". An agent on its last round is the one about to ask for another. */}
+        {/* Which round this is and how many it may run, granted extensions included, and under it, on the line the
+            token counts sit on, how long the round has run and how long it has left: "8m 23s | Left: 4m 34s". The stats
+            row is a grid (board.css) that gives the times the width under the cost as well. An agent on its last round is about to ask for
+            another; one with no timeout has no time left to show. */}
         <span className="car-when">
           {car.round > 0 && (
-            <>
-              <span className={`car-round${car.round >= roundsOf(car) ? " is-last" : ""}`} title={roundTip(car)}>
-                Round {car.round} of {roundsOf(car)}
-              </span>
-              <span className="car-sep" aria-hidden="true"> | </span>
-            </>
+            <span className={`car-round${car.round >= roundsOf(car) ? " is-last" : ""}`} title={roundTip(car)}>
+              Round {car.round} of {roundsOf(car)}
+            </span>
           )}
-          <span title="Time this round has run">{clock(car.elapsed)}</span>
+          <span className="car-time">
+            <span title="Time this round has run">{clock(car.elapsed)}</span>
+            {car.remaining != null && (
+              <>
+                <span className="car-sep" aria-hidden="true"> | </span>
+                <span title="Time left before this round times out">Left: {clock(car.remaining)}</span>
+              </>
+            )}
+          </span>
         </span>
       </div>
     </div>

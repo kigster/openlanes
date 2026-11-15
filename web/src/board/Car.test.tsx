@@ -14,11 +14,25 @@ const draw = (over: Partial<ReturnType<typeof sampleCar>>) => {
 describe("Car round and clock", () => {
   const when = (over: Partial<ReturnType<typeof sampleCar>>) => draw(over).querySelector(".car-when")!;
 
-  it("shows the round, the rounds it may run and the time, between the tokens and the edge", () => {
-    const tile = when({ round: 2, rounds: 3, elapsed: 382 });
-    expect(tile).toHaveTextContent("Round 2 of 3 | 6m 22s");
+  it("shows the round, and under it how long the round has run and how long it has left", () => {
+    const tile = when({ round: 2, rounds: 3, elapsed: 503, remaining: 274 });
+    expect(tile.querySelector(".car-round")).toHaveTextContent(/^Round 2 of 3$/);
+    expect(tile.querySelector(".car-time")).toHaveTextContent(/^8m 23s \| Left: 4m 34s$/);
     expect(tile.querySelector(".car-round")).not.toHaveClass("is-last");
     expect(tile.querySelector(".car-round")).toHaveAttribute("title", "Round 2 of 3: 1 more after this one if it does not finish.");
+  });
+
+  it("puts the times after the round, so they sit on the line under it", () => {
+    const tile = when({ round: 2, rounds: 3, elapsed: 5, remaining: 60 });
+    expect([...tile.children].map((child) => child.className)).toEqual(["car-round", "car-time"]);
+  });
+
+  it("shows only the time run for an agent with no timeout to run down", () => {
+    expect(when({ round: 1, rounds: 2, elapsed: 382, remaining: null }).querySelector(".car-time")).toHaveTextContent(/^6m 22s$/);
+  });
+
+  it("shows no time left as 0s rather than a negative clock", () => {
+    expect(when({ round: 1, rounds: 2, elapsed: 900, remaining: -3 }).querySelector(".car-time")).toHaveTextContent(/^15m 00s \| Left: 0s$/);
   });
 
   it("marks the last round, the one after which it asks for another", () => {
@@ -28,7 +42,7 @@ describe("Car round and clock", () => {
   });
 
   it("never shows fewer rounds than the one it is on, and only the clock before a first round", () => {
-    expect(when({ round: 4, rounds: 1, elapsed: 5 })).toHaveTextContent("Round 4 of 4 | 5s");
+    expect(when({ round: 4, rounds: 1, elapsed: 5 }).querySelector(".car-round")).toHaveTextContent(/^Round 4 of 4$/);
     expect(when({ round: 0, rounds: 1, elapsed: 5 })).toHaveTextContent(/^5s$/);
   });
 });
