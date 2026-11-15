@@ -345,6 +345,7 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 .document-modal-x:hover { color: var(--ink); }
 .document-modal-x:focus-visible { outline: 2px solid var(--focus); }
 .document-modal-body { flex: 1; min-height: 0; overflow: auto; padding: 12px 16px; }
+.document-modal-body:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .document-modal-foot { display: flex; justify-content: flex-end; padding: 10px 16px; border-top: 1px solid var(--hairline); }
 .document-frontmatter { margin: 0 0 10px; }
 .document-frontmatter pre { margin: 0; padding: 8px 12px; border: 1px solid var(--hairline); border-radius: 8px; overflow-x: auto; font: 13px/1.5 var(--mono); }

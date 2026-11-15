@@ -4,7 +4,8 @@ import type { AppStatus, Board, CopilotLog, InterviewTurn, Snapshot, WireBoard }
 import { fetchBoard, isFixtureMode, loadFixtureBoard } from "./client";
 import { appliesTo, applyDelta } from "./boardDelta";
 import { openStream, type ConnectionState } from "./events";
-import { APPS_KEY, BOARD_KEY, COPILOT_KEY, DEPENDENCIES_KEY } from "./queryClient";
+import { APPS_KEY, BOARD_KEY, COPILOT_KEY, DEPENDENCIES_KEY, PLAN_FILES_KEY, planFilesKey } from "./queryClient";
+import { plansWithNewDocuments } from "./planDocuments";
 import { EMPTY_LOG, withTurn } from "./copilot";
 import { interviewKey, withTurn as withInterviewTurn } from "./interview";
 import { replies } from "./replies";
@@ -75,6 +76,10 @@ export function useBoard(): BoardState {
 
   useEffect(() => {
     if (fixture) return;
+    // A lane's document list was read once and kept for good: a plan.md written after the lane mounted never showed.
+    const refreshDocuments = (old: WireBoard | undefined, next: WireBoard) => {
+      for (const ordinal of plansWithNewDocuments(old, next)) void client.invalidateQueries({ queryKey: planFilesKey(ordinal) });
+    };
     return openStream({
       onBoard: board => {
         // Drop any GET still in flight before applying the event, so its older answer never lands on top of it.
@@ -82,7 +87,8 @@ export function useBoard(): BoardState {
         void client.cancelQueries({ queryKey: BOARD_KEY });
         streamed.current += 1;
         version.current = board.version ?? null;
-        client.setQueryData<WireBoard>(BOARD_KEY, old => reconcile(old, board));
+        const old = client.getQueryData<WireBoard>(BOARD_KEY);
+        refreshDocuments(old, client.setQueryData<WireBoard>(BOARD_KEY, reconcile(old, board)) ?? board);
         // The dependency graph reads the archive too, which no snapshot carries: a plan that moved refetches it.
         void client.invalidateQueries({ queryKey: DEPENDENCIES_KEY });
       },
@@ -95,7 +101,8 @@ export function useBoard(): BoardState {
         // No cancelQueries here, unlike onBoard: `streamed` already makes a GET in flight answer with this cache.
         streamed.current += 1;
         version.current = delta.version;
-        client.setQueryData<WireBoard>(BOARD_KEY, old => (old ? applyDelta(old, delta) : old));
+        const old = client.getQueryData<WireBoard>(BOARD_KEY);
+        if (old) refreshDocuments(old, client.setQueryData<WireBoard>(BOARD_KEY, applyDelta(old, delta)) ?? old);
       },
       onReply: reply => replies.deliver(reply),
       // A turn that arrives before the conversation's GET has answered starts the log: that GET may have read the
@@ -119,6 +126,7 @@ export function useBoard(): BoardState {
       onReconnect: () => {
         void client.refetchQueries({ queryKey: BOARD_KEY });
         void client.refetchQueries({ queryKey: ["interview"] }); // a turn sent while the stream was down
+        void client.invalidateQueries({ queryKey: PLAN_FILES_KEY }); // and any document written while it was
       },
     }, eventsUrl());
   }, [client, fixture, epoch]);

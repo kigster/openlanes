@@ -48,6 +48,29 @@ describe("Lane documents", () => {
     cy.get(DOCUMENT_MODAL).should("not.exist");
   });
 
+  it("lists a document written after the page loaded, without a reload", () => {
+    openMenu();
+    cy.contains('[role="menuitem"]', "Specification").should("exist");
+    cy.contains('[role="menuitem"]', "Design").should("not.exist");
+    cy.get("body").type("{esc}");
+    cy.then(() => cy.writeFile(`${folder}/design.md`, "# Design\n\nWritten while the page was open.\n"));
+    openMenu();
+    cy.contains('[role="menuitem"]', "Design").click();
+    cy.get(`${DOCUMENT_MODAL} .md-preview`).should("contain", "Written while the page was open.");
+  });
+
+  it("scrolls a long document from the keyboard and leaves nothing in <body> for a diagram that will not draw", () => {
+    const body = `# Long\n\n\`\`\`mermaid\ngraph TD; A--\n\`\`\`\n\n${"A paragraph of text.\n\n".repeat(200)}`;
+    cy.then(() => cy.writeFile(`${folder}/research.md`, body));
+    openMenu();
+    cy.contains('[role="menuitem"]', "Research").click();
+    cy.get(`${DOCUMENT_MODAL} .mermaid-error`, { timeout: 15000 }).should("contain", "Could not draw this diagram");
+    cy.get('body > [id^="dmermaid-"]').should("not.exist");
+    cy.get(`${DOCUMENT_MODAL} .document-modal-body`).should("have.attr", "tabindex", "0").focus().should("have.focus");
+    cy.injectAxe();
+    cy.checkA11y(DOCUMENT_MODAL, { includedImpacts: ["serious", "critical"] }, report);
+  });
+
   it("renders an admonition and a Mermaid diagram", () => {
     const body = "# Diagrams\n\n> [!NOTE]\n> Mind the gap.\n\n```mermaid\ngraph TD; A-->B\n```\n";
     cy.then(() => cy.writeFile(`${folder}/research.md`, body));

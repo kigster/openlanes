@@ -229,6 +229,52 @@ it("ignores a GET whose fetch outlives its cancellation, answering from what the
   expect(result.current.board).toBeUndefined();
 });
 
+describe("a lane's document list", () => {
+  const start = async () => {
+    const first = { ...loadFixtureBoard(), version: 1 };
+    fetchMock.mockResolvedValue(json(first));
+    const client = createQueryClient();
+    const { result } = renderHook(() => useBoard(), {
+      wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
+    });
+    await waitFor(() => expect(result.current.board).toBeDefined());
+    act(() => streams[0].onBoard(first));
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+    const lists = () => invalidate.mock.calls.map(([filter]) => filter?.queryKey).filter(key => key?.[0] === "plan-files");
+    return { first, plan: first.me.plans[0], lists };
+  };
+
+  it("is invalidated when a streamed board shows its plan moved, and only then", async () => {
+    const { first, plan, lists } = await start();
+    const ticked = { ...first, me: { ...first.me, seq: first.me.seq + 1, plans: [{ ...plan, cost: plan.cost + 1 }, ...first.me.plans.slice(1)] } };
+    act(() => streams[0].onBoard(ticked));
+    expect(lists()).toEqual([]);
+    const moved = { ...first, me: { ...first.me, seq: first.me.seq + 2, plans: [{ ...plan, station: "moved-on" }, ...first.me.plans.slice(1)] } };
+    act(() => streams[0].onBoard(moved));
+    expect(lists()).toEqual([["plan-files", plan.ordinal]]);
+  });
+
+  it("is invalidated when a delta shows its plan moved", async () => {
+    const { first, plan, lists } = await start();
+    const key = `plan/${first.me.node.id}/${first.me.node.checkout}/${plan.ordinal}`;
+    // As a real delta: the node entry comes too, its seq moved, which is what lets the plan's entry in.
+    const node = (seq: number) => ({
+      key: `node/${first.me.node.id}/${first.me.node.checkout}`,
+      value: { ...first.me, plans: undefined, seq, plan_order: first.me.plans.map(p => p.ordinal) },
+    });
+    act(() => streams[0].onBoardDelta?.({ base: 1, version: 2, upsert: [node(first.me.seq + 1), { key, value: { ...plan, cost: plan.cost + 1 } }], remove: [] }));
+    expect(lists()).toEqual([]);
+    act(() => streams[0].onBoardDelta?.({ base: 2, version: 3, upsert: [node(first.me.seq + 2), { key, value: { ...plan, station: "moved-on" } }], remove: [] }));
+    expect(lists()).toEqual([["plan-files", plan.ordinal]]);
+  });
+
+  it("is invalidated for every lane when the stream reconnects", async () => {
+    const { lists } = await start();
+    act(() => streams[0].onReconnect());
+    expect(lists()).toEqual([["plan-files"]]);
+  });
+});
+
 describe("board deltas", () => {
   // One client for the whole test: the shared wrapper builds a fresh one on every render, which drops the cache.
   const stable = () => {
