@@ -206,6 +206,7 @@ classDiagram
   OpenLanes__Web__SettingsSave ..> OpenLanes__Config : uses
   OpenLanes__Web__SettingsSave ..> OpenLanes__Error : uses
   OpenLanes__Web__SettingsSave ..> OpenLanes__Execution__Boundary : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Project : uses
   OpenLanes__Web__SettingsSave ..> OpenLanes__Web__Settings : uses
   OpenLanes__Web__SettingsSave ..> OpenLanes__Web__SettingsSave__Refused : uses
 ```

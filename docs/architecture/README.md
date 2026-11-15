@@ -94,6 +94,7 @@ classDiagram
   OpenLanes__Config ..> OpenLanes__CLI : 1
   OpenLanes__Config ..> OpenLanes__Coverage : 1
   OpenLanes__Config ..> OpenLanes__Live : 1
+  OpenLanes__Config ..> OpenLanes__Memory : 1
   OpenLanes__Config ..> OpenLanes__Plans : 1
   OpenLanes__Config ..> OpenLanes__Setup : 1
   OpenLanes__Coverage ..> OpenLanes : 5
@@ -194,7 +195,7 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Lifecycle : 1
   OpenLanes__Vcs ..> OpenLanes__Plans : 7
   OpenLanes__Vcs ..> OpenLanes__UI : 6
-  OpenLanes__Web ..> OpenLanes : 15
+  OpenLanes__Web ..> OpenLanes : 16
   OpenLanes__Web ..> OpenLanes__Adapters : 1
   OpenLanes__Web ..> OpenLanes__Agents : 2
   OpenLanes__Web ..> OpenLanes__Apps : 3
