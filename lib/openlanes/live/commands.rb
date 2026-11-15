@@ -326,6 +326,7 @@ module OpenLanes
       def answer(command, dispatcher)
         return extension(command, dispatcher) if command["question"].to_s.match?(/\AX\d+\z/i)
         return quality(command, dispatcher) if command["question"].to_s.casecmp?(Engine::QualityQuestion::NAME)
+        return cycle(command, dispatcher) if command["question"].to_s.casecmp?(Engine::CycleQuestion::NAME)
 
         subject, question = question!(command, dispatcher)
         return nil if File.read(File.join(subject.feature.path, "blocked.md")).include?(marker(command))
@@ -399,6 +400,22 @@ module OpenLanes
           raise Refusal, "#{command.plan} has no open question #{name}"
         dispatcher.wake!
         "desired_codebase_quality: #{chosen} in #{Config::FILE}"
+      end
+
+      # The answer to a dependency cycle: the option's letter, which frees
+      # the lowest plan on it, or the number of the plan to run next. That
+      # plan's `depends_on:` loses its entries on the cycle, and the gate
+      # lets it start.
+      #
+      # @return [String]
+      def cycle(command, dispatcher)
+        subject = subject!(command, dispatcher)
+        fix = Engine::CycleQuestion.answer!(dispatcher.runner.tree, subject.feature.ordinal.to_s, command["text"]) or
+          raise Refusal, "#{command.plan} has no open question #{Engine::CycleQuestion::NAME}"
+        dispatcher.wake!
+        fix.to_s
+      rescue Engine::CycleQuestion::Invalid => e
+        raise Refusal, e.message
       end
 
       # ---- bombs ------------------------------------------------------------

@@ -416,6 +416,27 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     end
   end
 
+  describe "plans on a dependency cycle" do
+    subject(:asked) do
+      described_class.new(board:, tree:, agents:, node:, repo: keys.repo, project: "openlanes", seq: 1, at:, claims:)
+                     .to_h[:plans].to_h { [it[:ordinal], it[:questions].map { |q| q[:id] }] }
+    end
+
+    def needs(*ordinals) = "---\ndepends_on: #{ordinals.inspect}\n---\n#{spec_body}"
+
+    before do
+      plans do |t|
+        t.plan "001.00", :planned, "a", files: { "spec.md" => needs("002.00") }
+        t.plan "002.00", :planned, "b", files: { "spec.md" => needs("001.00") }
+      end
+      %w[001.00 002.00].each { claims.claim(it) }
+    end
+
+    it "asks which goes first, once, on the lowest of them" do
+      expect(asked).to include("001.00" => ["001.00/C1"], "002.00" => [])
+    end
+  end
+
   describe "a question that offers lettered options (D3)" do
     subject(:question) do
       described_class.new(board:, tree:, agents:, node:, repo: keys.repo, project: "openlanes", seq: 1, at:, claims:, judge:)

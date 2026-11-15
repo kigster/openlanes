@@ -46,6 +46,10 @@ classDiagram
   class OpenLanes__Engine__Conversions["Conversions"]
   class OpenLanes__Engine__CoverageGate["CoverageGate"]
   class OpenLanes__Engine__Curating["Curating"]
+  class OpenLanes__Engine__CycleQuestion["CycleQuestion"]
+  <<module>> OpenLanes__Engine__CycleQuestion
+  class OpenLanes__Engine__CycleQuestion__Fix["CycleQuestion::Fix"]
+  class OpenLanes__Engine__CycleQuestion__Invalid["CycleQuestion::Invalid"]
   class OpenLanes__Engine__Dispatcher["Dispatcher"]
   class OpenLanes__Engine__Dispatcher__Assign["Dispatcher::Assign"]
   class OpenLanes__Engine__Dispatcher__Assign__Candidates["Dispatcher::Assign::Candidates"]
@@ -201,6 +205,8 @@ classDiagram
   class OpenLanes__Execution__Executor__Handle["OpenLanes::Execution::Executor::Handle"]
   class OpenLanes__Execution__ProcessStart["OpenLanes::Execution::ProcessStart"]
   <<module>> OpenLanes__Execution__ProcessStart
+  class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
+  <<module>> OpenLanes__Frontmatter
   class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
   <<module>> OpenLanes__Lifecycle
   class OpenLanes__Lifecycle__Completion["OpenLanes::Lifecycle::Completion"]
@@ -335,6 +341,14 @@ classDiagram
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Engine__Curating ..> OpenLanes__Agents__Names : uses
   OpenLanes__Engine__Curating ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__CycleQuestion ..> OpenLanes : uses
+  OpenLanes__Engine__CycleQuestion ..> OpenLanes__Engine__CycleQuestion__Fix : uses
+  OpenLanes__Engine__CycleQuestion ..> OpenLanes__Engine__CycleQuestion__Invalid : uses
+  OpenLanes__Engine__CycleQuestion ..> OpenLanes__Error : uses
+  OpenLanes__Engine__CycleQuestion ..> OpenLanes__Frontmatter : uses
+  OpenLanes__Engine__CycleQuestion ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Engine__CycleQuestion ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Engine__CycleQuestion__Invalid --|> OpenLanes__Error : inherits
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Dispatcher__Controls : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Dispatcher__Desk : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Dispatcher__FixedPoint : uses

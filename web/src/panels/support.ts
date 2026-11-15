@@ -24,11 +24,16 @@ export const ariaSendKeys = (): string => (isMac() ? "Meta+Enter" : "Control+Ent
 export const isSendKey = (e: { key: string; metaKey: boolean; ctrlKey: boolean }): boolean =>
   e.key === "Enter" && (e.metaKey || e.ctrlKey);
 
-/** The B<n>, X<n> or Q1 a command addresses a question by; the question's id carries the plan too. */
-const REF_PREFIX: Record<Question["kind"], string> = { block: "B", extension: "X", quality: "Q" };
+/** The B<n>, X<n>, Q1 or C1 a command addresses a question by; the question's id carries the plan too. */
+const REF_PREFIX: Record<Question["kind"], string> = { block: "B", extension: "X", quality: "Q", cycle: "C" };
 export const questionRef = (q: Question): string => `${REF_PREFIX[q.kind]}${q.number}`;
-/** The harness's own questions (E1, R4) take one of their options and nothing else. */
-export const optionsOnly = (q: Question): boolean => q.kind !== "block";
+/**
+ * The harness's own questions (E1, R4) take one of their options and nothing else. A dependency cycle's takes
+ * words too: the number of the plan to run next.
+ */
+export const optionsOnly = (q: Question): boolean => q.kind !== "block" && q.kind !== "cycle";
+/** Only a question a blocked plan's agent asked can be held: the harness's own are not in blocked.md to hold. */
+export const holdable = (q: Question): boolean => q.kind === "block" || q.kind == null;
 
 /**
  * The red block emoji the status bar uses, so the backlog marks blocked plans the same way. Holds the single

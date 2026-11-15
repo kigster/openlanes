@@ -84,11 +84,12 @@ export interface QuestionOption {
 /**
  * A request still without an answer: a question an agent wrote into blocked.md (B<n>, answered by A<n>), or the
  * harness asking for more time or another round for an agent that ran out (X<n>, E1), which offers only its options.
+ * A cycle (C1) is asked on the lowest plan of a dependency cycle: its one option frees that plan, and words name another.
  */
 export interface Question {
-  id: string; // "<ordinal>/B<n>", "<ordinal>/X<n>" or "<ordinal>/Q1"
+  id: string; // "<ordinal>/B<n>", "<ordinal>/X<n>", "<ordinal>/Q1" or "<ordinal>/C1"
   number: number;
-  kind: "block" | "extension" | "quality"; // quality: R4's desired_codebase_quality, asked once per project
+  kind: "block" | "extension" | "quality" | "cycle"; // quality: R4's desired_codebase_quality, asked once per project
   heading: string;
   body: string; // Markdown
   // What the unblocker asked back when it could not act on the last answer, with that answer quoted; shown apart

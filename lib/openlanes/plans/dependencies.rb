@@ -71,6 +71,17 @@ module OpenLanes
         (@rings ||= {})[wanted] ||= ring_from(wanted)
       end
 
+      # Every plan on a cycle with this one, itself included: the plans a
+      # person chooses between to break it, which can be more than the one
+      # ring {#cycle_of} names.
+      #
+      # @param ordinal [OpenLanes::Plans::Ordinal, String]
+      # @return [Array<String>, nil] sorted, or nil when the plan is on no cycle
+      def tangle_of(ordinal)
+        wanted = key(ordinal)
+        group_of.fetch(wanted) if looped?(wanted)
+      end
+
       # One shortest cycle per tangle of plans that wait on each other, each
       # starting and ending at the tangle's lowest ordinal. A tangle can hold
       # more cycles than this; {#cycle_of} names one through any plan in it.

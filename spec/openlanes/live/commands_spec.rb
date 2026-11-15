@@ -221,6 +221,39 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     end
   end
 
+  # A dependency cycle, asked as C1 on its lowest plan.
+  describe "answer to C1" do
+    def needs(*ordinals) = "---\ndepends_on: #{ordinals.inspect}\n---\n#{spec_body}"
+
+    def declared(ordinal) = OpenLanes::Plans::Spec.parse(File.read(File.join(path_of(ordinal), "spec.md"))).depends_on
+
+    before do
+      plans do |t|
+        t.plan "001.00", :planned, "a", files: { "spec.md" => needs("002.00") }
+        t.plan "002.00", :planned, "b", files: { "spec.md" => needs("001.00") }
+      end
+    end
+
+    it "frees the lowest plan for the option, and refuses what names no plan or finds no cycle left" do
+      send_command("answer", plan: "001.00", question: "C1", text: "maybe")
+      send_command("answer", plan: "002.00", question: "C1", text: "a")
+      send_command("answer", plan: "001.00", question: "C1", text: "a) Remove 001.00's dependency on 002.00, so 001.00 runs next")
+      send_command("answer", plan: "001.00", question: "C1", text: "a")
+      aggregate_failures do
+        expect(apply.map(&:reason)).to eq(['C1 takes a) or one of 001.00, 002.00, not "maybe"', "002.00 has no open question C1",
+                                           "001.00 no longer depends on 002.00", "001.00 has no open question C1"])
+        expect(declared("001.00")).to eq([])
+        expect(declared("002.00")).to eq(["001.00"])
+      end
+    end
+
+    it "frees the plan named in words" do
+      send_command("answer", plan: "001.00", question: "C1", text: "002")
+      expect(apply.map(&:reason)).to eq(["002.00 no longer depends on 001.00"])
+      expect(declared("002.00")).to eq([])
+    end
+  end
+
   # Plan 009: the 💣 notice's three buttons.
   describe "the bomb commands" do
     def bomb(ordinal, slug, questions)
