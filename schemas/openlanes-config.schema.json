@@ -11,7 +11,7 @@
         "string",
         "null"
       ],
-      "description": "Heading for INDEX.md; null takes the root's name",
+      "description": "Heading for INDEX.md; null takes the root's name. `openlanes` (any case) marks OpenLanes working on itself: only there does restarting the control room rebuild its page",
       "default": null,
       "minLength": 1
     },

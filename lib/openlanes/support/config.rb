@@ -7,6 +7,8 @@ module OpenLanes
   # A project's `.openlanes/config.yml`, at its root:
   #
   #   project: Equilibris App   # heading for INDEX.md; default: the root's name
+  #                             # `openlanes` (any case) marks OpenLanes working on itself:
+  #                             # only there does restarting the control room rebuild its page
   #   starts: research          # default for `openlanes create`: one of Spec::STARTS
   #   frontend: false           # a spec's `frontend:` when spec.md omits it
   #   jobs: 4                   # how many plans `openlanes run` works on at once
@@ -71,7 +73,8 @@ module OpenLanes
   # @!attribute [r] path
   #   @return [String, nil] the file, nil when the project has none
   # @!attribute [r] project
-  #   @return [String, nil]
+  #   @return [String, nil] the heading; `openlanes`, in any case, also marks
+  #     OpenLanes working on itself ({Supervision::WebRebuild})
   # @!attribute [r] starts
   #   @return [Symbol, nil] one of {Plans::Spec::STARTS}
   # @!attribute [r] frontend
