@@ -71,6 +71,9 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/live/publisher.rb` | `@log` | `Live::Publisher` | tick, agent jobs | `@log_mutex` | guarded |
 | `lib/openlanes/live/run_state.rb` | concurrency, run fields | `Live::RunState` | tick, web commands | `@mutex` | guarded |
 | `lib/openlanes/live/store.rb` | the `RedisClient` connection, `@failed_at` | `Live::Store` | tick (outage ping), agent jobs, publisher | `@lock` (`Monitor`, re-entrant); a blocking `xread` holds it for the wait; `@failed_at` is read and written only inside it | guarded |
+| `lib/openlanes/slack/bridge.rb` | `@polls`, the questions last offered | `Slack::Bridge` | tick, Slack worker | `@lock` | guarded |
+| `lib/openlanes/slack/bridge.rb` | `@stop` | `Slack::Bridge` | tick, Slack worker | `Thread::Queue`, closed to stop the worker | guarded |
+| `lib/openlanes/slack/outbox.rb` | `@queue`, what the worker wants written to the store | `Slack::Outbox` | Slack worker, tick | `Thread::Queue`; only the tick touches the store | guarded |
 | `lib/openlanes/support/clock.rb` | `Clock::Fake` time | the spec | stress threads | `@mutex` | guarded |
 | `lib/openlanes/support/spawner.rb` | `Spawner::Fake` calls and pids | the spec | stress threads | `@mutex` | guarded |
 | `lib/openlanes/support/ui.rb` | `@parts` of a line | `UI::Line` | ticker, worker | `@lock` | guarded |
