@@ -1,5 +1,5 @@
-// The page's colours. Until a person picks one, the operating system's preference chooses between Daylight and
-// Midnight. A choice is this viewer's own, kept in localStorage, and applied by two attributes on <html>:
+// The page's colours. Until a person picks one it is Ember, the first in the menu, whatever the operating
+// system prefers. A choice is this viewer's own, kept in localStorage, and applied by two attributes on <html>:
 // data-theme, the scheme everything already keys off, and data-palette, which styles/palettes.css reads.
 import { useCallback, useState } from "react";
 
@@ -15,28 +15,26 @@ export interface Palette {
 }
 
 export const PALETTES: Palette[] = [
+  { id: "ember", name: "Ember", note: "Dark: black-brown and hot orange", scheme: "dark", swatch: ["#140C02", "#1D1305", "#FF5F00"] },
+  { id: "azure", name: "Azure", note: "Dark: slate blue and sand", scheme: "dark", swatch: ["#2D3C59", "#26334D", "#E5BA41"] },
+  { id: "dark", name: "Midnight", note: "Dark: deep navy", scheme: "dark", swatch: ["#0E1522", "#151E2F", "#5B8DF0"] },
+  { id: "contrast", name: "High Contrast", note: "Dark: black, white text, yellow cars", scheme: "dark", swatch: ["#000000", "#FFD400", "#FFFFFF"] },
   { id: "light", name: "Daylight", note: "Light: cool grey and navy", scheme: "light", swatch: ["#E9EDF1", "#FFFFFF", "#1F5FD1"] },
   { id: "paper", name: "Paper", note: "Light: cream panels, warm text", scheme: "light", swatch: ["#F8F8F8", "#FFF3DC", "#D35728"] },
   { id: "earth", name: "Earth", note: "Light: parchment and umber", scheme: "light", swatch: ["#F7F1DE", "#ECE2C4", "#9D4F1C"] },
   { id: "forest", name: "Forest", note: "Light: mint and deep green", scheme: "light", swatch: ["#A9ECD8", "#C9F3E6", "#C7003F"] },
-  { id: "dark", name: "Midnight", note: "Dark: deep navy", scheme: "dark", swatch: ["#0E1522", "#151E2F", "#5B8DF0"] },
-  { id: "ember", name: "Ember", note: "Dark: black-brown and hot orange", scheme: "dark", swatch: ["#140C02", "#1D1305", "#FF5F00"] },
-  { id: "azure", name: "Azure", note: "Dark: slate blue and sand", scheme: "dark", swatch: ["#2D3C59", "#26334D", "#E5BA41"] },
 ];
 
-/** With nothing chosen, or a choice this build no longer has: what the operating system prefers. */
-function preferred(): Palette {
-  const dark = typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches;
-  return PALETTES.find(p => p.id === (dark ? "dark" : "light"))!;
-}
+/** What a page opens in with nothing chosen, or a choice this build no longer has: the first in the menu. */
+export const DEFAULT_PALETTE: Palette = PALETTES[0];
 
-const find = (id: string | null | undefined): Palette => PALETTES.find(p => p.id === id) ?? preferred();
+const find = (id: string | null | undefined): Palette => PALETTES.find(p => p.id === id) ?? DEFAULT_PALETTE;
 
 function stored(): Palette {
   try {
     return find(localStorage.getItem(PALETTE_KEY));
   } catch {
-    return preferred(); // a private window
+    return DEFAULT_PALETTE; // a private window
   }
 }
 

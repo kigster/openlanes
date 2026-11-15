@@ -48,14 +48,17 @@ describe("the board", () => {
   // The whole page, in both themes: tinted chips and tabs are where soft text loses contrast first.
   for (const theme of ["light", "dark"]) {
     it(`has no serious accessibility violations in the ${theme} theme`, () => {
-      cy.document().then((doc) => doc.documentElement.setAttribute("data-theme", theme));
+      cy.document().then((doc) => {
+        doc.documentElement.setAttribute("data-theme", theme);
+        doc.documentElement.removeAttribute("data-palette"); // the built-in two are the scheme alone, and the page opens in Ember
+      });
       cy.injectAxe();
       cy.checkA11y(undefined, { includedImpacts: ["serious", "critical"] }, report);
     });
   }
 
   // Each palette beyond the built-in two (styles/palettes.css), under the scheme it sets.
-  for (const [palette, scheme] of [["paper", "light"], ["earth", "light"], ["forest", "light"], ["ember", "dark"], ["azure", "dark"]]) {
+  for (const [palette, scheme] of [["paper", "light"], ["earth", "light"], ["forest", "light"], ["ember", "dark"], ["azure", "dark"], ["contrast", "dark"]]) {
     it(`has no serious accessibility violations in the ${palette} palette`, () => {
       cy.document().then((doc) => {
         doc.documentElement.setAttribute("data-theme", scheme);
@@ -69,7 +72,10 @@ describe("the board", () => {
   // The pills' time sits on a tinted plate in every state, so contrast is checked in both themes.
   for (const theme of ["light", "dark"]) {
     it(`has accessible status bar pills in the ${theme} theme`, () => {
-      cy.document().then((doc) => doc.documentElement.setAttribute("data-theme", theme));
+      cy.document().then((doc) => {
+        doc.documentElement.setAttribute("data-theme", theme);
+        doc.documentElement.removeAttribute("data-palette"); // the built-in two are the scheme alone, and the page opens in Ember
+      });
       cy.injectAxe();
       cy.checkA11y(".statusbar", { includedImpacts: ["serious", "critical"] }, report);
     });

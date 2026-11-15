@@ -93,6 +93,15 @@
     --car-shadow: none;
   }
 }
+/* High Contrast: a car is a solid yellow block with black letters, and orange once its agent is blocked. Its text
+   reads --ink and --ink-soft, so both turn black inside it; nothing in a car is told apart by a faint tint. */
+:root[data-palette="contrast"] .car.car {
+  --car-fill: #FFD400; --car-edge: var(--car-fill); --car-shadow: none;
+  --ink: #000000; --ink-soft: #1F1F1F; --alarm: #000000; --focus: #FFFFFF;
+  color: var(--ink);
+}
+:root[data-palette="contrast"] .car.car.is-blocked { --car-fill: #FF9A1F; }
+:root[data-palette="contrast"] .car.car:is(:hover, :has(.car-open[aria-expanded="true"])) { border-color: #FFFFFF; }
 /* A car whose agent is blocked turns red until someone answers it. */
 .car.is-blocked { --car-tint: var(--alarm); border-left-color: var(--alarm); }
 .car.is-blocked .car-model { color: var(--alarm); font-weight: 600; }
