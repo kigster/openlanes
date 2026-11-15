@@ -130,6 +130,7 @@ lib/openlanes/
     executor.rb          one agent invocation through its adapter, and the autonomy boundary
     boundary.rb          the after-check: HEAD unmoved, no remote-tracking ref moved by a push
     child.rb, clock.rb, control.rb   the process, its advisory timeout, its control file
+    deadline.rb          a wait on a child that ends it when its time is up (copilot, interview)
     transcript.rb        parses --output-format stream-json into a spinner phrase
   vcs/                   OpenLanes::Vcs — worktree.rb, publisher.rb (push, open the PR), github.rb (the gh seam)
   presentation/          OpenLanes::Presentation —

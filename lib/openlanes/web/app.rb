@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "ipaddr"
 require "json"
 require "rack/utils"
@@ -86,6 +87,48 @@ module OpenLanes
           halt 404, json(error: "no question #{number} on plan #{plan}") unless "#{plan}/#{number}".match?(INTERVIEW)
 
           Live::Interview.new(store:, keys: context.keys, plan:, number:)
+        end
+
+        # The interview on the route's question, kept to the question as it
+        # is asked now. One that is not open and unanswered has nothing to
+        # talk through: what was said about it is forgotten, and the request
+        # ends there, before a read can start a model run on it (issue 252).
+        #
+        # @return [OpenLanes::Live::Interview]
+        def open_interview
+          talk = interview
+          topic = interview_topic(talk.plan, talk.number)
+          unless topic
+            talk.close
+            halt 409, json(error: "plan #{talk.plan} has no open question #{talk.number} to talk through")
+          end
+          talk.tap { it.about(topic) }
+        end
+
+        # What names the question the interview is about. Under `--demo`
+        # there is no `blocked.md`, so the board the demo publishes says
+        # which questions are open.
+        #
+        # @param plan [String]
+        # @param number [Integer]
+        # @return [String, nil] nil when the question is not open and unanswered
+        def interview_topic(plan, number)
+          return demo_topic(plan, number) if context.demo
+
+          subject = Plans.tree(context.plans_dir).find(Plans::Ordinal.parse(plan))
+          subject && Live::Interview.topic(subject, number)
+        end
+
+        # A question from `blocked.md` is every kind but the harness's own
+        # (`extension`, `quality`), which number separately; the fixture's
+        # carry no kind at all, so asking for "block" found none of them.
+        #
+        # @return [String, nil] as {#interview_topic}, off the demo's board
+        def demo_topic(plan, number)
+          plans = Live.board(store:, keys: context.keys)[:me].to_h.fetch("plans", [])
+          asked = plans.find { it["ordinal"] == plan }.to_h.fetch("questions", []).reject { %w[extension quality].include?(it["kind"]) }
+          question = asked.find { it["number"] == number }
+          question && Digest::SHA256.hexdigest(question.values_at("heading", "body").join("\n"))
         end
 
         # The unblocker's next turn, apart from this request, as {#answer_later}.
@@ -321,9 +364,10 @@ module OpenLanes
 
       # The unblocker's interview on one open question (plan 068), oldest
       # turn first. The first read of an empty one starts it: the opening
-      # question arrives as `event: interview`.
+      # question arrives as `event: interview`. A question that is answered
+      # or gone answers 409 and starts nothing.
       get "/api/plans/:plan/questions/:number/interview" do
-        talk = interview
+        talk = open_interview
         interview_later(talk.plan, talk.number) if context.interview && talk.history.empty?
         json(talk.wire)
       end
@@ -335,7 +379,7 @@ module OpenLanes
         halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
         halt 503, json(error: "the unblocker's interview is not running in this server") unless context.interview
 
-        talk = interview
+        talk = open_interview
         data = JSON.parse(request.body.read)
         halt 422, json(error: "id must be 1 to 64 letters, digits, - or _") unless data.is_a?(Hash) && data["id"].to_s.match?(Live::Command::ID)
 

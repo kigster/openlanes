@@ -324,7 +324,7 @@ it("files an interview turn under its question, and reads the open interviews ag
   const client = createQueryClient();
   fetchMock.mockResolvedValue(json(loadFixtureBoard()));
   renderHook(() => useBoard(), { wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
-  const turn = { id: "t1", from: "unblocker", kind: "text", text: "Which one?", at: "2026-11-13T00:00:00Z" } as const;
+  const turn = { id: "t1", from: "unblocker", kind: "text", text: "Which one?", at: "2026-11-13T00:00:00Z", seq: "1794700000000-0" } as const;
   act(() => streams[0].onInterview?.({ plan: "068.00", number: 2, turn }));
   act(() => streams[0].onInterview?.({ plan: "068.00", number: 2, turn }));
   expect(client.getQueryData<InterviewTurn[]>(interviewKey("068.00", 2))).toEqual([turn]);
