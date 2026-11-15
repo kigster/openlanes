@@ -129,6 +129,7 @@ classDiagram
   <<module>> OpenLanes__Engine__QualityQuestion
   class OpenLanes__Engine__QualityQuestion__Choice["QualityQuestion::Choice"]
   class OpenLanes__Engine__Rebase["Rebase"]
+  class OpenLanes__Engine__Recovery__Orphans["Recovery::Orphans"]
   class OpenLanes__Engine__Recovery__Reattach["Recovery::Reattach"]
   class OpenLanes__Engine__Recovery__Records["Recovery::Records"]
   class OpenLanes__Engine__Recovery__Round["Recovery::Round"]
@@ -638,6 +639,9 @@ classDiagram
   OpenLanes__Engine__Rebase ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__UI : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__Vcs__Refresh : uses
+  OpenLanes__Engine__Recovery__Orphans ..> OpenLanes__Plans__Lock : uses
+  OpenLanes__Engine__Recovery__Orphans ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Recovery__Orphans ..> OpenLanes__Plans__Rounds : uses
   OpenLanes__Engine__Recovery__Reattach ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Recovery__Reattach ..> OpenLanes__Supervision__PidFile : uses
   OpenLanes__Engine__Recovery__Reattach ..> OpenLanes__Supervision__Probe : uses
@@ -646,6 +650,7 @@ classDiagram
   OpenLanes__Engine__Recovery__Records ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__Engine__Recovery__Records ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Recovery__Records ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Engine__Recovery__Orphans : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Engine__Recovery__Round : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Ordinal : uses

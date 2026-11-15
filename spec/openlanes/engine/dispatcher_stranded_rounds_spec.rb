@@ -62,4 +62,21 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     it_behaves_like "a round the harness lost"
   end
+
+  context "when no restart record knows the stage at all" do
+    it_behaves_like "a round the harness lost"
+  end
+
+  context "when another live run holds the plan's lock" do
+    # The suite's parent process: alive, and not this one.
+    before { OpenLanes::Plans::Lock.write(folder, pid: Process.ppid) }
+
+    after { OpenLanes::Plans::Lock.remove(folder) }
+
+    it "leaves the Started round to that run" do
+      engine
+
+      expect([told, stages.map { it["status"] }]).to eq([[], ["Started"]])
+    end
+  end
 end

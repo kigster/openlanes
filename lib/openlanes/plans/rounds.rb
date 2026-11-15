@@ -46,6 +46,18 @@ module OpenLanes
       # @return [Array<Hash>] the stages that spent a round in this visit
       def visit(agent, state, moves:) = spent(agent, state, moves)
 
+      # Rounds of this visit that `state.json` still calls Started, whoever
+      # runs them. One that no running job owns was cut off with nothing
+      # written, and counted as it stands it would hold its agent at its
+      # budget with nobody working ({Engine::Recovery::Orphans}).
+      #
+      # @param state [#to_s]
+      # @param moves [Integer]
+      # @return [Array<Hash>]
+      def started(state, moves:)
+        stages.select { it["status"] == "Started" && !it["handed_back"] && visit?(it, state.to_s, moves.to_i) }
+      end
+
       # The round to hand out next. Never lower than a round already
       # dispatched or signed in this visit, so an agent restarted after a
       # crash, or one whose signature outran its stage, is never told a

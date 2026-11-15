@@ -132,6 +132,17 @@ RSpec.describe OpenLanes::Plans::Rounds do
     end
   end
 
+  describe "#started" do
+    let(:stages) do
+      [stage(1, status: "Started"), stage(1, status: "Started", agent: "frontend-coder"), stage(2),
+       stage(1, status: "Started", visit: 0), stage(3, status: "Interrupted", handed_back: true)]
+    end
+
+    it "lists the rounds of the visit still Started, whoever runs them" do
+      expect(rounds.started("building", moves: 1).map { it["agent"] }).to eq(%w[backend-coder frontend-coder])
+    end
+  end
+
   context "with stages an older release wrote" do
     let(:stages) do
       [{ "agent" => "backend-coder", "round" => 1, "status" => "Completed", "to" => "building", "moves" => 4 },

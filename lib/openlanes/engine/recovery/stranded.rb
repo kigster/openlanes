@@ -13,13 +13,14 @@ module OpenLanes
       # with one round was left with none, a request for more was raised for
       # work it never got to do, and the run sat idle.
       #
-      # Two records can say a stage was stranded: the run's own state file,
-      # which holds the pid and host of every stage it started, and the
-      # plan's `state.json`, whose stages carry a `run` only when an older
-      # release wrote them. The pid and host are about one machine, so new
-      # stages no longer put them in a committed file; the second check stays
-      # so a crash under the old layout still resumes. A stage either names
-      # is resumed once.
+      # Three records can say a stage was stranded: the run's own state file,
+      # which holds the pid and host of every stage it started; the plan's
+      # `state.json`, whose stages carry a `run` only when an older release
+      # wrote them; and a stage of the plan's current visit still Started
+      # that neither of those names ({Orphans}). The pid and host are about
+      # one machine, so new stages no longer put them in a committed file;
+      # the second check stays so a crash under the old layout still resumes.
+      # A stage any of them names is resumed once.
       class Stranded
         # @param runner [Runner]
         # @param state [StateFile, nil] nil under a dry run
@@ -30,6 +31,7 @@ module OpenLanes
           @state = state
           @records = records
           @clock = clock
+          @orphans = Orphans.new
         end
 
         # @param skip [Array<Array(String, String, Integer)>] stages taken
@@ -61,13 +63,16 @@ module OpenLanes
         # @return [void]
         def from_plan_states(resumed)
           @runner.in_scope.reject { @runner.foreign?(it) }.each do |subject|
-            Plans::PlanState.for(subject.feature.path).stranded.each do |stage|
+            left_started(subject).each do |stage|
               next if resumed.include?([subject.feature.ordinal.to_s, stage["agent"], stage["round"]])
 
               resumed << interrupt(subject, stage["agent"], stage["round"])
             end
           end
         end
+
+        # @return [Array<Hash>] stages of the plan's `state.json` nobody is working
+        def left_started(subject) = Plans::PlanState.for(subject.feature.path).stranded + @orphans.call(subject)
 
         # @return [Array(String, String, Integer), nil] what was resumed
         def interrupt(subject, name, number)
