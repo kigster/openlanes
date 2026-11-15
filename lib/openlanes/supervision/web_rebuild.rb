@@ -26,6 +26,9 @@ module OpenLanes
       # Lines of the build's output kept for the reply.
       TAIL = 15
 
+      # Seconds a build stopped with the factory gets to be reaped.
+      REAPED_WITHIN = Shutdown::KILLED_WITHIN
+
       # What one build came to.
       #
       # @!attribute [r] status
@@ -71,7 +74,8 @@ module OpenLanes
       # user) raises from the backup or the spawn. That is a build failure
       # to report, never an error to raise: nothing between here and
       # {Supervisor#tick} rescues, so it would end `openlanes start`, the
-      # engine with it (F1).
+      # engine with it (F1). Every {StandardError} counts, not only the
+      # file system's: an encoding error left the same way (issue 253).
       #
       # @return [self]
       def start
@@ -79,14 +83,14 @@ module OpenLanes
 
         spawn_build
         self
-      rescue SystemCallError => e
+      rescue StandardError => e
         # Nothing was built, so there is nothing to put back.
         @backup&.discard
-        settle("failed", "the build could not start (#{e.message}), so the old page stays")
+        settle("failed", "the build could not start (#{reason(e)}), so the old page stays")
         self
       end
 
-      # Never blocks, and never raises a {SystemCallError} (F1).
+      # Never blocks, and never raises (F1).
       #
       # @return [Outcome, nil] nil while the build runs
       def poll
@@ -97,8 +101,24 @@ module OpenLanes
 
         stop_late_build
         nil
-      rescue SystemCallError => e
-        settle("failed", "the build's outcome could not be read (#{e.message}), so the old page stays")
+      rescue StandardError => e
+        settle("failed", "the build's outcome could not be read (#{reason(e)}), so the old page stays")
+      end
+
+      # Ends a build the factory is stopping under: kills its process
+      # group, waits for it to be reaped, then puts the old page back.
+      # Without it a Ctrl-C mid-build left `npm` and its children running
+      # with nobody to reap them, `web/dist` as empty as `vite` had made
+      # it, and the backup in tmp for good (issue 253). Never raises.
+      #
+      # @return [Outcome] the one already settled, when the build had ended
+      def cancel
+        return @outcome if @outcome
+
+        kill_and_reap if @pid
+        settle("failed", "the build was stopped with the factory, so the old page stays")
+      rescue StandardError => e
+        settle("failed", "the build could not be stopped (#{reason(e)}), so the old page stays")
       end
 
       private
@@ -159,6 +179,19 @@ module OpenLanes
         @host.signaller.call("KILL", -@pid)
       end
 
+      # KILL to the whole group, as for a build past its time: the factory
+      # is going, and its half-built page is thrown away either way. The
+      # wait is bounded, so a build that cannot be reaped does not keep
+      # `openlanes start` from ending.
+      #
+      # @return [void]
+      def kill_and_reap
+        @host.signaller.call("KILL", -@pid)
+        clock = @host.clock
+        deadline = clock.monotonic + REAPED_WITHIN
+        clock.sleep(Shutdown::POLL) until @host.waiter.call(@pid) || clock.monotonic >= deadline
+      end
+
       # Never raises: an old page that cannot be put back is said in the
       # outcome, since this runs on the supervisor's tick (F1).
       #
@@ -169,18 +202,34 @@ module OpenLanes
         @outcome = Outcome.new(status:, message:)
         @outcome.ok? ? @backup&.discard : @backup&.restore
         @outcome
-      rescue SystemCallError => e
-        @outcome = Outcome.new(status: "failed", message: "#{message}; the old page could not be put back (#{e.message})")
+      rescue StandardError => e
+        @outcome = Outcome.new(status: "failed", message: "#{message}; the old page could not be put back (#{reason(e)})")
       ensure
         FileUtils.rm_rf(@workdir) if @workdir
       end
 
-      # Read before {#settle} removes the log.
+      # Read before {#settle} removes the log. Read as UTF-8 whatever the
+      # locale, and scrubbed: under `LC_ALL=C` (cron, systemd, Docker) the
+      # `✓` vite prints made `String#strip` raise, which ended the
+      # supervisor and the engine with it (issue 253).
       #
       # @return [String] the end of the build's output, or nothing
       def tail
-        lines = @log && File.exist?(@log) ? File.readlines(@log).last(TAIL).join.strip : ""
+        return "" unless @log && File.exist?(@log)
+
+        lines = File.read(@log, encoding: Encoding::UTF_8).scrub.lines.last(TAIL).join.strip
         lines.empty? ? "" : ":\n#{lines}"
+      end
+
+      # An error's message, safe to put in a UTF-8 sentence: one tagged
+      # with the locale's encoding and holding other bytes (a path, a
+      # tool's output) would raise again where it is joined to the reply.
+      #
+      # @param error [StandardError]
+      # @return [String]
+      def reason(error)
+        text = error.message.to_s.dup
+        text.force_encoding(Encoding::UTF_8).scrub
       end
     end
   end

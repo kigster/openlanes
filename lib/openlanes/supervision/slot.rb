@@ -5,6 +5,14 @@ module OpenLanes
     # One child of the {Supervisor} and its history: the process running
     # it now, when it is due to start again, and why it no longer is.
     class Slot
+      # What a supervisor's PID file says of the children it gave up on.
+      # One definition, for giving one up and for taking one back, so
+      # `openlanes status` cannot be told one thing by each.
+      #
+      # @param slots [Array<Slot>]
+      # @return [Hash{String => String}] role to reason
+      def self.failed(slots) = slots.select(&:given_up).to_h { [it.role, it.given_up] }
+
       # @param program [OpenLanes::Supervision::Program]
       # @param crashes [OpenLanes::Supervision::Crashes]
       def initialize(program, crashes)

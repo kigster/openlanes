@@ -32,6 +32,38 @@ RSpec.describe OpenLanes::Engine::Recovery::Stranded, :tree do
     end
   end
 
+  it "hands the round back, so the agent's rounds are not one fewer for the harness dying" do
+    stranded.call
+
+    aggregate_failures do
+      expect(plan_state.stages.map { it["handed_back"] }).to eq([true])
+      expect(OpenLanes::Plans::Rounds.from(plan_state).used("backend-coder", :building, moves: plan_state.moves)).to eq(0)
+    end
+  end
+
+  context "with a Started round of the current visit that no record of a run names" do
+    before do
+      plan_state.update { |data| data["stages"].clear }
+      plan_state.stage!(agent: "backend-coder", round: 2, reset: true, status: "Started", from: "building", state: "building")
+    end
+
+    it "resumes it as it does a round a dead run left" do
+      stranded.call
+
+      aggregate_failures do
+        expect(plan_state.stages.map { it.values_at("round", "status", "handed_back") }).to eq([[2, "Interrupted", true]])
+        expect(OpenLanes::Plans::Mailbox.new(dir: path).messages.last.body).to start_with("RESUME: the harness died during your round 2")
+      end
+    end
+
+    it "writes nothing on a dry run" do
+      allow(runner).to receive(:dry_run?).and_return(true)
+      stranded.call
+
+      expect(plan_state.stages.map { it["status"] }).to eq(%w[Started])
+    end
+  end
+
   context "with the run's own state file" do
     let(:state) do
       instance_double(OpenLanes::Engine::StateFile,

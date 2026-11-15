@@ -16,6 +16,10 @@ module OpenLanes
     # @return [OpenLanes::Arbitration::Ruling]
     def ruling(text) = Ruling.parse(text)
 
+    # @param text [String] the adapter's final text
+    # @return [OpenLanes::Arbitration::TimeRuling] its answer to a request for more time
+    def time_ruling(text) = TimeRuling.parse(text)
+
     # @param agents [OpenLanes::Agents::Registry] whose rejections count
     # @return [OpenLanes::Arbitration::Counter]
     def counter(agents:) = Counter.new(agents:)

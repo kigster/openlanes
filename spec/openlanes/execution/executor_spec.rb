@@ -763,6 +763,17 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
         expect(Dir.children(@traces).grep(/^control-/)).to be_empty
       end
 
+      # E2: taught once, to every agent, with the command its `state` grant
+      # already covers and the threshold its own definition sets.
+      it "teaches the ESTIMATE question and the command that answers it" do
+        streaming.call(agent, subject_plan)
+
+        expect(prompts.first).to include("A line starting ESTIMATE:",
+          "state estimate --dir",
+          "--agent #{agent.name} --minutes 20",
+          "#{agent.extension_cap / 60} minutes or less is")
+      end
+
       it "aborts whatever is still running once the grace period after q is spent" do
         allow(OpenLanes::Execution::Control).to receive(:overdue?).and_return(true)
         allow(fake_child).to receive(:alive?).and_return(true)

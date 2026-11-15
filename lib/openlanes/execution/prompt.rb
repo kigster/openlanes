@@ -615,6 +615,18 @@ module OpenLanes
           finish the essential remainder now. STOP means write what you have,
           sign your ledger entry, and end your turn.
 
+          A line starting ESTIMATE: means your time is nearly out and the
+          harness wants to give you more without waking a person. Do not stop
+          and do not wrap up: say how many more minutes the work needs, and
+          what for, then carry on at once.
+
+              #{cli} state estimate --dir "#{plans_dir}" --plan #{plan} --agent #{agent.name} --minutes 20 --why "two units left: B3 and its specs"
+
+          Be honest rather than modest: #{(agent.extension_cap / 60.0).round} minutes or less is
+          granted as asked, more is put to the arbitrator, and nothing is
+          granted twice. The file says `WARN: N minutes left, time was
+          extended` once the time is yours; until it does, keep working.
+
           PAUSE means the run lost touch with the machines it shares work with.
           Finish the write you are in, start nothing new, and wait: reread this
           file every thirty seconds until it says anything other than PAUSE.

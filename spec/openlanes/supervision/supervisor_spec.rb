@@ -321,7 +321,7 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
     end
 
     let(:builds) { [] }
-    let(:slow) { instance_double(OpenLanes::Supervision::WebRebuild, poll: nil) }
+    let(:slow) { instance_double(OpenLanes::Supervision::WebRebuild, poll: nil, cancel: OpenLanes::Supervision::WebRebuild::Outcome.new(status: "failed", message: "stopped")) }
     let(:on_tick) do
       lambda do |s|
         s.restart_web!

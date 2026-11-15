@@ -52,8 +52,46 @@ RSpec.describe OpenLanes::Agents::Roster do
 
   def plain(text) = text.gsub(/\e\[[0-9;]*[a-zA-Z]/, "")
 
+  # `.openlanes/config.yml` `agents:` changes what an agent runs on; the
+  # table must show the value in force, and say it is not the file's.
+  describe "with this machine's overrides" do
+    subject(:roster) { described_class.new(agents: OpenLanes::Agents::Registry.new(dir:, overrides:)) }
+
+    let(:overrides) { OpenLanes::Agents::Overrides.new(table: { "staff-reviewer" => { rounds: 3, timeout: 3600, model: "opus", extension_cap: 1200 } }) }
+    let(:row) { plain(roster.list).lines.find { it.include?("staff-reviewer") } }
+
+    it "shows the values in force, each marked" do
+      expect(row).to include("opus*", "│ 3* ", "60m*", "20m*, up to 60m")
+    end
+
+    it "says under the table what the mark means" do
+      expect(plain(roster.list).lines.last).to include("* set for this machine in .openlanes/config.yml `agents:`")
+    end
+
+    it "marks nothing on an agent the file leaves alone" do
+      expect(plain(roster.list).lines.find { it.include?("unblocker") }).not_to include("*")
+    end
+
+    it "says in a sentence what one agent had changed, and nothing for one it did not" do
+      agents = roster.agents
+      aggregate_failures do
+        expect(roster.overridden(agents.find("staff-reviewer")))
+          .to eq("staff-reviewer: .openlanes/config.yml `agents:` sets rounds 3, timeout 3600, model opus, extension_cap 1200 over its definition")
+        expect(roster.overridden(agents.find("unblocker"))).to be_nil
+      end
+    end
+  end
+
   describe "#list" do
     let(:table) { plain(roster.list) }
+
+    it "shows each agent's rounds, clock, and what may be added to it" do
+      expect(table).to include("Rounds", "Timeout", "Extension", "15m, up to 60m", "run default")
+    end
+
+    it "adds no footnote when this machine changed nothing" do
+      expect(table.lines.last).to start_with("└")
+    end
 
     # The fixtures are written backend-coder last, so name order is an actual sort,
     # not the order the files happened to load in.

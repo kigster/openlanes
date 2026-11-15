@@ -27,63 +27,52 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
     handle.clock = clock
   end
 
-  describe "#watch, a running agent's clock" do
-    it "asks nothing while more than five minutes are left" do
-      expect(extensions.watch(job, path)).to be_nil
-      expect(plan.extensions).to eq([])
+  describe "#ask_time, the person's card for a round short of time" do
+    def ask(round: 1) = extensions.ask_time(path, agent: "backend-coder", state: :building, round:)
+
+    it "asks once for the round, and keeps asking the same request" do
+      2.times { ask }
+      expect(plan.extensions).to contain_exactly(include("number" => 1,
+        "agent" => "backend-coder",
+        "state" => "building",
+        "round" => 1,
+        "limit" => "time",
+        "asked_at" => now.iso8601))
     end
 
-    context "with five minutes left" do
-      let(:left) { 300 }
-
-      it "asks once for the round, and keeps asking the same request" do
-        2.times { extensions.watch(job, path) }
-        expect(plan.extensions).to contain_exactly(include("number" => 1,
-          "agent" => "backend-coder",
-          "state" => "building",
-          "round" => 1,
-          "limit" => "time",
-          "asked_at" => now.iso8601))
-      end
+    # Time on the running clock is not the end of it: a person can add more.
+    it "asks again once the request was answered with time on the running clock" do
+      extensions.answer!(path, ask["number"], "b", by: "pat", live: handle)
+      expect(ask).to include("number" => 2).and(satisfy { !it.key?("settled_at") })
     end
 
-    context "with two minutes left and nobody answering" do
-      let(:left) { 120 }
+    it "does not ask again in a round that was answered with another round" do
+      extensions.answer!(path, ask["number"], "a", by: "pat", live: handle)
+      expect(ask).to be_nil
+    end
 
-      it "gives ten more minutes on its own, to the clock that is running" do
-        extensions.watch(job, path)
-        aggregate_failures do
-          expect(plan.extensions.first).to include("answer" => "b", "by" => "auto", "grant" => "live", "seconds" => 600)
-          expect(handle.remaining).to eq(720)
-        end
+    it "says whether it grants on its own, and what time it is" do
+      aggregate_failures do
+        expect(extensions.automatic?).to be(true)
+        expect(described_class.new(stay:, auto: false).automatic?).to be(false)
+        expect(extensions.now).to eq(now)
       end
+    end
+  end
 
-      # The automatic grant is spent; a person can still add to it.
-      it "asks again when the granted time runs low, and leaves that one to a person" do
-        extensions.watch(job, path)
-        clock.extend!(-600)
-        extensions.watch(job, path)
-        aggregate_failures do
-          expect(plan.extensions.map { it["number"] }).to eq([1, 2])
-          expect(plan.extensions.last).to include("limit" => "time").and(satisfy { !it.key?("settled_at") })
-        end
-      end
+  describe ".questions, with a request the engine is still working out" do
+    let(:subject_now) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")) }
 
-      it "gives it once per agent and state: the next round's request waits for a person" do
-        extensions.watch(job, path)
-        job.task.round = 2
-        handle.clock = OpenLanes::Execution::Clock.new(seconds: 60, control: File.join(path, "control"), on_expire: -> {}, now: -> { 0 })
-        extensions.watch(job, path)
-        aggregate_failures do
-          expect(plan.extensions.last).to include("round" => 2).and(satisfy { !it.key?("settled_at") })
-          expect(handle.remaining).to eq(60)
-        end
-      end
+    def staged(stage) = plan.ask_extension!(agent: "backend-coder", state: "building", round: 1, limit: "time", stage:)
 
-      it "only asks, when told never to grant on its own" do
-        described_class.new(stay:, auto: false, now: -> { now }).watch(job, path)
-        expect(plan.extensions.first).not_to have_key("settled_at")
-      end
+    it "shows a person no card while the agent or the arbitrator is answering" do
+      staged("estimate")
+      expect(described_class.questions(subject_now, plan)).to eq([])
+    end
+
+    it "shows the card once the request is a person's" do
+      plan.amend_extension!(staged("arbitration")["number"], stage: "person")
+      expect(described_class.questions(subject_now, plan).map { it[:id] }).to eq(["001.00/X1"])
     end
   end
 
@@ -174,6 +163,136 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
 
     it "refuses a letter that is not a choice" do
       expect { extensions.answer!(path, 1, "d", by: "dana") }.to raise_error(ArgumentError, /a\), b\), c\)/)
+    end
+  end
+
+  # A visit is one stay of the plan in a state. Round numbers start again at
+  # 1 on each, so a request is about its own visit and no other.
+  describe "a plan that comes back to a state" do
+    def revisit
+      plan.state!(:built)
+      plan.state!(:building)
+    end
+
+    before { extensions.exhausted(path, "backend-coder", :building, 1) }
+
+    it "raises a request of its own for the same round number" do
+      extensions.answer!(path, 1, "a", by: "dana")
+      revisit
+      extensions.exhausted(path, "backend-coder", :building, 1)
+
+      expect(plan.extensions.map { it.values_at("number", "round", "moves") }).to eq([[1, 1, 0], [2, 1, 2]])
+    end
+
+    it "does not take the earlier visit's open request for its own" do
+      revisit
+
+      expect(extensions.exhausted(path, "backend-coder", :building, 1)).to include("number" => 2)
+    end
+
+    it "closes a request for a round answered after the plan left its visit, and grants nothing" do
+      revisit
+
+      aggregate_failures do
+        expect(extensions.answer!(path, 1, "a", by: "dana")).to be_nil
+        expect(plan.extensions.first).to include("closed" => described_class::MOVED)
+        expect(extensions.rounds(path, "backend-coder", :building)).to eq(0)
+      end
+    end
+
+    context "when nobody can answer" do
+      let(:stay) { false }
+
+      it "gives each visit its one round without an answer" do
+        revisit
+        extensions.exhausted(path, "backend-coder", :building, 1)
+
+        expect(plan.extensions.map { it.values_at("by", "moves") }).to eq([["auto", 0], ["auto", 2]])
+      end
+    end
+
+    it "leaves an earlier visit's extra seconds with that visit" do
+      extensions.answer!(path, 1, "c", by: "dana")
+      revisit
+
+      expect(extensions.take_seconds(path, "backend-coder", :building)).to eq(0)
+    end
+
+    it "does not close an earlier visit's request when this visit's round ends" do
+      revisit
+      extensions.close!(path, "backend-coder", :building)
+
+      expect(plan.extensions.first).not_to have_key("settled_at")
+    end
+
+    it "asks a person about the clock of the same round number again" do
+      plan.ask_extension!(agent: "backend-coder", state: :building, round: 1, limit: "time", at: now)
+      plan.settle_extension!(2, closed: "finished", at: now)
+      revisit
+      extensions.ask_time(path, agent: "backend-coder", state: :building, round: 1)
+
+      expect(plan.extensions.map { it.values_at("limit", "moves") }).to eq([["rounds", 0], ["time", 0], ["time", 2]])
+    end
+  end
+
+  # A request written before requests named their visit carries no `moves`.
+  describe "a request asked before requests named their visit" do
+    before do
+      extensions.exhausted(path, "backend-coder", :building, 1)
+      plan.update { |data| data["extensions"].first.delete("moves") }
+    end
+
+    it "is still the agent's open request, and is not asked a second time" do
+      expect(extensions.exhausted(path, "backend-coder", :building, 1)).to include("number" => 1)
+    end
+
+    it "is still shown" do
+      subject_of = tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00"))
+
+      expect(described_class.questions(subject_of, plan).map { it[:number] }).to eq([1])
+    end
+
+    it "does not stand in for a new request once it is settled" do
+      extensions.answer!(path, 1, "a", by: "dana")
+      plan.update { |data| data["extensions"].first.delete("moves") }
+
+      expect(extensions.exhausted(path, "backend-coder", :building, 1)).to include("number" => 2)
+    end
+  end
+
+  describe "#stalled, an agent whose starts keep failing" do
+    let(:subject_of) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")) }
+    let(:question) { described_class.questions(subject_of, plan).first }
+
+    before { extensions.stalled(path, "backend-coder", :building, 1, after: now - 60) }
+
+    it "asks once for the run of failures, saying what it is about" do
+      extensions.stalled(path, "backend-coder", :building, 1, after: now - 60)
+
+      expect(plan.extensions.map { it.values_at("limit", "cause") }).to eq([%w[rounds failed_starts]])
+    end
+
+    it "says on the card that its starts failed, not that it is out of rounds" do
+      aggregate_failures do
+        expect(question[:heading]).to eq("backend-coder keeps failing to start")
+        expect(question[:body]).to start_with("Its starts on #{subject_of.status} kept failing before it spent anything")
+      end
+    end
+
+    it "offers the choices of a rounds request" do
+      expect(question[:options].map { it[:letter] }).to eq(%w[a b c])
+    end
+
+    it "does not ask again once the request was closed after the last failure" do
+      extensions.close!(path, "backend-coder", :building)
+
+      expect(extensions.stalled(path, "backend-coder", :building, 1, after: now - 60)).to be_nil
+    end
+
+    it "writes a request the schema accepts" do
+      schema = JSONSchemer.schema(Pathname.new(OpenLanes::Plans::PlanState::SCHEMA_PATH))
+
+      expect(schema.validate(JSON.parse(File.read(plan.path))).map { it["error"] }).to eq([])
     end
   end
 

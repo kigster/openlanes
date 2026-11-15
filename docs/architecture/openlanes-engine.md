@@ -38,6 +38,8 @@ classDiagram
   class OpenLanes__Engine__AgentLocks["AgentLocks"]
   class OpenLanes__Engine__Arbitration["Arbitration"]
   class OpenLanes__Engine__Arbitration__Asker["Arbitration::Asker"]
+  class OpenLanes__Engine__Arbitration__Overtime["Arbitration::Overtime"]
+  class OpenLanes__Engine__Arbitration__Retries["Arbitration::Retries"]
   class OpenLanes__Engine__Board["Board"]
   class OpenLanes__Engine__Budget["Budget"]
   class OpenLanes__Engine__CliPause["CliPause"]
@@ -116,6 +118,10 @@ classDiagram
   class OpenLanes__Engine__EventJournal__Replay__Agent["EventJournal::Replay::Agent"]
   class OpenLanes__Engine__EventJournal__Replay__InFlight["EventJournal::Replay::InFlight"]
   class OpenLanes__Engine__Extensions["Extensions"]
+  class OpenLanes__Engine__Extensions__Brief["Extensions::Brief"]
+  <<module>> OpenLanes__Engine__Extensions__Brief
+  class OpenLanes__Engine__Extensions__Ladder["Extensions::Ladder"]
+  class OpenLanes__Engine__Extensions__Round["Extensions::Round"]
   class OpenLanes__Engine__Finishes["Finishes"]
   class OpenLanes__Engine__Merging["Merging"]
   class OpenLanes__Engine__Narrator["Narrator"]
@@ -129,6 +135,7 @@ classDiagram
   <<module>> OpenLanes__Engine__QualityQuestion
   class OpenLanes__Engine__QualityQuestion__Choice["QualityQuestion::Choice"]
   class OpenLanes__Engine__Rebase["Rebase"]
+  class OpenLanes__Engine__Recovery__Orphans["Recovery::Orphans"]
   class OpenLanes__Engine__Recovery__Reattach["Recovery::Reattach"]
   class OpenLanes__Engine__Recovery__Records["Recovery::Records"]
   class OpenLanes__Engine__Recovery__Round["Recovery::Round"]
@@ -290,6 +297,8 @@ classDiagram
   OpenLanes__Engine__Arbitration ..> OpenLanes__Arbitration__Effects : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Config : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Engine__Arbitration__Asker : uses
+  OpenLanes__Engine__Arbitration ..> OpenLanes__Engine__Arbitration__Overtime : uses
+  OpenLanes__Engine__Arbitration ..> OpenLanes__Engine__Arbitration__Retries : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Error : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Execution : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Plans__Findings : uses
@@ -301,6 +310,8 @@ classDiagram
   OpenLanes__Engine__Arbitration__Asker ..> OpenLanes__Error : uses
   OpenLanes__Engine__Arbitration__Asker ..> OpenLanes__Execution : uses
   OpenLanes__Engine__Arbitration__Asker ..> OpenLanes__Execution__Executor__Handle : uses
+  OpenLanes__Engine__Arbitration__Overtime ..> OpenLanes__Arbitration : uses
+  OpenLanes__Engine__Arbitration__Overtime ..> OpenLanes__UI : uses
   OpenLanes__Engine__Budget ..> OpenLanes__Config : uses
   OpenLanes__Engine__Budget ..> OpenLanes__Events : uses
   OpenLanes__Engine__Budget ..> OpenLanes__Events__PlanSpend : uses
@@ -384,6 +395,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Dispatcher__Desk__Rounds : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__EventJournal__Feed : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Extensions : uses
+  OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Extensions__Ladder : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Finishes : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__PlanLocks : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Rebase : uses
@@ -424,7 +436,6 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Poll ..> OpenLanes__Engine__Dispatcher__Poll__Mail : uses
   OpenLanes__Engine__Dispatcher__Poll ..> OpenLanes__Engine__Dispatcher__Poll__Sighting : uses
   OpenLanes__Engine__Dispatcher__Poll --|> OpenLanes__Engine__Dispatcher__Step : inherits
-  OpenLanes__Engine__Dispatcher__Poll ..> OpenLanes__Engine__Extensions : uses
   OpenLanes__Engine__Dispatcher__Poll__Journal --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Poll__Journal ..> OpenLanes__Error : uses
   OpenLanes__Engine__Dispatcher__Poll__Journal ..> OpenLanes__Plans__Journal__Entry : uses
@@ -589,8 +600,21 @@ classDiagram
   OpenLanes__Engine__EventJournal__Replay ..> OpenLanes__Engine__EventJournal__Replay__Agent : uses
   OpenLanes__Engine__EventJournal__Replay ..> OpenLanes__Engine__EventJournal__Replay__InFlight : uses
   OpenLanes__Engine__Extensions ..> OpenLanes__Container : uses
+  OpenLanes__Engine__Extensions ..> OpenLanes__Engine__Extensions__Ladder : uses
   OpenLanes__Engine__Extensions ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Extensions ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Extensions__Brief ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Engine__Extensions__Brief ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Extensions__Ladder ..> OpenLanes__Arbitration : uses
+  OpenLanes__Engine__Extensions__Ladder ..> OpenLanes__Engine__Arbitration__Overtime : uses
+  OpenLanes__Engine__Extensions__Ladder ..> OpenLanes__Engine__Extensions__Brief : uses
+  OpenLanes__Engine__Extensions__Ladder ..> OpenLanes__Engine__Extensions__Round : uses
+  OpenLanes__Engine__Extensions__Ladder ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Engine__Extensions__Ladder ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Extensions__Round ..> OpenLanes__Engine__Extensions : uses
+  OpenLanes__Engine__Extensions__Round ..> OpenLanes__Engine__Extensions__Brief : uses
+  OpenLanes__Engine__Extensions__Round ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Extensions__Round ..> OpenLanes__UI : uses
   OpenLanes__Engine__Finishes ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Finishes ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Finishes ..> OpenLanes__Plans__Tree : uses
@@ -638,6 +662,9 @@ classDiagram
   OpenLanes__Engine__Rebase ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__UI : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__Vcs__Refresh : uses
+  OpenLanes__Engine__Recovery__Orphans ..> OpenLanes__Plans__Lock : uses
+  OpenLanes__Engine__Recovery__Orphans ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Recovery__Orphans ..> OpenLanes__Plans__Rounds : uses
   OpenLanes__Engine__Recovery__Reattach ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Recovery__Reattach ..> OpenLanes__Supervision__PidFile : uses
   OpenLanes__Engine__Recovery__Reattach ..> OpenLanes__Supervision__Probe : uses
@@ -646,6 +673,7 @@ classDiagram
   OpenLanes__Engine__Recovery__Records ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__Engine__Recovery__Records ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Recovery__Records ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Engine__Recovery__Orphans : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Engine__Recovery__Round : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Ordinal : uses

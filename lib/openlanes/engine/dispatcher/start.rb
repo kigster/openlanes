@@ -26,10 +26,7 @@ module OpenLanes
           # Before the rename, so a plan held outside openlanes is left as it was (W31).
           return nil unless @claims.reserve(subject.feature.ordinal.to_s, subject, agent)
 
-          # The round is counted before the rename, while the folder still
-          # says the state it is counted in: `state.json` names a visit by
-          # the plan's moves, and a rename on start is one.
-          launch(agent, subject, from: subject.status.key, round: next_round(subject, agent))
+          launch(agent, subject, from: subject.status.key)
         end
 
         # @return [Array(String, String, Integer), nil] see {Adoption#call}
@@ -42,13 +39,18 @@ module OpenLanes
 
         # Locked before anything is recorded and before the thread, so the next
         # tick sees it. Until the thread that releases it exists, a failure does.
-        def launch(agent, subject, from:, round:)
+        #
+        # The round is numbered after the rename, among the rounds of the
+        # state it works in. Numbered before it, an agent that `starts_as`
+        # had its first round counted for the state the plan had just left,
+        # where no later round looked for it.
+        def launch(agent, subject, from:)
           ordinal = subject.feature.ordinal.to_s
           owed = false
           subject = locked(agent, subject, ordinal) or return false
           @launch.open(agent, subject, from)
           owed = true
-          begin_work(@launch.job(agent, subject, from:, round:), ordinal)
+          begin_work(@launch.job(agent, subject, from:, round: next_round(subject, agent)), ordinal)
         rescue StandardError
           locks.release(ordinal) if owed && !runner.dry_run?
           locks.unreserve(ordinal)

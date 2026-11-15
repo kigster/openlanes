@@ -18,6 +18,13 @@ module OpenLanes
           # seconds once spent all three tries inside eight.
           BACKOFF = 30
 
+          # How many failed logins in a row are left to the {CliPause}. A
+          # login its probe passes but the run fails released the CLI and
+          # failed again every ten minutes for good, with nobody asked; from
+          # this many on they count as any failed start does, the agent is
+          # capped, and a person is asked.
+          LOGIN_TRIES = 3
+
           # @param ledger [RoundLedger]
           # @param extensions [OpenLanes::Engine::Extensions]
           # @param clock [#now]
@@ -30,9 +37,9 @@ module OpenLanes
           # Why an agent is not started on a plan, when its starts keep
           # failing: `:capped` once {CAP} in a row failed, until a person
           # grants it a round; `:backing_off` while it waits for its next try.
-          # A failed login is not counted, since {CliPause} holds the whole
-          # CLI for it, and a grant settled after the run of failures starts
-          # the count again.
+          # A failed login is not counted until {LOGIN_TRIES} of them ran,
+          # since {CliPause} holds the whole CLI for it, and a grant settled
+          # after the run of failures starts the count again.
           #
           # @param subject [OpenLanes::Plans::Subject]
           # @param agent [OpenLanes::Agents::Agent]
@@ -56,7 +63,8 @@ module OpenLanes
             name = agent.name
             state = subject.status.key
             count = Plans::Rounds::Count.new(since: @extensions.lifted_at(subject.feature.path, name, state),
-              except: Execution::Executor::AUTH_FAILURE)
+              except: Execution::Executor::AUTH_FAILURE,
+              tolerate: LOGIN_TRIES)
             [rounds.failed_starts(name, state, moves:, count:), rounds.last_failed_start(name, state, moves:, count:)]
           end
         end

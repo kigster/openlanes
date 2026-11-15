@@ -75,6 +75,7 @@ classDiagram
   class OpenLanes__CLI__Setup["Setup"]
   class OpenLanes__CLI__Skills__Install["Skills::Install"]
   class OpenLanes__CLI__Start["Start"]
+  class OpenLanes__CLI__State__Estimate["State::Estimate"]
   class OpenLanes__CLI__State__Locating["State::Locating"]
   <<module>> OpenLanes__CLI__State__Locating
   class OpenLanes__CLI__State__Resume["State::Resume"]
@@ -140,6 +141,8 @@ classDiagram
   class OpenLanes__Memory__Promotion["OpenLanes::Memory::Promotion"]
   class OpenLanes__Plans["OpenLanes::Plans"]
   <<module>> OpenLanes__Plans
+  class OpenLanes__Plans__Estimate["OpenLanes::Plans::Estimate"]
+  <<module>> OpenLanes__Plans__Estimate
   class OpenLanes__Plans__Feature["OpenLanes::Plans::Feature"]
   class OpenLanes__Plans__LastKnownState["OpenLanes::Plans::LastKnownState"]
   class OpenLanes__Plans__Ledger["OpenLanes::Plans::Ledger"]
@@ -400,6 +403,12 @@ classDiagram
   OpenLanes__CLI__Start ..> OpenLanes__Web : uses
   OpenLanes__CLI__Start ..> OpenLanes__Web__AdminAuth : uses
   OpenLanes__CLI__Start ..> OpenLanes__Web__Launcher : uses
+  OpenLanes__CLI__State__Estimate ..> OpenLanes__Agents__Names : uses
+  OpenLanes__CLI__State__Estimate --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__State__Estimate ..|> OpenLanes__CLI__State__Locating : includes
+  OpenLanes__CLI__State__Estimate ..> OpenLanes__Plans__Estimate : uses
+  OpenLanes__CLI__State__Estimate ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__CLI__State__Estimate ..> OpenLanes__UI : uses
   OpenLanes__CLI__State__Locating ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__CLI__State__Locating ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__CLI__State__Resume ..> OpenLanes__Agents__Names : uses

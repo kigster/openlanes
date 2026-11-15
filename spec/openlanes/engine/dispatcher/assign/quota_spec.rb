@@ -21,6 +21,34 @@ RSpec.describe OpenLanes::Engine::Dispatcher::Assign::Quota, :tree do
     expect(quota.eligible?(coder, plan)).to be(false)
   end
 
+  describe "#ask_for_rounds" do
+    let(:requests) { OpenLanes::Plans::PlanState.for(plan.feature.path).extensions.map { it.values_at("agent", "round") } }
+
+    before { coder.rounds.times { desk.remember("001.00", coder.name, plan.status.key, "Interrupted", it + 1) } }
+
+    it "asks for an agent that used every round it had without finishing" do
+      quota.ask_for_rounds
+
+      expect(requests).to eq([[coder.name, coder.rounds]])
+    end
+
+    it "asks nothing for an agent that finished" do
+      desk.remember("001.00", coder.name, plan.status.key, "Completed", coder.rounds)
+      quota.ask_for_rounds
+
+      expect(requests).to eq([])
+    end
+
+    # A Started round with no job is nobody's: skipped as a running one is,
+    # its agent sat at its budget and no one was asked.
+    it "asks for an agent whose last round is still Started with no job running it" do
+      desk.remember("001.00", coder.name, plan.status.key, "Started", coder.rounds)
+      quota.ask_for_rounds
+
+      expect(requests).to eq([[coder.name, coder.rounds]])
+    end
+  end
+
   it "refuses an agent that has used every round it had" do
     coder.rounds.times { desk.remember("001.00", coder.name, plan.status.key, "Interrupted", it + 1) }
     expect(quota.eligible?(coder, plan)).to be(false)

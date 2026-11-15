@@ -2056,6 +2056,55 @@
             }
           }
         },
+        "state estimate": {
+          "type": "object",
+          "description": "Say how much more time a running agent needs, when its control file asks ESTIMATE",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "agent": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The agent answering"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "minutes": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "How many more minutes: 20, or 90s, 20m, 1.5h"
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Which plan: NNN or NNN.MM"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "why": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "What the time is for, in a line"
+            }
+          }
+        },
         "state resume": {
           "type": "object",
           "description": "Record where an interrupted agent stood, for the next round to resume from",
@@ -2867,6 +2916,82 @@
           "exclusiveMinimum": 0,
           "description": "The most a plan may spend, in estimated dollars, before no new round starts on it; unset is no cap",
           "default": null
+        }
+      }
+    },
+    "agents": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "One machine's changes to an agent, by its name: each key replaces the same key of agents/<name>.md and nothing else",
+      "default": null,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "timeout": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Seconds on a round's clock; `--timeout` still only tightens it",
+            "default": null,
+            "minimum": 1
+          },
+          "rounds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Rounds the agent gets on one plan state",
+            "default": null,
+            "minimum": 1,
+            "maximum": 5
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The model it runs on, where the frontmatter's `model:` stands; spec.md `phases:` and `sizing:` still outrank it",
+            "default": null,
+            "minLength": 1
+          },
+          "effort": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "How hard it thinks, where the frontmatter's `effort:` stands",
+            "default": null,
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              null
+            ]
+          },
+          "extension_cap": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Seconds the engine adds to a round's clock on its own, and the largest estimate of the agent's own it grants; null is 900",
+            "default": null,
+            "minimum": 1
+          },
+          "extension_ceiling": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Seconds, the most the arbitrator may add to a round; null is 3600",
+            "default": null,
+            "minimum": 1
+          }
         }
       }
     }

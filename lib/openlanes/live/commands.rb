@@ -131,8 +131,13 @@ module OpenLanes
       # @param clock [Proc] wall time
       # @param restart_web [#call, nil] root in; the supervisor's pid once
       #   asked to restart the control room, nil when none runs
+      # @param root [String] the project root: where this process is, since
+      #   every project command moves there before it runs. Never the
+      #   parent of the plans directory, which `-D docs/plans` puts a level
+      #   down: `/restart-web` then looked for the supervisor's PID file
+      #   under `docs/tmp/pids` and always found none (issue 253).
       def initialize(store:, keys:, node:, run_state: RunState.new, record: nil, claims: nil, clock: -> { Time.now },
-        restart_web: nil)
+        restart_web: nil, root: Dir.pwd)
         @store = store
         @keys = keys
         @node = node
@@ -141,6 +146,7 @@ module OpenLanes
         @claims = claims
         @clock = clock
         @restart_web = restart_web || Supervision.method(:restart_web)
+        @root = root
         @ready = false
         @swept_at = nil
         @pending = {}
@@ -389,7 +395,7 @@ module OpenLanes
         name = Engine::QualityQuestion::NAME
         letter = command["text"].to_s.strip[/\A([a-c])\)?(?:\s|\z)/i, 1] or
           raise Refusal, "#{name} takes a), b) or c), not #{command["text"].to_s.strip[0, 40].inspect}"
-        chosen = Engine::QualityQuestion.answer!(subject.feature.path, letter, by: @node.user, root: File.dirname(dispatcher.runner.tree.dir)) or
+        chosen = Engine::QualityQuestion.answer!(subject.feature.path, letter, by: @node.user, root: @root) or
           raise Refusal, "#{command.plan} has no open question #{name}"
         dispatcher.wake!
         "desired_codebase_quality: #{chosen} in #{Config::FILE}"
@@ -666,7 +672,7 @@ module OpenLanes
         )
         feature = Plans::Feature.parse(path)
         seed = [idea, decisions(command.payload["decisions"]), marker(command)].compact.join("\n\n")
-        brief = Lifecycle.brief(path:, title: feature.title, root: File.dirname(tree.dir), seed:)
+        brief = Lifecycle.brief(path:, title: feature.title, root: @root, seed:)
         brief.write_scaffold!
         brief.stamp!(settings)
         created(feature, dispatcher)
@@ -789,8 +795,8 @@ module OpenLanes
       # and the new one reports how the build went.
       #
       # @return [String]
-      def restart_web(_command, dispatcher)
-        pid = @restart_web.call(File.dirname(dispatcher.runner.tree.dir))
+      def restart_web(_command, _dispatcher)
+        pid = @restart_web.call(@root)
         raise Refusal, Supervision::RESTART_WEB_REFUSAL unless pid
 
         "restarting the control room: supervisor #{pid} stops it, rebuilds the page where the project is OpenLanes itself, " \
@@ -803,11 +809,11 @@ module OpenLanes
       # missing field would take `false` for one.
       #
       # @return [String]
-      def set_chime(command, dispatcher)
+      def set_chime(command, _dispatcher)
         on = command.payload["on"]
         raise Refusal, "chime is true or false, not #{on.inspect}" unless [true, false].include?(on)
 
-        Config.write_flag(File.dirname(dispatcher.runner.tree.dir), "chime", on)
+        Config.write_flag(@root, "chime", on)
         "chime: #{on} in #{Config::FILE}"
       end
 
