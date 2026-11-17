@@ -1,14 +1,14 @@
 import { useCallback, useState } from "react";
-import { LAYOUTS, isLayout, type LayoutKey } from "./layouts";
+import { DEFAULT_LAYOUT, isLayout, type LayoutKey } from "./layouts";
 
 export const LAYOUT_KEY = "openlanes-dependency-layout";
 
 function read(): LayoutKey {
   try {
     const kept = localStorage.getItem(LAYOUT_KEY);
-    return isLayout(kept) ? kept : LAYOUTS[0].key;
+    return isLayout(kept) ? kept : DEFAULT_LAYOUT;
   } catch {
-    return LAYOUTS[0].key; // a private window
+    return DEFAULT_LAYOUT; // a private window
   }
 }
 
