@@ -88,7 +88,7 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__UI : 22
   OpenLanes__CLI ..> OpenLanes__Uml : 2
   OpenLanes__CLI ..> OpenLanes__Vcs : 7
-  OpenLanes__CLI ..> OpenLanes__Web : 15
+  OpenLanes__CLI ..> OpenLanes__Web : 16
   OpenLanes__Config ..> OpenLanes : 4
   OpenLanes__Config ..> OpenLanes__Adapters : 1
   OpenLanes__Config ..> OpenLanes__Agents : 2
@@ -203,7 +203,7 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Lifecycle : 1
   OpenLanes__Vcs ..> OpenLanes__Plans : 7
   OpenLanes__Vcs ..> OpenLanes__UI : 6
-  OpenLanes__Web ..> OpenLanes : 18
+  OpenLanes__Web ..> OpenLanes : 24
   OpenLanes__Web ..> OpenLanes__Adapters : 1
   OpenLanes__Web ..> OpenLanes__Agents : 2
   OpenLanes__Web ..> OpenLanes__Apps : 3
@@ -211,11 +211,12 @@ classDiagram
   OpenLanes__Web ..> OpenLanes__Container : 2
   OpenLanes__Web ..> OpenLanes__Engine : 1
   OpenLanes__Web ..> OpenLanes__Execution : 1
+  OpenLanes__Web ..> OpenLanes__Lifecycle : 1
   OpenLanes__Web ..> OpenLanes__Live : 34
   OpenLanes__Web ..> OpenLanes__Log : 1
-  OpenLanes__Web ..> OpenLanes__Plans : 11
+  OpenLanes__Web ..> OpenLanes__Plans : 17
   OpenLanes__Web ..> OpenLanes__UI : 2
-  OpenLanes__Web ..> OpenLanes__Vcs : 1
+  OpenLanes__Web ..> OpenLanes__Vcs : 2
 ```
 
 - [OpenLanes](openlanes.md)
