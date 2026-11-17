@@ -6,7 +6,7 @@
     "slug": "uml-class-diagrams"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:54:17-08:00",
+  "updated_at": "2026-11-17T03:02:10-08:00",
   "stages": [
     {
       "agent": "curator",
@@ -22,7 +22,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "9165f46d-46c4-41ee-aa27-c679c230ccf3",
+        "session": "4f1ca09f-7c93-4272-b57a-7822587eedd4",
         "through": 0
       }
     }

@@ -6,7 +6,7 @@
     "slug": "setup-command"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:54:03-08:00",
+  "updated_at": "2026-11-17T03:01:59-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -149,7 +149,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "c749a672-9ed8-4610-9ece-0fad75002736",
+        "session": "48db97da-c7ff-41ab-98f2-7e9378f78276",
         "through": 0
       }
     }

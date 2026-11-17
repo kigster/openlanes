@@ -6,7 +6,7 @@
     "slug": "config-into-openlanes-folder"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:54:31-08:00",
+  "updated_at": "2026-11-17T03:02:22-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -564,7 +564,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "42cbfb96-c7d1-47e2-903c-00ab78d438f3",
+        "session": "65d1f1b2-1a2c-42f8-b575-c7c4fa4cb588",
         "through": 0
       }
     }

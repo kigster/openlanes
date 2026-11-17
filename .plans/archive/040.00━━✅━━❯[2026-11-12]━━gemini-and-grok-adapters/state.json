@@ -6,7 +6,7 @@
     "slug": "gemini-and-grok-adapters"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:54:07-08:00",
+  "updated_at": "2026-11-17T03:02:02-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -1501,7 +1501,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "11c61636-7e5f-4ade-a153-7b3c3b18fe91",
+        "session": "df81181d-8bbb-45cb-806c-c32644443969",
         "through": 0
       }
     }

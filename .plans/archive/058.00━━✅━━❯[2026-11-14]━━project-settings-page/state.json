@@ -6,7 +6,7 @@
     "slug": "project-settings-page"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:54:21-08:00",
+  "updated_at": "2026-11-17T03:02:13-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -1027,7 +1027,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "1e23e027-032a-4bef-99a2-a94c7a5c02ae",
+        "session": "2075f3dd-1eab-4b16-89f1-f20c102ffc33",
         "through": 0
       }
     }
