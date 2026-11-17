@@ -15,9 +15,13 @@ RSpec.describe OpenLanes::Plans::PlanState::Extensions, :tree do
 
   it "numbers requests, takes an estimate only at its estimate stage, and settles once" do
     section.ask_extension!(ask, { stage: "estimate" })
-    expect(section.estimate_extension!("a", { "estimate" => 600, "why" => nil })["estimate"]).to eq(600)
+    expect(section.estimate_extension!("a", 600, nil, at)["estimate"]).to eq(600)
     section.settle_extension!(1, at, { answer: "yes" })
     expect([section.settle_extension!(1, at, { answer: "no" }), section.extensions.first["answer"]]).to eq([nil, "yes"])
+  end
+
+  it "reads no estimate argument when no request is waiting at its estimate stage" do
+    expect(section.estimate_extension!("a", "soon", nil, at)).to be_nil
   end
 
   it "amends and spends a request by number" do

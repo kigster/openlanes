@@ -26,18 +26,20 @@ module OpenLanes
 
         # The agent's own estimate (E2), written onto the request still at its
         # `estimate` stage; one that arrives after the engine stopped waiting
-        # changes nothing.
+        # changes nothing, and its arguments are not even read: `&.` skips them.
         #
         # @param agent [String]
-        # @param estimate [Hash] `estimate`, `why`, `estimated_at`
+        # @param seconds [Integer, String]
+        # @param why [String, nil]
+        # @param at [Time]
         # @return [Hash, nil] the request as it now stands
-        def estimate_extension!(agent, estimate)
+        def estimate_extension!(agent, seconds, why, at)
           found = nil
           update do |data|
             found = (data["extensions"] || []).find do |request|
               request["agent"] == agent && request["stage"] == "estimate" && !request.key?("settled_at")
             end
-            found&.merge!(estimate.compact)
+            found&.merge!({ "estimate" => Integer(seconds), "why" => why, "estimated_at" => at.iso8601 }.compact)
           end
           found
         end

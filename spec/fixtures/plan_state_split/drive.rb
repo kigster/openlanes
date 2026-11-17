@@ -3,7 +3,6 @@
 # Every writer of `state.json`, through the PlanState facade, at fixed times.
 # Run against the code before the split to record `state.json` beside this
 # file, and by plan_state_split_integration_spec.rb against the code after it.
-# rubocop:disable-next Metrics/MethodLength -- a script of writer calls, one per line, read top to bottom
 module PlanStateSplitDrive
   AT = Time.utc(2026, 11, 17, 9, 0, 0)
 
@@ -18,7 +17,7 @@ module PlanStateSplitDrive
     normalise(state.read)
   end
 
-  def harness(state)
+  def harness(state) # rubocop:disable Metrics/MethodLength -- a script of writer calls, read top to bottom
     state.stage!(agent: "backend-coder",
       round: 1,
       reset: true,
@@ -34,7 +33,7 @@ module PlanStateSplitDrive
     state.take_global_lock!(at: AT)
   end
 
-  def agents(state)
+  def agents(state) # rubocop:disable Metrics/MethodLength -- a script of writer calls, read top to bottom
     state.sign!(agent: "backend-coder", round: 1, status: "Started", at: AT)
     state.sign!(agent: "backend-coder", round: 1, status: "Completed", note: "done", next_agent: "staff-reviewer", at: AT + 60)
     state.message!(from: "backend-coder", to: "frontend-coder", body: "hi", at: AT, after: 2, command: "c1")
@@ -53,7 +52,7 @@ module PlanStateSplitDrive
         files_touched: ["a.rb"]))
   end
 
-  def engine(state)
+  def engine(state) # rubocop:disable Metrics/MethodLength -- a script of writer calls, read top to bottom
     state.rule!(kind: "appeal",
       pr: 9,
       round: "2",

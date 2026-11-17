@@ -15,8 +15,9 @@ RSpec.describe OpenLanes::Plans::PlanState::Memory, :tree do
 
   it "starts the next journal round and refuses an override that points ahead" do
     ahead = OpenLanes::Plans::Journal::Entry.new(kind: "override", text: "two", overrides: 5)
-    number, rejected = section.journal!("a", [entry, ahead], nil, { "round" => 1 })
-    expect([number, rejected.size, section.journal("a").first.entries.size]).to eq([1, 1, 1])
+    number, rejected = section.journal!("a", [entry, ahead], nil, described_class.opening(1, :building))
+    round = section.journal("a").first
+    expect([number, rejected.size, round.entries.size, round.round, round.state]).to eq([1, 1, 1, 1, "building"])
   end
 
   it "refuses an agent name that is not one token" do

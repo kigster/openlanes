@@ -82,12 +82,10 @@ module OpenLanes
       end
 
       def journal!(agent:, entries:, number: nil, round: nil, state: nil) # rubocop:disable Metrics/ParameterLists -- callers' keywords
-        @memory.journal!(agent, entries, number, { "round" => round, "state" => state&.to_s }.compact)
+        @memory.journal!(agent, entries, number, Memory.opening(round, state))
       end
 
-      def estimate_extension!(agent:, seconds:, why: nil, at: Time.now)
-        @extensions.estimate_extension!(agent, { "estimate" => Integer(seconds), "why" => why, "estimated_at" => at.iso8601 })
-      end
+      def estimate_extension!(agent:, seconds:, why: nil, at: Time.now) = @extensions.estimate_extension!(agent, seconds, why, at)
 
       def answer!(agent:, ref:, question:, answer:)
         @answers.answer!(agent, Journal::Entry.new(kind: "question", text: question, ref:, answer:))

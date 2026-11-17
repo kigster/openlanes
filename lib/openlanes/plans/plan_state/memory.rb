@@ -6,6 +6,14 @@ module OpenLanes
       # Each agent's journal on this plan (M2): the lines it printed as it
       # worked, kept under {PlanState::MEMORY}, one record per journal round.
       class Memory < Section
+        # The keys a journal round opens with, kept beside the code that
+        # writes the round, not on the facade.
+        #
+        # @param round [Integer, nil] the harness round
+        # @param state [#to_s, nil] the folder's state
+        # @return [Hash]
+        def self.opening(round, state) = { "round" => round, "state" => state&.to_s }.compact
+
         # One agent's journal, oldest round first, each entry numbered as the
         # agent refers to it: 1 up, across every round.
         #
@@ -29,7 +37,7 @@ module OpenLanes
         # @param agent [String]
         # @param entries [Array<OpenLanes::Plans::Journal::Entry>]
         # @param number [Integer, nil]
-        # @param opening [Hash] `round` and `state`, for a round started here
+        # @param opening [Hash] from {.opening}, for a round started here
         # @return [Array(Integer, Array<OpenLanes::Plans::Journal::Rejection>)]
         # @raise [OpenLanes::Error] on an agent name that is not one token
         def journal!(agent, entries, number, opening)
