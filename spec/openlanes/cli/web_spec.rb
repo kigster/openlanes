@@ -30,6 +30,8 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
       demo
     end
     allow(OpenLanes::Web).to receive(:open)
+    # No spec binds a real port: 11000 may be a developer's own server.
+    allow(OpenLanes::Web::Ports).to receive(:first_free) { |from, **| Integer(from) }
     allow(Signal).to receive(:trap) { |name, &block| traps[name] = block }
   end
 
@@ -150,7 +152,28 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
 
   it "listens on the port asked for" do
     result
-    expect(built[:server][:port]).to eq("11000")
+    expect(built[:server][:port]).to eq(11_000)
+  end
+
+  context "when the port asked for is taken" do
+    before do
+      allow(OpenLanes::Web::Ports).to receive(:first_free).with("11000").and_return(11_002)
+      allow(OpenLanes::Web).to receive(:server) do |**keywords|
+        built[:server] = keywords
+        allow(server).to receive_messages(listen: keywords[:listen], port: 11_002, url: "http://127.0.0.1:11002", urls: ["http://127.0.0.1:11002"])
+        server
+      end
+    end
+
+    it "moves up to the first free one and says so" do
+      expect([built.tap { result }[:server][:port], stderr]).to match([11_002, include("Control room: http://127.0.0.1:11002 (11000 was taken)")])
+    end
+
+    it "draws the address in the highlighted box" do
+      allow(OpenLanes::UI).to receive(:highlight).and_call_original
+      result
+      expect(OpenLanes::UI).to have_received(:highlight).with(include("Control room: http://127.0.0.1:11002"))
+    end
   end
 
   it "opens the page" do

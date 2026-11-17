@@ -773,6 +773,20 @@ RSpec.describe OpenLanes::UI do
     end
   end
 
+  describe ".highlight" do
+    it "is the plain info box without colour" do
+      expect { described_class.highlight("Control room: http://127.0.0.1:11001") }.to output(/Info.*Control room/m).to_stderr
+    end
+
+    # White on green comes from the box's style; an escape code put into the
+    # text instead made Strings::Wrap raise IndexError.
+    it "draws white on green with colour, the text left unpainted" do
+      allow(described_class).to receive(:color?).and_return(true)
+      expect { described_class.highlight("Control room: http://127.0.0.1:11001\nRedis: memory://") }
+        .to output(%r{\e\[(?:\d+;)*(?:42|37)[;m].*Control room: http://127\.0\.0\.1:11001}m).to_stderr
+    end
+  end
+
   describe ".line" do
     it "still prints with warnings silenced" do
       verbose = $VERBOSE

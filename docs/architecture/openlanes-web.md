@@ -23,6 +23,8 @@ classDiagram
   <<module>> OpenLanes__Execution__Boundary
   class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
   <<module>> OpenLanes__Frontmatter
+  class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
+  <<module>> OpenLanes__Lifecycle
   class OpenLanes__Live["OpenLanes::Live"]
   <<module>> OpenLanes__Live
   class OpenLanes__Live__BoardDelta__Stream["OpenLanes::Live::BoardDelta::Stream"]
@@ -54,11 +56,15 @@ classDiagram
   class OpenLanes__Plans__Findings["OpenLanes::Plans::Findings"]
   <<module>> OpenLanes__Plans__Findings
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
+  class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
+  class OpenLanes__Plans__StateMachine__Refused["OpenLanes::Plans::StateMachine::Refused"]
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
   class OpenLanes__Project["OpenLanes::Project"]
   <<module>> OpenLanes__Project
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  class OpenLanes__Vcs__GitHub["OpenLanes::Vcs::GitHub"]
   class OpenLanes__Vcs__Refresh["OpenLanes::Vcs::Refresh"]
   class OpenLanes__Web["OpenLanes::Web"]
   <<module>> OpenLanes__Web
@@ -77,6 +83,10 @@ classDiagram
   class OpenLanes__Web__Launcher["Launcher"]
   class OpenLanes__Web__Listen["Listen"]
   class OpenLanes__Web__Listen__Invalid["Listen::Invalid"]
+  class OpenLanes__Web__PlanActions["PlanActions"]
+  class OpenLanes__Web__PlanActions__Busy["PlanActions::Busy"]
+  class OpenLanes__Web__PlanActions__NotFound["PlanActions::NotFound"]
+  class OpenLanes__Web__PlanActions__Refused["PlanActions::Refused"]
   class OpenLanes__Web__PlanFiles["PlanFiles"]
   class OpenLanes__Web__PlanFiles__FrontmatterChanged["PlanFiles::FrontmatterChanged"]
   class OpenLanes__Web__PlanFiles__NotFound["PlanFiles::NotFound"]
@@ -86,6 +96,8 @@ classDiagram
   class OpenLanes__Web__PlanFiles__TooLarge["PlanFiles::TooLarge"]
   class OpenLanes__Web__PlanReview["PlanReview"]
   class OpenLanes__Web__PlanReview__NotFound["PlanReview::NotFound"]
+  class OpenLanes__Web__Ports["Ports"]
+  <<module>> OpenLanes__Web__Ports
   class OpenLanes__Web__RequestLog["RequestLog"]
   class OpenLanes__Web__Server["Server"]
   class OpenLanes__Web__Settings["Settings"]
@@ -95,6 +107,8 @@ classDiagram
   class OpenLanes__Web__SettingsSave["SettingsSave"]
   class OpenLanes__Web__SettingsSave__Refused["SettingsSave::Refused"]
   class OpenLanes__Web__Stores["Stores"]
+  class OpenLanes__Web__Worktrees["Worktrees"]
+  class OpenLanes__Web__Worktrees__NotFound["Worktrees::NotFound"]
   OpenLanes__Web ..> OpenLanes__Live__Chat : uses
   OpenLanes__Web ..> OpenLanes__Web__App : uses
   OpenLanes__Web ..> OpenLanes__Web__Context : uses
@@ -122,10 +136,15 @@ classDiagram
   OpenLanes__Web__App ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Web__App ..> OpenLanes__Plans : uses
   OpenLanes__Web__App ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Web__App ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Web__App ..> OpenLanes__Web__AdminAuth : uses
   OpenLanes__Web__App ..> OpenLanes__Web__BranchDiff : uses
   OpenLanes__Web__App ..> OpenLanes__Web__DependencyGraph : uses
   OpenLanes__Web__App ..> OpenLanes__Web__Events : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanActions : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanActions__Busy : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanActions__NotFound : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanActions__Refused : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__FrontmatterChanged : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__NotFound : uses
@@ -137,6 +156,8 @@ classDiagram
   OpenLanes__Web__App ..> OpenLanes__Web__PlanReview__NotFound : uses
   OpenLanes__Web__App ..> OpenLanes__Web__Settings : uses
   OpenLanes__Web__App ..> OpenLanes__Web__SettingsSave : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__Worktrees : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__Worktrees__NotFound : uses
   OpenLanes__Web__BranchDiff ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Web__Demo ..> OpenLanes__Agents__Names : uses
   OpenLanes__Web__Demo ..> OpenLanes__Live : uses
@@ -177,9 +198,23 @@ classDiagram
   OpenLanes__Web__Launcher ..> OpenLanes__Log : uses
   OpenLanes__Web__Launcher ..> OpenLanes__Web__AdminAuth : uses
   OpenLanes__Web__Launcher ..> OpenLanes__Web__Listen : uses
+  OpenLanes__Web__Launcher ..> OpenLanes__Web__Ports : uses
   OpenLanes__Web__Listen ..> OpenLanes__Error : uses
   OpenLanes__Web__Listen ..> OpenLanes__Web__Listen__Invalid : uses
   OpenLanes__Web__Listen__Invalid --|> OpenLanes__Error : inherits
+  OpenLanes__Web__PlanActions ..> OpenLanes__Error : uses
+  OpenLanes__Web__PlanActions ..> OpenLanes__Lifecycle : uses
+  OpenLanes__Web__PlanActions ..> OpenLanes__Plans : uses
+  OpenLanes__Web__PlanActions ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Web__PlanActions ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Web__PlanActions ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Web__PlanActions ..> OpenLanes__Plans__StateMachine__Refused : uses
+  OpenLanes__Web__PlanActions ..> OpenLanes__Web__PlanActions__Busy : uses
+  OpenLanes__Web__PlanActions ..> OpenLanes__Web__PlanActions__NotFound : uses
+  OpenLanes__Web__PlanActions ..> OpenLanes__Web__PlanActions__Refused : uses
+  OpenLanes__Web__PlanActions__Busy --|> OpenLanes__Error : inherits
+  OpenLanes__Web__PlanActions__NotFound --|> OpenLanes__Error : inherits
+  OpenLanes__Web__PlanActions__Refused --|> OpenLanes__Error : inherits
   OpenLanes__Web__PlanFiles ..> OpenLanes__Error : uses
   OpenLanes__Web__PlanFiles ..> OpenLanes__Frontmatter : uses
   OpenLanes__Web__PlanFiles ..> OpenLanes__Plans : uses
@@ -217,4 +252,9 @@ classDiagram
   OpenLanes__Web__SettingsSave ..> OpenLanes__Project : uses
   OpenLanes__Web__SettingsSave ..> OpenLanes__Web__Settings : uses
   OpenLanes__Web__SettingsSave ..> OpenLanes__Web__SettingsSave__Refused : uses
+  OpenLanes__Web__Worktrees ..> OpenLanes__Error : uses
+  OpenLanes__Web__Worktrees ..> OpenLanes__Plans : uses
+  OpenLanes__Web__Worktrees ..> OpenLanes__Web__BranchDiff : uses
+  OpenLanes__Web__Worktrees ..> OpenLanes__Web__Worktrees__NotFound : uses
+  OpenLanes__Web__Worktrees__NotFound --|> OpenLanes__Error : inherits
 ```
