@@ -6,7 +6,7 @@
     "slug": "redis-outage-resilience"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:53:54-08:00",
+  "updated_at": "2026-11-17T01:02:43-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -1180,7 +1180,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "ece40161-fa0d-422a-9c40-7412a40dfcf4",
+        "session": "cac627a2-5466-4601-b983-3fb7bc28db45",
         "through": 0
       }
     }

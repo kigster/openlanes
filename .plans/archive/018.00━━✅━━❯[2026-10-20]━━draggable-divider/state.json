@@ -6,7 +6,7 @@
     "slug": "draggable-divider"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:53:49-08:00",
+  "updated_at": "2026-11-17T01:02:39-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -1567,7 +1567,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "04be0598-be12-4977-ab81-3faeb1ddeec4",
+        "session": "f2f5006a-2a89-4faa-bf16-7ea4bf7a9cde",
         "through": 0
       }
     }

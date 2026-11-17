@@ -6,7 +6,7 @@
     "slug": "ability-to-view-markdowns"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T00:49:43-08:00",
+  "updated_at": "2026-11-17T01:02:38-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -1001,7 +1001,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "a00a7d49-0131-48c4-8133-d176105f6c6b",
+        "session": "b1fb8065-e3b3-49ba-82cf-06b0f5acb43d",
         "through": 0
       }
     }

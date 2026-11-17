@@ -6,7 +6,7 @@
     "slug": "runtime-state-outside-plans"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:53:53-08:00",
+  "updated_at": "2026-11-17T01:02:42-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -1027,7 +1027,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "78f3604c-b8e7-42eb-a551-90a223127c22",
+        "session": "feff7a0d-8ebc-4d46-8cb8-63e9ada10734",
         "through": 0
       }
     }

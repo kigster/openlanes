@@ -6,7 +6,7 @@
     "slug": "plan-dependencies"
   },
   "state": "ready_for_review",
-  "updated_at": "2026-11-17T00:49:33-08:00",
+  "updated_at": "2026-11-17T01:02:31-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -246,7 +246,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "7f9bcb7d-f96f-410a-97eb-3260bbc07a60",
+        "session": "f9662042-9d73-489e-89a7-3a4fbb10d641",
         "through": 0
       }
     }

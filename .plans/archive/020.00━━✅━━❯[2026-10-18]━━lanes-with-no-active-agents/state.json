@@ -6,7 +6,7 @@
     "slug": "lanes-with-no-active-agents"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:53:50-08:00",
+  "updated_at": "2026-11-17T01:02:40-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -734,7 +734,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "365c06e7-758a-4219-b360-de9413cfc0f3",
+        "session": "ce97fe93-10de-4d45-89de-b3f8a95ac913",
         "through": 0
       }
     }
