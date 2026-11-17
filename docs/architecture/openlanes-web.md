@@ -141,6 +141,10 @@ classDiagram
   OpenLanes__Web__App ..> OpenLanes__Web__BranchDiff : uses
   OpenLanes__Web__App ..> OpenLanes__Web__DependencyGraph : uses
   OpenLanes__Web__App ..> OpenLanes__Web__Events : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanActions : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanActions__Busy : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanActions__NotFound : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanActions__Refused : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__FrontmatterChanged : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__NotFound : uses

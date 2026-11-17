@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import { useWorktreePulls, type Worktree } from "../api/worktrees";
-import { LaneDocuments } from "../board/LaneDocuments";
+import { PlanManagement } from "../board/PlanManagement";
 import { FoldToggle } from "../shell/FoldToggle";
 import { DiffModal } from "./DiffModal";
 import { ciLabel, shortPath } from "./format";
@@ -46,7 +46,7 @@ function WorktreeBody({ worktree: w }: { worktree: Worktree }) {
           <span className={`wt-state${w.plan.working ? " is-working" : ""}`}>
             {w.plan.emoji} {w.plan.label} · {w.plan.working ? "agent working" : "idle"}
           </span>
-          <LaneDocuments ordinal={w.plan.ordinal} lazy className="wt-docs" />
+          <PlanManagement ordinal={w.plan.ordinal} lazy className="wt-docs" />
         </div>
       ) : (
         <p className="wt-plan wt-muted">No plan on this branch</p>
