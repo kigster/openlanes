@@ -61,6 +61,10 @@ require "tmpdir"
 ENV["NO_COLOR"] = "1"
 # No example reaches Anthropic for the model list, whatever the shell exports.
 ENV["OPENLANES_MODELS_OFFLINE"] = "1"
+# Nor reads the model list a developer's own run cached under ~/.cache, which
+# would put whatever Anthropic lists today ahead of the shipped models.
+ENV["XDG_CACHE_HOME"] = Dir.mktmpdir("openlanes-cache")
+at_exit { FileUtils.rm_rf(ENV.fetch("XDG_CACHE_HOME")) }
 # A developer's shell (direnv) may export the control room's login; the
 # examples that need one set it themselves.
 ENV.delete("OPENLANES_ADMIN_CREDENTIALS")
