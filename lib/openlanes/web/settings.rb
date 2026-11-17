@@ -160,9 +160,22 @@ module OpenLanes
       def problems(values, message, file = Config::FILE)
         schema = Config::Schema.errors(Config::Schema.jsonable(values)).map do |error|
           path = error.fetch("data_pointer").split("/").drop(1).map { it.gsub("~1", "/").gsub("~0", "~") }
-          Problem.new(path:, message: error.fetch("error"))
+          Problem.new(path:, message: readable(error))
         end
         schema.empty? ? [parser_problem(message, file)] : schema
+      end
+
+      # A refused pattern, said in the key's own words. The validator's text
+      # quotes the regex (`does not match pattern: ^\s*[/~]`), which tells a
+      # person typing `events.log` into a directory field nothing.
+      #
+      # @param error [Hash] one json_schemer error
+      # @return [String]
+      def readable(error)
+        description = error.dig("schema", "description")
+        return error.fetch("error") unless error["type"] == "pattern" && description
+
+        "#{error["data"].inspect} is not accepted here: #{description}"
       end
 
       # @param message [String] e.g. ".openlanes/config.yml: merge.by: \"x\" is not one of …"

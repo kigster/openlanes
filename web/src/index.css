@@ -8,6 +8,9 @@
 @import "./styles/palettes.css";
 @import "highlight.js/styles/base16/gruvbox-dark-medium.css" layer(base);
 
+/* Every header in Barlow Condensed SemiBold (600, the only weight bundled), the house header face. */
+h1, h2, h3, h4, h5, h6 { font-family: var(--condensed); font-weight: 600; }
+
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @media (prefers-reduced-motion: reduce) {
