@@ -1,14 +1,45 @@
-.set-page { --set-alarm: var(--alarm, #c0392b); max-width: 880px; margin: 0 auto; padding: 24px; }
-.set-pane { border: 1px solid var(--hairline); border-radius: 6px; margin: 0 0 16px; background: var(--plate); }
-.set-pane.is-nested { margin: 12px 0 0 12px; }
-.set-pane h2, .set-pane h3 { display: flex; align-items: center; gap: 10px; margin: 0; padding: 8px 12px; font-size: 1rem; }
-.set-toggle { width: 24px; height: 24px; line-height: 1; cursor: pointer; border: 1px solid var(--hairline); background: transparent; border-radius: 4px; }
+/* Width: 1100px above a 1300px window, 86% of it from there down to 650px, then 95%. */
+/* Text inputs sit darker than their pane, with full-strength ink: a light theme darkens a little, a dark one a lot. */
+.set-page { --set-input-bg: color-mix(in srgb, #000 10%, var(--plate)); --set-input-ink: var(--ink); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .set-page { --set-input-bg: color-mix(in srgb, #000 40%, var(--plate)); --set-input-ink: color-mix(in srgb, #fff 45%, var(--ink)); }
+}
+:root[data-theme="dark"] .set-page { --set-input-bg: color-mix(in srgb, #000 40%, var(--plate)); --set-input-ink: color-mix(in srgb, #fff 45%, var(--ink)); }
+.set-page { --set-alarm: var(--alarm, #c0392b); --set-gap: 30px; --set-gap-inner: 20px;
+            width: 86%; margin: 0 auto; padding: 24px 0; }
+@media (min-width: 1301px) { .set-page { width: 1100px; } }
+@media (max-width: 650px) { .set-page { width: 95%; } }
+.set-page h1 { margin: 0 0 20px; font-size: 2rem; }
+
+/* Outer panes: 30px apart, text 40% larger. Nested panes inherit that size rather than compounding it. */
+.set-pane { border: 1px solid var(--hairline); border-radius: 6px; margin: 0 0 var(--set-gap); background: var(--plate);
+            font-size: 140%; scroll-margin-top: 56px; }
+.set-pane .set-pane { font-size: 100%; }
+/* Outer panes float on a soft dark shadow; a pane holding panes (Commands) sits a shade darker, the panes inside it a shade lighter and flat. */
+.set-pane:not(.is-nested) { box-shadow: 0 0 15px rgb(0 0 0 / 45%); }
+.set-pane.has-panes { background: color-mix(in srgb, #000 6%, var(--plate)); }
+.set-pane.is-nested { margin: var(--set-gap-inner) 0 0; background: color-mix(in srgb, #fff 6%, var(--plate)); }
+.set-pane.is-nested:last-child { margin-bottom: var(--set-gap-inner); }
+.set-pane h2 { display: flex; align-items: center; gap: 10px; margin: 0; padding: 8px 12px; font-size: 1em; }
 .set-body { padding: 4px 12px 12px; }
 .set-field { display: grid; grid-template-columns: 220px 1fr; gap: 2px 12px; padding: 8px 0; align-items: center; }
 .set-field label { font-weight: 600; word-break: break-word; }
-.set-help { grid-column: 2; margin: 0; color: var(--ink-soft); font-size: 0.85rem; }
-.set-field.is-invalid input, .set-field.is-invalid select { outline: 2px solid var(--set-alarm); }
+/* Controls: 3px padding, a hairline border with 3px corners, and text 20% smaller than the labels. */
+.set-field input:not([type="checkbox"]), .set-field select, .set-field textarea { padding: 3px 5px; border: 1px solid var(--hairline); border-radius: 3px; font: inherit; font-size: 0.8em; }
+.set-field input:not([type="checkbox"]), .set-field select, .set-field textarea { background: var(--set-input-bg); color: var(--set-input-ink); }
+.set-field input::placeholder { color: var(--ink-soft); opacity: 1; }
+/* A checkbox row: the box, then its label beside it, and the help line under the label. */
+.set-field.is-check { grid-template-columns: auto 1fr; }
+.set-field input[type="checkbox"] { justify-self: start; width: 1em; height: 1em; margin: 0; }
+.set-field textarea { resize: none; overflow: hidden; field-sizing: content; min-height: 2.6em; line-height: 1.35; white-space: pre-wrap; }
+/* The description under a control is reference, not content: dimmer than the soft ink, so the values stand out. */
+.set-help { grid-column: 2; margin: 0; color: var(--ink-soft); opacity: 0.7; font-size: 0.85em; }
+.set-field.is-invalid input, .set-field.is-invalid select, .set-field.is-invalid textarea { outline: 2px solid var(--set-alarm); }
 .set-error, .set-refusal { grid-column: 2; margin: 0; color: var(--set-alarm); font-weight: 600; }
+@media (max-width: 650px) {
+  .set-field:not(.is-check) { grid-template-columns: 1fr; }
+  .set-field:not(.is-check) .set-help, .set-field:not(.is-check) .set-error { grid-column: 1; }
+}
 .set-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; position: sticky; bottom: 0; padding: 12px 0; background: var(--plate); }
 .set-save { padding: 8px 16px; font-weight: 600; cursor: pointer; }
 .set-note { color: var(--ink-soft); font-size: 0.85rem; }

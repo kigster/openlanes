@@ -85,6 +85,11 @@ RSpec.describe OpenLanes::Web::Settings do
       expect(problems.first.message).to match(/\S/)
     end
 
+    it "says a refused pattern in the key's own words, not the regex" do
+      problem = described_class.validate({ "events" => { "dir" => "events.log" } }).first
+      expect(problem.to_json_hash).to eq(path: %w[events dir], message: "\"events.log\" is not accepted here: An absolute path; null is under $XDG_STATE_HOME")
+    end
+
     it "places a parser refusal on the key it names" do
       problems = described_class.validate({ "jobs" => 0 })
       expect(problems.map(&:path)).to eq([["jobs"]])
