@@ -6,7 +6,7 @@
     "slug": "plan-aging-and-bombs"
   },
   "state": "rejected",
-  "updated_at": "2026-11-15T10:53:42-08:00",
+  "updated_at": "2026-11-17T00:49:34-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -361,7 +361,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "9c05946e-5a49-4449-94de-0cd4fe97880d",
+        "session": "68700416-ec15-424c-9257-b5a9237d0bcb",
         "through": 0
       }
     }

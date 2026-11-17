@@ -6,7 +6,7 @@
     "slug": "web-control-room"
   },
   "state": "rejected",
-  "updated_at": "2026-11-15T09:45:36-08:00",
+  "updated_at": "2026-11-17T00:49:25-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -304,7 +304,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "284c8f4f-acb4-4b53-9ad4-0c070d4d2d16",
+        "session": "3041a214-cefc-453d-96cb-92b52307888d",
         "through": 0
       }
     }

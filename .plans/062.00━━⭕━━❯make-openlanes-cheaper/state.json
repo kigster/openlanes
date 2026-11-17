@@ -6,7 +6,7 @@
     "slug": "make-openlanes-cheaper"
   },
   "state": "blocked",
-  "updated_at": "2026-11-15T09:57:33-08:00",
+  "updated_at": "2026-11-17T00:50:12-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -87,7 +87,7 @@
     "unblocker": {
       "rounds": {},
       "held": {
-        "session": "e18af027-92bc-4484-9480-76eb3aa92bb5",
+        "session": "fb8c7ca2-60fa-40a3-8922-cc66212b822a",
         "through": 0
       }
     }

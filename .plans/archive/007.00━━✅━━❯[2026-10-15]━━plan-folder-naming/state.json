@@ -6,7 +6,7 @@
     "slug": "plan-folder-naming"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:53:39-08:00",
+  "updated_at": "2026-11-17T00:49:31-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -280,7 +280,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "6220a3d7-a76d-418b-9634-711122cca8e6",
+        "session": "076cfe22-8fe8-47bd-bc8c-ab3da7e3f0f0",
         "through": 0
       }
     }

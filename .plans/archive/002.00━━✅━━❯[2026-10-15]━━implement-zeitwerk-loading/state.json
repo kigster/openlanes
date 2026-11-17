@@ -6,7 +6,7 @@
     "slug": "implement-zeitwerk-loading"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T09:45:34-08:00",
+  "updated_at": "2026-11-17T00:49:22-08:00",
   "stages": [
     {
       "agent": "spec-writer",
@@ -230,11 +230,7 @@
     "curator": {
       "rounds": {},
       "held": {
-<<<<<<< Updated upstream
-        "session": "c9364597-ceb2-4853-927c-9c6e7386f6a3",
-=======
-        "session": "1787d946-aaae-4ffb-bac6-f3dc5318294e",
->>>>>>> Stashed changes
+        "session": "830abc45-f526-4e90-8b1f-d7892fbc186a",
         "through": 0
       }
     }

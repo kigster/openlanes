@@ -6,7 +6,7 @@
     "slug": "app-runner-and-preview"
   },
   "state": "blocked",
-  "updated_at": "2026-11-15T10:53:44-08:00",
+  "updated_at": "2026-11-17T00:49:38-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -357,7 +357,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "7702c7ab-4865-4f2a-96a8-7239e368223b",
+        "session": "26005518-11a7-4c2a-99c7-b14a43106f22",
         "through": 0
       }
     }

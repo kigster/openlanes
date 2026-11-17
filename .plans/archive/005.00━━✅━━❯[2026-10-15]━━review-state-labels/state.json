@@ -6,7 +6,7 @@
     "slug": "review-state-labels"
   },
   "state": "rejected",
-  "updated_at": "2026-11-15T10:53:37-08:00",
+  "updated_at": "2026-11-17T00:49:27-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -443,7 +443,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "8367a401-eff8-4985-9676-6b67477277ff",
+        "session": "2e0330f7-640c-4d7f-abf6-46b5f2c647b8",
         "through": 0
       }
     }
