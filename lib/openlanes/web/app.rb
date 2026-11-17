@@ -150,6 +150,15 @@ module OpenLanes
         # @return [OpenLanes::Web::PlanReview]
         def plan_review = PlanReview.new(plans_dir: context.plans_dir, diff: BranchDiff.new(root: context.root))
 
+        # @return [OpenLanes::Web::Worktrees]
+        def worktrees
+          Worktrees.new(root: context.root,
+            plans_dir: context.plans_dir,
+            repo: context.keys.repo,
+            github: Vcs::GitHub.new(chdir: context.root),
+            working: ->(ordinal) { live_car?(ordinal) })
+        end
+
         # The rule the page draws cars by: this machine's board lists the
         # plan with at least one car. No snapshot means no engine, so no car.
         #
@@ -224,6 +233,11 @@ module OpenLanes
       end
 
       error PlanReview::NotFound do
+        status 404
+        json(error: env["sinatra.error"].message)
+      end
+
+      error Worktrees::NotFound do
         status 404
         json(error: env["sinatra.error"].message)
       end
@@ -477,6 +491,21 @@ module OpenLanes
       # The plan branch's diff and its reviewers' findings (plan 064, B3).
       get "/api/plans/:ordinal/review" do
         json(context.demo ? context.demo.board.review(params[:ordinal]) : plan_review.call(params[:ordinal]))
+      end
+
+      # The Worktrees page: every checkout but the main one, then one
+      # worktree's diff against the default branch and its pull requests
+      # with their CI, each asked for when its panel opens.
+      get "/api/worktrees" do
+        json(worktrees: worktrees.list)
+      end
+
+      get "/api/worktrees/:id/diff" do
+        json(worktrees.diff(params[:id]))
+      end
+
+      get "/api/worktrees/:id/pulls" do
+        json(pulls: worktrees.pulls(params[:id]))
       end
 
       # `.openlanes/config.yml` as the settings page draws it (plan 058, B3).

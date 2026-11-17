@@ -34,7 +34,6 @@ import {
   GlobalLockBanner,
   PausedCliBanner,
   AnnouncerProvider,
-  HelpDialog,
   ModelSelect,
   NeedsYou,
   PlanDrawer,
@@ -258,7 +257,6 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         actionMenu={<ActionMenu backlog={me.backlog} onCommand={onCommand} note={backlogNote(board)} ideaOpen={ideaOpen} onIdeaOpenChange={setIdeaOpen} catalog={me} />}
         restartWeb={<RestartWebDialog connection={connection} onCommand={onCommand} />}
         stopAll={<StopAllDialog agents={busy.reduce((sum, n) => sum + n, 0)} plans={busy.length} onCommand={onCommand} />}
-        help={<HelpDialog />}
       />
       {/* --side-width is set here, above both the status line and the layout: the line is as wide as the board
           panel, which is whatever the right column leaves, and set on the layout alone it could not know that. */}

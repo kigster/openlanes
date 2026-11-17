@@ -28,12 +28,23 @@ module OpenLanes
       # @return [Hash] `{ stat:, patch:, truncated: }`
       def call(feature)
         branch = branch_for(feature) or return EMPTY
+        for_branch(branch)
+      end
+
+      # The same diff for a branch named outright, as a worktree knows it.
+      #
+      # @param branch [String] a local branch
+      # @return [Hash] `{ stat:, patch:, truncated: }`
+      def for_branch(branch)
         range = "#{base}...#{branch}"
         # --no-ext-diff: a `diff.external` in the user's git config (difftastic,
         # say) replaces the unified patch the page parses with its own layout.
         patch = git("diff", "--no-ext-diff", range).to_s
-        { stat: git("diff", "--stat", range).to_s, patch: patch.byteslice(0, @max).scrub, truncated: patch.bytesize > @max }
+        { stat: git("diff", "--no-ext-diff", "--stat", range).to_s, patch: patch.byteslice(0, @max).scrub, truncated: patch.bytesize > @max }
       end
+
+      # @return [String] the branch diffed against
+      def base = @base ||= Vcs::Refresh.default_branch(@root) || "main"
 
       private
 
@@ -43,9 +54,6 @@ module OpenLanes
       def branch_for(feature)
         git("for-each-ref", "--format=%(refname:short)", "refs/heads/*/#{feature.ordinal}-#{feature.slug}").to_s.lines.first&.strip
       end
-
-      # @return [String]
-      def base = @base ||= Vcs::Refresh.default_branch(@root) || "main"
 
       # @return [String, nil] STDOUT, nil when git failed
       def git(*)

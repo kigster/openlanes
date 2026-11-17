@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Snapshot } from "../api/types";
 import type { ConnectionState } from "../api/events";
-import { ThemeMenu } from "./ThemeMenu";
 import { useNavHidden } from "./useNavHidden";
 import { usePhone } from "./usePhone";
 import logo from "../assets/logo.png";
@@ -26,8 +25,6 @@ export interface HeaderProps {
   restartWeb?: ReactNode;
   /** Stop Local Workers and its confirmation: StopAllDialog from src/panels, which brings its own button. */
   stopAll?: ReactNode;
-  /** The round ? pill and its dialog: HelpDialog from src/panels. */
-  help?: ReactNode;
   /** Clock override in epoch ms, for tests; the page ticks its own every few seconds. */
   now?: number;
 }
@@ -100,10 +97,10 @@ function Nav({ toggles, children }: { toggles: ReactNode; children: ReactNode })
 }
 
 /**
- * The top bar: the logo, the run-wide controls as pills, and the theme and help buttons. The run's numbers are in
+ * The top bar: the logo and the run-wide controls as pills; the theme and help buttons sit in the page nav above it. The run's numbers are in
  * StatusLine. The outage notices sit outside the row a phone can hide, so hiding the bar never hides an alarm.
  */
-export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, hideInactive = false, onToggleHideInactive, actionMenu, restartWeb, stopAll, help, now }: HeaderProps) {
+export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, hideInactive = false, onToggleHideInactive, actionMenu, restartWeb, stopAll, now }: HeaderProps) {
   const { run } = snapshot;
   const clock = useNow(now);
   // The engine cannot publish while Redis is gone, so a silent snapshot is the only live signal (plan 022).
@@ -173,8 +170,6 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
             {connection === "offline" ? "Offline, retrying" : "Reconnecting…"}
           </span>
         )}
-        <ThemeMenu />
-        {help}
         {phone && (
           <button className="btn btn-quiet btn-icon nav-hide" type="button" ref={hide} aria-expanded="true" aria-controls="topbar-row" aria-label="Hide navigation" title="Hide this bar. A Nav button at the top of the screen brings it back" onClick={toggleBar}>
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
