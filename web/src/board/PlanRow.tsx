@@ -3,7 +3,7 @@ import { useAnimate, useReducedMotion } from "motion/react";
 import type { AdapterAvailability, Car as CarData, Node, Plan, Station, UnackedMail } from "../api/types";
 import { Car, SpendBadge, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
-import { LaneDocuments } from "./LaneDocuments";
+import { PlanManagement } from "./PlanManagement";
 import { PlanReview } from "./PlanReview";
 import type { SendCommand } from "../panels/support";
 import { dollars, fmt, statusTip, unackedTip, who } from "./format";
@@ -171,7 +171,7 @@ export function PlanRow({ plan, stations, adapters, owner, faded = false, retiri
             </>
           )}
         </div>
-        {!readOnly && <LaneDocuments ordinal={plan.ordinal} lanes={keepsRow(plan) ? "narrow" : lanes} />}
+        {!readOnly && <PlanManagement ordinal={plan.ordinal} lanes={keepsRow(plan) ? "narrow" : lanes} />}
       </div>
       <div className="route">
         <div className="track" aria-hidden="true">

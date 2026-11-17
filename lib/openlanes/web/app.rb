@@ -150,6 +150,9 @@ module OpenLanes
         # @return [OpenLanes::Web::PlanReview]
         def plan_review = PlanReview.new(plans_dir: context.plans_dir, diff: BranchDiff.new(root: context.root))
 
+        # @return [OpenLanes::Web::PlanActions]
+        def plan_actions = PlanActions.new(plans_dir: context.plans_dir, working: ->(ordinal) { live_car?(ordinal) })
+
         # @return [OpenLanes::Web::Worktrees]
         def worktrees
           Worktrees.new(root: context.root,
@@ -239,6 +242,21 @@ module OpenLanes
 
       error Worktrees::NotFound do
         status 404
+        json(error: env["sinatra.error"].message)
+      end
+
+      error PlanActions::NotFound do
+        status 404
+        json(error: env["sinatra.error"].message)
+      end
+
+      error PlanActions::Refused do
+        status 422
+        json(error: env["sinatra.error"].message)
+      end
+
+      error PlanActions::Busy do
+        status 409
         json(error: env["sinatra.error"].message)
       end
 
@@ -486,6 +504,19 @@ module OpenLanes
         tag = plan_files.write(ordinal, name, body: request.body.read, if_match:)
         headers "ETag" => tag
         json(etag: tag)
+      end
+
+      # The "Plan Management" menu: which actions one plan offers, and doing
+      # one. {PlanActions} holds the rules; a plan an agent is on is a 409.
+      get "/api/plans/:ordinal/actions" do
+        json(plan_actions.offer(params[:ordinal]).to_h)
+      end
+
+      post "/api/plans/:ordinal/actions" do
+        halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
+
+        data = body_json
+        json(plan_actions.call(params[:ordinal], data["action"].to_s, reason: data["reason"].to_s).to_h)
       end
 
       # The plan branch's diff and its reviewers' findings (plan 064, B3).
