@@ -1,0 +1,29 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "024.00",
+    "slug": "resume-sessions-across-rounds"
+  },
+  "state": null,
+  "updated_at": "2026-11-17T03:01:52-08:00",
+  "stages": [
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
+    }
+  ],
+  "signatures": [],
+  "messages": [],
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "798ee2d3-1fdb-469a-9705-57c89b7b8443",
+        "through": 0
+      }
+    }
+  }
+}
