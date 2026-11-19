@@ -135,6 +135,8 @@ classDiagram
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__Verdict["OpenLanes::Plans::Verdict"]
+  class OpenLanes__Slack["OpenLanes::Slack"]
+  <<module>> OpenLanes__Slack
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   <<module>> OpenLanes__Supervision
   class OpenLanes__UI["OpenLanes::UI"]
@@ -336,6 +338,7 @@ classDiagram
   OpenLanes__Live__Session ..> OpenLanes__Live__RunState : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Store : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Live__Session ..> OpenLanes__Slack : uses
   OpenLanes__Live__Session ..> OpenLanes__UI : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Adapters : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Adapters__Availability : uses

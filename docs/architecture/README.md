@@ -28,6 +28,7 @@ classDiagram
   class OpenLanes__Release["OpenLanes::Release"]
   class OpenLanes__Setup["OpenLanes::Setup"]
   class OpenLanes__Skills["OpenLanes::Skills"]
+  class OpenLanes__Slack["OpenLanes::Slack"]
   class OpenLanes__Spawner["OpenLanes::Spawner"]
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   class OpenLanes__UI["OpenLanes::UI"]
@@ -62,7 +63,7 @@ classDiagram
   OpenLanes__Arbitration ..> OpenLanes__Agents : 3
   OpenLanes__Arbitration ..> OpenLanes__Plans : 12
   OpenLanes__Arbitration ..> OpenLanes__Vcs : 2
-  OpenLanes__CLI ..> OpenLanes : 28
+  OpenLanes__CLI ..> OpenLanes : 29
   OpenLanes__CLI ..> OpenLanes__Adapters : 3
   OpenLanes__CLI ..> OpenLanes__Agents : 13
   OpenLanes__CLI ..> OpenLanes__Apps : 5
@@ -82,8 +83,9 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Presentation : 8
   OpenLanes__CLI ..> OpenLanes__Setup : 9
   OpenLanes__CLI ..> OpenLanes__Skills : 1
+  OpenLanes__CLI ..> OpenLanes__Slack : 2
   OpenLanes__CLI ..> OpenLanes__Supervision : 10
-  OpenLanes__CLI ..> OpenLanes__UI : 21
+  OpenLanes__CLI ..> OpenLanes__UI : 22
   OpenLanes__CLI ..> OpenLanes__Uml : 2
   OpenLanes__CLI ..> OpenLanes__Vcs : 7
   OpenLanes__CLI ..> OpenLanes__Web : 15
@@ -160,6 +162,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Execution : 7
   OpenLanes__Live ..> OpenLanes__Lifecycle : 7
   OpenLanes__Live ..> OpenLanes__Plans : 29
+  OpenLanes__Live ..> OpenLanes__Slack : 1
   OpenLanes__Live ..> OpenLanes__Supervision : 1
   OpenLanes__Live ..> OpenLanes__UI : 7
   OpenLanes__Memory ..> OpenLanes : 3
@@ -182,6 +185,10 @@ classDiagram
   OpenLanes__Setup ..> OpenLanes__Live : 2
   OpenLanes__Setup ..> OpenLanes__UI : 2
   OpenLanes__Skills ..> OpenLanes : 1
+  OpenLanes__Slack ..> OpenLanes : 5
+  OpenLanes__Slack ..> OpenLanes__Config : 1
+  OpenLanes__Slack ..> OpenLanes__Live : 3
+  OpenLanes__Slack ..> OpenLanes__UI : 4
   OpenLanes__Supervision ..> OpenLanes : 4
   OpenLanes__Supervision ..> OpenLanes__Config : 1
   OpenLanes__Supervision ..> OpenLanes__Container : 2
@@ -235,6 +242,7 @@ classDiagram
 - [OpenLanes::Release](openlanes-release.md)
 - [OpenLanes::Setup](openlanes-setup.md)
 - [OpenLanes::Skills](openlanes-skills.md)
+- [OpenLanes::Slack](openlanes-slack.md)
 - [OpenLanes::Spawner](openlanes-spawner.md)
 - [OpenLanes::Supervision](openlanes-supervision.md)
 - [OpenLanes::UI](openlanes-ui.md)
