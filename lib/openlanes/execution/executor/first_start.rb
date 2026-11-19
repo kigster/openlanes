@@ -72,9 +72,20 @@ module OpenLanes
           launcher = @crew.launcher
           relaunch = lambda do
             attempt.handle.session = nil
-            launcher.launch(@crew.invocations.first(attempt, request.with(resume: nil)), attempt, &)
+            launcher.launch(@crew.invocations.first(reprofiled(attempt), request.with(resume: nil)), attempt, &)
           end
           Restarts.new(resume: request.resume, relaunch:, again: request.resume ? -> { launcher.launch(argv, attempt, &) } : relaunch)
+        end
+
+        # A fresh start's argv is built from the profile as it is now, not as
+        # it was when the round began: a relaunch can come minutes later, after
+        # a rate-limit wait in which a person picked another model with
+        # `prefer_model`. Only the argv changes; the attempt launched stays the
+        # one the round started with, as it was before the executor was split.
+        #
+        # @return [OpenLanes::Execution::Executor::Attempt]
+        def reprofiled(attempt)
+          attempt.with(profile: @crew.preferences.profile_for(attempt.agent, attempt.subject, root: attempt.root))
         end
       end
     end

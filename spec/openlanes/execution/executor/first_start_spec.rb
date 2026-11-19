@@ -28,7 +28,7 @@ RSpec.describe OpenLanes::Execution::Executor::FirstStart do
   let(:invocations) { instance_double(executor::Invocation) }
   let(:supervision) { instance_double(executor::Supervision, supervise: status) }
   let(:verdict) { instance_double(executor::Verdict, judge: :judged) }
-  let(:preferences) { instance_double(executor::Preferences, timeout_for: 1800) }
+  let(:preferences) { instance_double(executor::Preferences, timeout_for: 1800, profile_for: profile) }
   let(:crew) { executor::Crew.new(launcher:, invocations:, supervision:, verdict:, preferences:, trace_dir: traces) }
   let(:records) { [] }
 
@@ -129,6 +129,18 @@ RSpec.describe OpenLanes::Execution::Executor::FirstStart do
         restarts.relaunch.call
         expect(handle.session).to be_nil
         expect(restarts.again).to equal(restarts.relaunch)
+        expect(launcher).to have_received(:launch).with(["claude", "--resume", ""], attempt).twice
+      end
+    end
+
+    context "when another model was chosen after the round began" do
+      let(:asked) { request }
+      let(:chosen) { profile.with(model: "claude-opus-4-1") }
+
+      it "builds the relaunch's argv from the profile as it is now, and launches the same attempt" do
+        allow(preferences).to receive(:profile_for).with(agent, subject_plan, root: traces).and_return(chosen)
+        restarts.relaunch.call
+        expect(invocations).to have_received(:first).with(have_attributes(profile: chosen), have_attributes(resume: nil))
         expect(launcher).to have_received(:launch).with(["claude", "--resume", ""], attempt).twice
       end
     end
