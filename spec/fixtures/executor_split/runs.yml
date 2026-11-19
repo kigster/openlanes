@@ -1,0 +1,305 @@
+---
+unconfinable:
+  argv: []
+  prompts: []
+  result:
+    ok: false
+    note: backend-coder is confined to spec.md, and codex cannot enforce that
+    up: 0
+    down: 0
+    subagents: 0
+    delegated: 0
+    killed:
+    cached: 0
+    throttled: false
+    tools: 0
+  trace_lines:
+  restart: []
+  progress: []
+success:
+  argv:
+  - - claude
+    - "-p"
+    - "<prompt>"
+    - "--add-dir"
+    - "<root>"
+    - "--output-format"
+    - stream-json
+    - "--verbose"
+    - "--include-partial-messages"
+    - "--brief"
+    - "--setting-sources"
+    - project,local
+    - "--strict-mcp-config"
+    - "--mcp-config"
+    - '{"mcpServers":{}}'
+    - "--disable-slash-commands"
+    - "--disallowedTools"
+    - WebFetch,WebSearch,Bash(git push:*),Bash(git commit:*),Bash(git rebase:*),Bash(gh
+      pr create:*),Bash(gh pr edit:*),Bash(gh pr merge:*),Bash(gh pr review:*),Bash(gh
+      pr comment:*),Bash(gh release create:*)
+    - "--allowedTools"
+    - Read,Grep,Glob,Bash,Write,Edit
+    - "--model"
+    - opus
+    - "--effort"
+    - high
+  prompts:
+  - - "## Implementation requirements"
+    - "## Your journal - record as you go, read before you start"
+    - "## The ledger - sign at the start and at the end"
+    - "## Time budget - 1800 seconds"
+    - "## Control file — poll it between steps"
+    - "## Questions in blocked.md: context, then lettered options"
+    - "## Boundary — enforced, not requested"
+  result:
+    ok: true
+    note: completed
+    up: 100
+    down: 10
+    subagents: 0
+    delegated: 0
+    killed:
+    cached: 0
+    throttled: false
+    tools: 0
+  trace_lines: 4
+  restart:
+  - - before
+    - control
+    - cwd
+    - deadline
+    - trace
+  progress:
+  - ''
+  - ''
+  - Built it.
+  - Built it.
+dry_run:
+  argv: []
+  prompts: []
+  result:
+    ok: true
+    note: dry run - would invoke backend-coder
+    up: 0
+    down: 0
+    subagents: 0
+    delegated: 0
+    killed:
+    cached: 0
+    throttled: false
+    tools: 0
+  trace_lines:
+  restart: []
+  progress: []
+throttled:
+  argv:
+  - - claude
+    - "-p"
+    - "<prompt>"
+    - "--add-dir"
+    - "<root>"
+    - "--output-format"
+    - stream-json
+    - "--verbose"
+    - "--include-partial-messages"
+    - "--brief"
+    - "--setting-sources"
+    - project,local
+    - "--strict-mcp-config"
+    - "--mcp-config"
+    - '{"mcpServers":{}}'
+    - "--disable-slash-commands"
+    - "--disallowedTools"
+    - WebFetch,WebSearch,Bash(git push:*),Bash(git commit:*),Bash(git rebase:*),Bash(gh
+      pr create:*),Bash(gh pr edit:*),Bash(gh pr merge:*),Bash(gh pr review:*),Bash(gh
+      pr comment:*),Bash(gh release create:*)
+    - "--allowedTools"
+    - Read,Grep,Glob,Bash,Write,Edit
+    - "--model"
+    - opus
+    - "--effort"
+    - high
+  - - claude
+    - "-p"
+    - "<prompt>"
+    - "--add-dir"
+    - "<root>"
+    - "--output-format"
+    - stream-json
+    - "--verbose"
+    - "--include-partial-messages"
+    - "--brief"
+    - "--setting-sources"
+    - project,local
+    - "--strict-mcp-config"
+    - "--mcp-config"
+    - '{"mcpServers":{}}'
+    - "--disable-slash-commands"
+    - "--disallowedTools"
+    - WebFetch,WebSearch,Bash(git push:*),Bash(git commit:*),Bash(git rebase:*),Bash(gh
+      pr create:*),Bash(gh pr edit:*),Bash(gh pr merge:*),Bash(gh pr review:*),Bash(gh
+      pr comment:*),Bash(gh release create:*)
+    - "--allowedTools"
+    - Read,Grep,Glob,Bash,Write,Edit
+    - "--model"
+    - opus
+    - "--effort"
+    - high
+  prompts:
+  - - "## Implementation requirements"
+    - "## Your journal - record as you go, read before you start"
+    - "## The ledger - sign at the start and at the end"
+    - "## Time budget - 1800 seconds"
+    - "## Control file — poll it between steps"
+    - "## Questions in blocked.md: context, then lettered options"
+    - "## Boundary — enforced, not requested"
+  - - "## Implementation requirements"
+    - "## Your journal - record as you go, read before you start"
+    - "## The ledger - sign at the start and at the end"
+    - "## Time budget - 1800 seconds"
+    - "## Control file — poll it between steps"
+    - "## Questions in blocked.md: context, then lettered options"
+    - "## Boundary — enforced, not requested"
+  result:
+    ok: true
+    note: completed
+    up: 50
+    down: 5
+    subagents: 0
+    delegated: 0
+    killed:
+    cached: 0
+    throttled: false
+    tools: 0
+  trace_lines: 5
+  restart:
+  - - before
+    - control
+    - cwd
+    - deadline
+    - trace
+  - - deadline
+  progress:
+  - ''
+  - ''
+  - rate limited, retry 1 of 8 in 20s
+  - ''
+  - ''
+  - ''
+exit_failed:
+  argv:
+  - - claude
+    - "-p"
+    - "<prompt>"
+    - "--add-dir"
+    - "<root>"
+    - "--output-format"
+    - stream-json
+    - "--verbose"
+    - "--include-partial-messages"
+    - "--brief"
+    - "--setting-sources"
+    - project,local
+    - "--strict-mcp-config"
+    - "--mcp-config"
+    - '{"mcpServers":{}}'
+    - "--disable-slash-commands"
+    - "--disallowedTools"
+    - WebFetch,WebSearch,Bash(git push:*),Bash(git commit:*),Bash(git rebase:*),Bash(gh
+      pr create:*),Bash(gh pr edit:*),Bash(gh pr merge:*),Bash(gh pr review:*),Bash(gh
+      pr comment:*),Bash(gh release create:*)
+    - "--allowedTools"
+    - Read,Grep,Glob,Bash,Write,Edit
+    - "--model"
+    - opus
+    - "--effort"
+    - high
+  prompts:
+  - - "## Implementation requirements"
+    - "## Your journal - record as you go, read before you start"
+    - "## The ledger - sign at the start and at the end"
+    - "## Time budget - 1800 seconds"
+    - "## Control file — poll it between steps"
+    - "## Questions in blocked.md: context, then lettered options"
+    - "## Boundary — enforced, not requested"
+  result:
+    ok: false
+    note: 'claude exited 1: said nothing - trace: <traces>/<trace>.ndjson'
+    up: 0
+    down: 0
+    subagents: 0
+    delegated: 0
+    killed:
+    cached: 0
+    throttled: false
+    tools: 0
+  trace_lines: 2
+  restart:
+  - - before
+    - control
+    - cwd
+    - deadline
+    - trace
+  progress:
+  - ''
+  - Something broke.
+budget_kill:
+  argv:
+  - - claude
+    - "-p"
+    - "<prompt>"
+    - "--add-dir"
+    - "<root>"
+    - "--output-format"
+    - stream-json
+    - "--verbose"
+    - "--include-partial-messages"
+    - "--brief"
+    - "--setting-sources"
+    - project,local
+    - "--strict-mcp-config"
+    - "--mcp-config"
+    - '{"mcpServers":{}}'
+    - "--disable-slash-commands"
+    - "--disallowedTools"
+    - WebFetch,WebSearch,Bash(git push:*),Bash(git commit:*),Bash(git rebase:*),Bash(gh
+      pr create:*),Bash(gh pr edit:*),Bash(gh pr merge:*),Bash(gh pr review:*),Bash(gh
+      pr comment:*),Bash(gh release create:*)
+    - "--allowedTools"
+    - Read,Grep,Glob,Bash,Write,Edit
+    - "--model"
+    - opus
+    - "--effort"
+    - high
+  prompts:
+  - - "## Implementation requirements"
+    - "## Your journal - record as you go, read before you start"
+    - "## The ledger - sign at the start and at the end"
+    - "## Token budget — 500 tokens, enforced"
+    - "## Time budget - 1800 seconds"
+    - "## Control file — poll it between steps"
+    - "## Questions in blocked.md: context, then lettered options"
+    - "## Boundary — enforced, not requested"
+  result:
+    ok: false
+    note: 'token budget of 500 exceeded, last seen starting up - trace: <traces>/<trace>.ndjson'
+    up: 900
+    down: 200
+    subagents: 0
+    delegated: 0
+    killed: :budget
+    cached: 0
+    throttled: false
+    tools: 0
+  trace_lines: 3
+  restart:
+  - - before
+    - control
+    - cwd
+    - deadline
+    - trace
+  progress:
+  - ''
+  - ''
+  - ''
