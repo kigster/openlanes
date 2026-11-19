@@ -6,7 +6,7 @@
     "slug": "inter-agent-communication"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:53:35-08:00",
+  "updated_at": "2026-11-17T01:02:02-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -132,6 +132,12 @@
       "agent": "curator",
       "round": 0,
       "status": "pending",
+      "note": "approved"
+    },
+    {
+      "agent": "curator",
+      "round": 1,
+      "status": "curated",
       "note": "approved"
     }
   ],
@@ -386,11 +392,7 @@
     "curator": {
       "rounds": {},
       "held": {
-<<<<<<< Updated upstream
-        "session": "c180bff1-6658-42c8-a1b7-bf4344e829fd",
-=======
-        "session": "80b0bf45-b389-4311-9ba6-9d0cfcb9d44e",
->>>>>>> Stashed changes
+        "session": "1d2e03c3-4fce-479b-9100-66c5c8cc8594",
         "through": 0
       }
     }

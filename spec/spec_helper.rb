@@ -64,16 +64,12 @@ ENV["OPENLANES_MODELS_OFFLINE"] = "1"
 # A developer's shell (direnv) may export the control room's login; the
 # examples that need one set it themselves.
 ENV.delete("OPENLANES_ADMIN_CREDENTIALS")
-# git hands a hook the repository it is committing to: GIT_DIR and
-# GIT_INDEX_FILE, and more in a linked worktree. The suite runs from
-# pre-commit (lefthook.yml), and with those set every `git` an example runs
-# in its temp directory acts on the developer's checkout instead. One merge
-# commit made that way wrote fixture commits onto a real branch, set
-# `core.bare` and a fixture `user.name` in the shared config, and pushed a
-# fixture branch to GitHub. `git rev-parse --local-env-vars` is this list.
-%w[GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_COMMON_DIR GIT_CONFIG GIT_CONFIG_PARAMETERS GIT_DIR GIT_GRAFT_FILE
-   GIT_IMPLICIT_WORK_TREE GIT_INDEX_FILE GIT_NO_REPLACE_OBJECTS GIT_OBJECT_DIRECTORY GIT_PREFIX GIT_REPLACE_REF_BASE
-   GIT_SHALLOW_FILE GIT_WORK_TREE].each { ENV.delete(it) }
+# A git hook exports GIT_DIR and GIT_INDEX_FILE, and in a linked worktree they
+# outrank `git -C <tmp>`: the pre-commit hook's rspec then ran an example's
+# `git init`, `config` and `commit` against the developer's repository, set
+# `core.bare` on it and committed its fixture to the branch being committed.
+# Git names every variable that binds it to a repository; none may reach a child.
+`git rev-parse --local-env-vars`.split.each { ENV.delete(it) }
 ENV["GIT_CONFIG_COUNT"] = "1"
 ENV["GIT_CONFIG_KEY_0"] = "commit.gpgsign"
 ENV["GIT_CONFIG_VALUE_0"] = "false"
@@ -82,6 +78,13 @@ ENV["GIT_CONFIG_VALUE_0"] = "false"
 # at a per-run temp directory so no example writes into the developer's home.
 ENV["XDG_STATE_HOME"] = Dir.mktmpdir("openlanes-state")
 at_exit { FileUtils.rm_rf(ENV.fetch("XDG_STATE_HOME")) }
+
+# The model catalogue caches Anthropic's list under the XDG cache directory.
+# A developer whose factory has run has one, and it adds models the bundled
+# table lacks, so examples comparing against the bundled table failed on that
+# machine alone.
+ENV["XDG_CACHE_HOME"] = Dir.mktmpdir("openlanes-cache")
+at_exit { FileUtils.rm_rf(ENV.fetch("XDG_CACHE_HOME")) }
 
 # PID files too (S3): a command run in an example writes its own, and a
 # checkout's `tmp/pids` is the developer's running factory.

@@ -2,7 +2,7 @@
 created: 2026-11-13
 starts: planning
 frontend: false
-depends_on: ["045.03"]
+depends_on: [none]
 ---
 
 # Split Plan State

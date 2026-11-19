@@ -6,7 +6,7 @@
     "slug": "idle-start-and-crash-recovery"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:54:08-08:00",
+  "updated_at": "2026-11-17T03:02:03-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -1326,7 +1326,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "6b02da27-87fb-4b3a-b113-682a5d0a55f0",
+        "session": "016fe3ca-6201-432e-a4ff-89d0227f16d7",
         "through": 0
       }
     }

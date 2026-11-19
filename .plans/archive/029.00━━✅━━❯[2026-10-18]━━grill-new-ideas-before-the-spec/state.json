@@ -6,7 +6,7 @@
     "slug": "grill-new-ideas-before-the-spec"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:53:58-08:00",
+  "updated_at": "2026-11-17T03:01:54-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -250,7 +250,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "c1234741-e173-49bf-b2b1-3b83c9c96ce0",
+        "session": "63971732-bd9c-4baa-bb71-22d50e9d2dc0",
         "through": 0
       }
     }

@@ -6,7 +6,7 @@
     "slug": "remove-new-relic"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:54:14-08:00",
+  "updated_at": "2026-11-17T03:02:08-08:00",
   "stages": [
     {
       "agent": "curator",
@@ -22,7 +22,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "8826285b-1656-4ccb-b06d-1230085695f1",
+        "session": "703b2814-afd8-418d-8302-376a94286e4b",
         "through": 0
       }
     }

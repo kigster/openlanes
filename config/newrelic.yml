@@ -16,7 +16,7 @@ common: &default_settings
 
   # Your application name. Renaming here affects where data displays in New
   # Relic.  For more details, see https://docs.newrelic.com/docs/apm/new-relic-apm/maintenance/renaming-applications
-  app_name: 'OpenLanes Kigster'
+  app_name: 'OpenLanes MacBook'
   
   ai_monitoring.enabled: true
   record_content.enabled: false
@@ -56,7 +56,7 @@ common: &default_settings
 # If your application has other named environments, configure them here.
 development:
   <<: *default_settings
-  app_name: 'OpenLanes Kigster (Development)'
+  app_name: 'OpenLanes MacBook (Development)'
 
 test:
   <<: *default_settings
@@ -65,7 +65,7 @@ test:
 
 staging:
   <<: *default_settings
-  app_name: 'OpenLanes Kigster (Staging)'
+  app_name: 'OpenLanes MacBook (Staging)'
 
 production:
   <<: *default_settings

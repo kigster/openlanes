@@ -6,7 +6,7 @@
     "slug": "durable-run-events"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:53:52-08:00",
+  "updated_at": "2026-11-17T03:01:48-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -579,7 +579,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "ba5b691f-1869-40a0-afa6-e6477dae8035",
+        "session": "9e0c8f35-7b2d-444c-8377-d356fea08d4f",
         "through": 0
       }
     }

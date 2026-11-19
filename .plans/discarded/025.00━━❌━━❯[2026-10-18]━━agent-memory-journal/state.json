@@ -6,7 +6,7 @@
     "slug": "agent-memory-journal"
   },
   "state": "discarded",
-  "updated_at": "2026-11-15T10:54:35-08:00",
+  "updated_at": "2026-11-17T03:02:26-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -239,7 +239,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "a7d7e831-d648-4d3d-af95-31f0386465ce",
+        "session": "8fe14220-07b4-42f2-b83c-ec78c2d5b54f",
         "through": 0
       }
     }

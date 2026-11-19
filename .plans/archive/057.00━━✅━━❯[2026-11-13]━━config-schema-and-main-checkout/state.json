@@ -6,7 +6,7 @@
     "slug": "config-schema-and-main-checkout"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:54:20-08:00",
+  "updated_at": "2026-11-17T03:02:12-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -2107,7 +2107,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "5fdf6df5-5079-48df-b911-35409a47eb77",
+        "session": "d927cef7-dd22-46f4-a36c-4543ed5a057c",
         "through": 0
       }
     }

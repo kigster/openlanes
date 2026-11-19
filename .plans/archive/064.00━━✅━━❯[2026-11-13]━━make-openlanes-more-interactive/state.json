@@ -6,7 +6,7 @@
     "slug": "make-openlanes-more-interactive"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:54:27-08:00",
+  "updated_at": "2026-11-17T03:02:19-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -996,7 +996,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "3a003b5c-398a-43fa-882e-6677895f9457",
+        "session": "d454a8e1-9dd8-42af-9ce8-1180ad6625db",
         "through": 0
       }
     }

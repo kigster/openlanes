@@ -128,16 +128,16 @@ classDiagram
   OpenLanes__Events ..> OpenLanes__Adapters : 1
   OpenLanes__Events ..> OpenLanes__Config : 1
   OpenLanes__Events ..> OpenLanes__Live : 1
-  OpenLanes__Execution ..> OpenLanes : 4
+  OpenLanes__Execution ..> OpenLanes : 5
   OpenLanes__Execution ..> OpenLanes__Adapters : 1
-  OpenLanes__Execution ..> OpenLanes__Agents : 3
+  OpenLanes__Execution ..> OpenLanes__Agents : 4
   OpenLanes__Execution ..> OpenLanes__Config : 1
   OpenLanes__Execution ..> OpenLanes__Container : 2
   OpenLanes__Execution ..> OpenLanes__Lifecycle : 1
   OpenLanes__Execution ..> OpenLanes__Memory : 1
   OpenLanes__Execution ..> OpenLanes__Plans : 7
   OpenLanes__Execution ..> OpenLanes__Supervision : 1
-  OpenLanes__Execution ..> OpenLanes__UI : 5
+  OpenLanes__Execution ..> OpenLanes__UI : 11
   OpenLanes__Execution ..> OpenLanes__Vcs : 3
   OpenLanes__Lifecycle ..> OpenLanes : 23
   OpenLanes__Lifecycle ..> OpenLanes__Adapters : 1
