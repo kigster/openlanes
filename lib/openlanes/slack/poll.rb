@@ -31,9 +31,10 @@ module OpenLanes
       #   @return [String] the Slack user id of whoever answered
       # @!attribute [r] text
       #   @return [String] what the engine is told: an option's `answer`, or
-      #     the words of a thread reply
+      #     the words of a thread reply, as said
       # @!attribute [r] label
-      #   @return [String] how the answer reads in the channel
+      #   @return [String] how the answer reads in the channel, escaped, so
+      #     a reply cannot ping `<!channel>` when it is echoed back
       Vote = Data.define(:user, :text, :label)
 
       # @param plan [Hash] `ordinal` and `title`, string keys
@@ -76,8 +77,11 @@ module OpenLanes
       # @return [Array<String>] one emoji per option
       def emoji = EMOJI.first(options.size)
 
+      # Escaped like the blocks: Slack reads `<!channel>` and `<url|label>`
+      # in a notification's text as well.
+      #
       # @return [String] the line a notification shows
-      def text = "#{ordinal} #{plan["title"]}: #{question["heading"]}".strip
+      def text = escape("#{ordinal} #{plan["title"]}: #{question["heading"]}".strip)
 
       # @param closing [String, nil] what happened to the question, once
       #   something has; nil while it is open
@@ -104,22 +108,28 @@ module OpenLanes
 
       # The answer a message carries, if it carries one yet.
       #
-      # A reaction on an option wins over a reply, and the first option
-      # anyone chose wins over the others: a poll with two votes is still
-      # one decision, and the engine can only be told one.
+      # A reaction on an option wins over a reply, and the lowest-numbered
+      # option an operator chose wins over the others, since Slack does not
+      # say which reaction came first: a poll with two votes is still one
+      # decision, and the engine can only be told one.
+      #
+      # Nobody's answer counts without operators. A `blocked.md` answer is
+      # prose an agent reads as instructions, and "anyone in the channel"
+      # takes in whoever joins it, a Slack Connect guest from another
+      # organisation among them.
       #
       # @param messages [Array<Hash>] the message and then its thread, as
       #   `conversations.replies` returns them
       # @param bot [String] the bot's own user id, whose reactions are the
       #   ballot and not a vote
       # @param operators [Array<String>] user ids allowed to answer; empty
-      #   lets anyone in the channel
+      #   lets nobody
       # @param reactions [Array<Hash>, nil] the message's reactions when
       #   they were read apart from it
       # @return [Vote, nil]
       def read(messages, bot:, operators: [], reactions: nil)
         parent, *replies = messages
-        allowed = ->(user) { user && user != bot && (operators.empty? || operators.include?(user)) }
+        allowed = ->(user) { user && user != bot && operators.include?(user) }
         chosen(reactions || parent.to_h["reactions"], allowed) || replied(replies, allowed)
       end
 
@@ -130,7 +140,7 @@ module OpenLanes
         by_name = Array(reactions).to_h { [it["name"].to_s, Array(it["users"])] }
         options.zip(emoji).each do |option, name|
           user = by_name.fetch(name, []).find(&allowed) or next
-          return Vote.new(user:, text: option["answer"].to_s, label: option["label"].to_s)
+          return Vote.new(user:, text: option["answer"].to_s, label: escape(option["label"]))
         end
         nil
       end
@@ -138,13 +148,13 @@ module OpenLanes
       # @return [Vote, nil]
       def replied(replies, allowed)
         said = replies.find { it["bot_id"].nil? && allowed.call(it["user"]) && !it["text"].to_s.strip.empty? } or return nil
-        Vote.new(user: said["user"], text: said["text"].strip, label: said["text"].strip)
+        Vote.new(user: said["user"], text: said["text"].strip, label: escape(said["text"].strip))
       end
 
       # @return [String] which plan, who asks, and whose question it is
       def title
-        asker = question["agent"] ? "#{question["agent"]} asks" : "the engine asks"
-        "*#{ordinal} #{escape(plan["title"])}* · #{asker} · #{question["owner"] || "technical"}"
+        asker = question["agent"] ? "#{escape(question["agent"])} asks" : "the engine asks"
+        "*#{escape(ordinal)} #{escape(plan["title"])}* · #{asker} · #{escape(question["owner"] || "technical")}"
       end
 
       # @return [String, nil]

@@ -12,7 +12,7 @@ RSpec.describe "A run that asks its questions in Slack", :tree do
 
   let(:slack) { FakeSlack.new }
   let(:bridge) do
-    room = OpenLanes::Slack::Room.new(api: slack.api, channel: "#questions")
+    room = OpenLanes::Slack::Room.new(api: slack.api, channel: "#questions", operators: ["UDANA"])
     OpenLanes::Slack::Bridge.new(room:, outbox: OpenLanes::Slack::Outbox.new(store:, keys:), interval: 3600)
   end
   let(:session) do

@@ -42,8 +42,8 @@ The control room keeps working alongside it. A question answered there closes it
    ```yaml
    slack:
      channel: "#openlanes-questions"   # or the channel's id, C0123ABCD; a private channel needs the id
-     workspace: acme                   # optional: the id, name or subdomain the token must belong to
-     operators: [U012ABC, U034DEF]     # optional: the only people whose answers count
+     workspace: T0123ABCD              # optional: the team id the token must belong to (a name or subdomain works, but can be renamed)
+     operators: [U012ABC, U034DEF]     # required: the only people whose answers count
      poll_seconds: 2                   # optional: seconds between two calls to Slack
    ```
 
@@ -60,9 +60,11 @@ After that, `openlanes start` and `openlanes run` ask in Slack whenever they hav
 ## How it works
 
 - **No public URL.** The engine reads answers by asking Slack for each open poll's reactions and thread, over HTTPS it starts itself. Slack never calls back, so there is no endpoint to expose, no Socket Mode and no signing secret. The price is latency: one poll is read every `poll_seconds`, so with five questions open an answer is heard within about ten seconds.
-- **The workspace is checked, not chosen.** A bot token belongs to one workspace. `slack.workspace` names the one intended, and a token that belongs to another posts nothing.
-- **Who may answer.** Anyone in the channel, unless `operators` lists user ids. An answer steers an agent, so treat the channel as you would access to the control room.
-- **One decision per poll.** The first option anyone picked is the answer. A reaction wins over a thread reply.
+- **The workspace is checked, not chosen.** A bot token belongs to one workspace. `slack.workspace` names the one intended, and a token that belongs to another posts nothing. Give the team id (`T…`, which `openlanes slack test` prints): it is the only name that is unique and never changes. A team name or subdomain is accepted, but either can be renamed or shared.
+- **Who may answer: only `operators`.** An answer becomes an agent's instructions, and the agents run with a shell in the repository, so a reaction or a reply counts only from a user id listed in `operators`. Without the list there is no bridge: the run says so once and asks in the control room only. "Anyone in the channel" would include whoever joins it, and a Slack Connect guest from another organisation. Find an id under a profile's **⋯ → Copy member ID**.
+- **One decision per poll.** Slack does not say which reaction came first, so the lowest-numbered option an operator chose is the answer. A reaction wins over a thread reply.
+- **What is posted is escaped.** Plan titles, headings, options and echoed replies have `&`, `<` and `>` escaped, so a heading cannot ping `<!channel>` or draw a link of its own.
+- **A poll fails alone.** A poll whose message was deleted, or whose channel was archived, is forgotten and posted again while its question is still asked; any other refusal of one message skips that poll for the cycle. Only a refusal that holds for every poll (a token, scope or channel problem), a rate limit or the network pauses the rest.
 - **The same questions as the page.** Prose questions the engine rewrites into choices are redrawn in place when the choices arrive. The engine's own questions (more time for an agent, the codebase quality) are polls too.
 - **A failure costs the polls only.** A wrong token, a channel the app is not in or Slack being down is logged once as a warning and tried again thirty seconds later. The run goes on, and the questions stay answerable in the control room.
 

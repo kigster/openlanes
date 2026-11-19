@@ -19,7 +19,20 @@ RSpec.describe OpenLanes::Slack do
       expect(OpenLanes::UI).to have_received(:log).with(/names a channel but SLACK_BOT_TOKEN is not set/, level: :warn)
     end
 
-    it "is a bridge once the channel and the token are both there" do
+    it "is nil without operators, and says that anyone in the channel will not do (HM4)" do
+      config = OpenLanes::Config.new(slack: { channel: "#questions" })
+
+      expect(described_class.bridge(store:, keys:, config:, env:)).to be_nil
+      expect(OpenLanes::UI).to have_received(:log).with(/no slack\.operators .*steers an agent.*, so questions are asked in the control room only/, level: :warn)
+    end
+
+    it "takes an empty or blank list as nobody named" do
+      config = OpenLanes::Config.new(slack: { channel: "#questions", operators: [""] })
+
+      expect(described_class.bridge(store:, keys:, config:, env:)).to be_nil
+    end
+
+    it "is a bridge once the channel, the token and the operators are all there" do
       expect(described_class.bridge(store:, keys:, config: configured, env:)).to be_a(described_class::Bridge)
     end
   end
@@ -32,6 +45,11 @@ RSpec.describe OpenLanes::Slack do
     it "says how to configure a channel when there is none" do
       expect { described_class.room(config: OpenLanes::Config.new, env:) }
         .to raise_error(OpenLanes::Error, %r{no Slack channel\. Add to \.openlanes/config\.yml:.*slack:\n    channel:}m)
+    end
+
+    it "names who may answer" do
+      expect { described_class.room(config: OpenLanes::Config.new(slack: { channel: "#questions" }), env:) }
+        .to raise_error(OpenLanes::Error, /no slack\.operators .*Copy member ID/)
     end
 
     it "needs the token" do

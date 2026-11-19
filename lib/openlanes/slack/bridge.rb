@@ -40,9 +40,12 @@ module OpenLanes
 
       # @param room [OpenLanes::Slack::Room]
       # @param outbox [OpenLanes::Slack::Outbox]
-      # @param interval [Numeric] seconds between Slack calls. Each cycle
-      #   reads one poll, so this is also the rate: 2 is 30 reads a minute,
-      #   inside Slack's limit of about 50
+      # @param interval [Numeric] seconds between cycles. Each cycle reads
+      #   one poll, so 2 is 30 reads a minute, inside Slack's limit of about
+      #   50. That is the read rate only: a cycle that posts a question also
+      #   makes a `chat.update` and a `reactions.add` per option, and one
+      #   that closes a poll a `chat.update`. A burst past the limit comes
+      #   back as {API::RateLimited}, and the worker waits as Slack asks
       # @param clock [Proc] wall time
       def initialize(room:, outbox:, interval: DEFAULT_INTERVAL, clock: -> { Time.now })
         @outbox = outbox

@@ -3188,7 +3188,7 @@
             "string",
             "null"
           ],
-          "description": "The workspace's id, name or subdomain the token must belong to; null takes whichever it does",
+          "description": "The team id (T…) the token must belong to; a name or subdomain is accepted but can be renamed. null takes whichever it does",
           "default": null,
           "minLength": 1
         },
@@ -3197,7 +3197,7 @@
             "array",
             "null"
           ],
-          "description": "Slack user ids allowed to answer; null lets anyone in the channel",
+          "description": "Slack user ids allowed to answer; required, since an answer steers an agent: without them there is no Slack bridge",
           "default": null,
           "items": {
             "type": "string",

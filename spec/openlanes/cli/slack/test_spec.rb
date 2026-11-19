@@ -6,7 +6,7 @@ RSpec.describe OpenLanes::CLI::Slack::Test do
   subject(:command) { described_class.new }
 
   let(:slack) { FakeSlack.new }
-  let(:room) { OpenLanes::Slack::Room.new(api: slack.api, channel: "#questions") }
+  let(:room) { OpenLanes::Slack::Room.new(api: slack.api, channel: "#questions", operators: ["UDANA"]) }
 
   def run(**)
     out, err, status = CapturedStream.capture { command.call(timeout: 0, **) }

@@ -44,7 +44,8 @@ module OpenLanes
   #     model: anthropic/claude-haiku-5.5  # rewrites prose questions into choices (D9)
   #   slack:                    # questions asked in Slack as polls; the token is SLACK_BOT_TOKEN
   #     channel: "#openlanes-questions"
-  #     workspace: acme         # the token must belong to it
+  #     workspace: T0123ABCD    # the token must belong to it
+  #     operators: [U0123ABCD]  # who may answer; required
   #   events:                   # the durable run log (plan 020.01), off by default
   #     enabled: true
   #     dir: /var/lib/openlanes/events  # default: under $XDG_STATE_HOME
