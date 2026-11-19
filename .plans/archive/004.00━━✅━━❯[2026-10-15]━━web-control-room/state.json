@@ -6,7 +6,7 @@
     "slug": "web-control-room"
   },
   "state": "rejected",
-  "updated_at": "2026-11-15T09:45:36-08:00",
+  "updated_at": "2026-11-17T01:02:15-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -132,6 +132,12 @@
       "agent": "curator",
       "round": 0,
       "status": "pending",
+      "note": "approved"
+    },
+    {
+      "agent": "curator",
+      "round": 1,
+      "status": "curated",
       "note": "approved"
     }
   ],
@@ -298,6 +304,15 @@
       "round": 1,
       "status": "Interrupted",
       "note": "harness died; last ledger line: Started, round 1"
+    }
+  },
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "3b34264f-7324-4e81-b776-e1d01e04bb76",
+        "through": 0
+      }
     }
   }
 }

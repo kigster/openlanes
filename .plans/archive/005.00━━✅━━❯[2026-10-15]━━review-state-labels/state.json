@@ -6,7 +6,7 @@
     "slug": "review-state-labels"
   },
   "state": "rejected",
-  "updated_at": "2026-10-18T04:44:22-07:00",
+  "updated_at": "2026-11-17T01:02:26-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -127,6 +127,18 @@
       "down": 5931,
       "seconds": 216.6,
       "note": "completed - 11 tool calls (rejected 1/2)"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
+    },
+    {
+      "agent": "curator",
+      "round": 1,
+      "status": "curated",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -431,6 +443,15 @@
       "round": 1,
       "status": "Interrupted",
       "note": "agent pushed (origin/kig/salvage-post-merge-commits) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: The front end (F1) was already built and committed in an earlier round."
+    }
+  },
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "2f3d312c-830e-4d06-a1af-552cc4cef4ec",
+        "through": 0
+      }
     }
   }
 }

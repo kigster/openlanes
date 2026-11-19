@@ -6,7 +6,7 @@
     "slug": "plan-folder-naming"
   },
   "state": "approved",
-  "updated_at": "2026-10-18T04:44:22-07:00",
+  "updated_at": "2026-11-17T03:01:37-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -127,6 +127,12 @@
       "down": 5165,
       "seconds": 111.6,
       "note": "completed - 11 tool calls; approved, awaiting merge"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -269,5 +275,14 @@
       "to": "frontend-coder",
       "body": "Back end not finished this round: B1 B2 B4 in, B3 B5 B6 B7 next round. Nothing changes in your contract."
     }
-  ]
+  ],
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "aa9721c8-52a2-48f8-938f-3665c6ec6855",
+        "through": 0
+      }
+    }
+  }
 }

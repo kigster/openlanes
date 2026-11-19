@@ -6,7 +6,7 @@
     "slug": "improve-openlanes-low-hanging-fruit"
   },
   "state": "discarded",
-  "updated_at": "2026-11-14T14:45:44-08:00",
+  "updated_at": "2026-11-17T03:02:28-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -643,6 +643,12 @@
       "started_at": "2026-11-14T14:44:24-08:00",
       "note": "⚖️ Ruling (cap): no_go",
       "finished_at": "2026-11-14T14:45:25-08:00"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "discarded"
     }
   ],
   "signatures": [
@@ -1883,6 +1889,13 @@
       "rounds": {},
       "held": {
         "session": "01080cb1-1512-4004-82e2-f7543b8ec03d",
+        "through": 0
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "1fbc2100-bc30-4c36-9fbe-19501e64f431",
         "through": 0
       }
     }

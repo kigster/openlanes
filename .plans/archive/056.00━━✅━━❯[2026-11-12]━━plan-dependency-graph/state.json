@@ -6,7 +6,7 @@
     "slug": "plan-dependency-graph"
   },
   "state": "approved",
-  "updated_at": "2026-11-13T09:39:31-08:00",
+  "updated_at": "2026-11-17T03:02:11-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -320,6 +320,12 @@
       "started_at": "2026-11-13T00:52:06-08:00",
       "note": "⚖️ Ruling (cap): no_go",
       "finished_at": "2026-11-13T00:53:17-08:00"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -1184,6 +1190,13 @@
       "rounds": {},
       "held": {
         "session": "a2108aae-b5d9-43cf-969b-0673257497fd",
+        "through": 0
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "f94d5d73-fca3-4ef0-9a27-eb5c65555481",
         "through": 0
       }
     }

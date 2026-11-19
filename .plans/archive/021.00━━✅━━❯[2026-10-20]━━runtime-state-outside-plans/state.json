@@ -6,7 +6,7 @@
     "slug": "runtime-state-outside-plans"
   },
   "state": "approved",
-  "updated_at": "2026-10-20T18:12:30-07:00",
+  "updated_at": "2026-11-17T03:01:49-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -337,6 +337,12 @@
       "seconds": 309.7,
       "note": "completed - 8 tool calls; verified PR #106; final.png pushed in 02af1f4; waiting on CI",
       "moves": 9
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -1016,6 +1022,13 @@
             }
           ]
         }
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "c097e4de-26a3-4db3-9aa1-820f758d8509",
+        "through": 0
       }
     }
   },

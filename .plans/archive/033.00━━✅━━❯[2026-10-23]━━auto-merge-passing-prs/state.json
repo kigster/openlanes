@@ -6,7 +6,7 @@
     "slug": "auto-merge-passing-prs"
   },
   "state": "approved",
-  "updated_at": "2026-10-23T14:04:11-07:00",
+  "updated_at": "2026-11-17T03:01:58-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -114,6 +114,12 @@
       "seconds": 80.5,
       "note": "completed - 11 tool calls; PR #113 merged",
       "moves": 10
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -284,6 +290,13 @@
             }
           ]
         }
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "0d65c57f-9210-4a77-a11a-7a18c26de22f",
+        "through": 0
       }
     }
   },

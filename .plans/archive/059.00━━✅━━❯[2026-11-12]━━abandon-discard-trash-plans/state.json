@@ -6,7 +6,7 @@
     "slug": "abandon-discard-trash-plans"
   },
   "state": "approved",
-  "updated_at": "2026-11-12T23:09:33-08:00",
+  "updated_at": "2026-11-17T03:02:15-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -752,6 +752,12 @@
       "seconds": 51.1,
       "note": "completed - 2 tool calls; review review-passed; sent back, back to 🔴: verification rejected PR #213, rejected 1 of 2; labels left as staff-reviewer set them; PR #213 labelled review-rejected; mailed backend-coder, chores-coder, frontend-coder; backend-coder and frontend-coder answer every comment that is not ✅",
       "moves": 12
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -2026,6 +2032,13 @@
             }
           ]
         }
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "eb5e6a0a-9588-4f4d-8d8e-830c1885312f",
+        "through": 0
       }
     }
   },

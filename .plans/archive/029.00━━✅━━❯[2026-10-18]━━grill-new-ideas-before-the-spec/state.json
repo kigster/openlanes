@@ -6,7 +6,7 @@
     "slug": "grill-new-ideas-before-the-spec"
   },
   "state": "approved",
-  "updated_at": "2026-10-18T14:07:57-07:00",
+  "updated_at": "2026-11-17T03:01:54-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -122,6 +122,12 @@
       "seconds": 56.1,
       "note": "completed - 6 tool calls (rejected 2/2)",
       "moves": 8
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -239,5 +245,14 @@
   "finished": {
     "kind": "merged",
     "at": "2026-10-18T13:34:54Z"
+  },
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "63971732-bd9c-4baa-bb71-22d50e9d2dc0",
+        "through": 0
+      }
+    }
   }
 }

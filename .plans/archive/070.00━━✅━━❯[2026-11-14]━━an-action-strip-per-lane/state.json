@@ -6,7 +6,7 @@
     "slug": "an-action-strip-per-lane"
   },
   "state": "approved",
-  "updated_at": "2026-11-14T15:36:39-08:00",
+  "updated_at": "2026-11-17T03:02:25-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -381,6 +381,12 @@
       "note": "timed out, killed 60s after STOP; Interrupted; 3 rounds left",
       "moves": 12,
       "replaced_by": "claude"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -899,6 +905,13 @@
       "held": {
         "session": "66921219-852d-42b0-9933-a1fa3623fa88",
         "through": 15
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "a4682a38-4d19-4b82-b9f7-8f347994c892",
+        "through": 0
       }
     }
   },

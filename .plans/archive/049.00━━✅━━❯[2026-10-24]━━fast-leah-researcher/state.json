@@ -6,9 +6,25 @@
     "slug": "fast-leah-researcher"
   },
   "state": "approved",
-  "updated_at": "2026-10-24T22:51:19-07:00",
-  "stages": [],
+  "updated_at": "2026-11-17T03:02:07-08:00",
+  "stages": [
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
+    }
+  ],
   "signatures": [],
   "messages": [],
-  "moves": 2
+  "moves": 2,
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "34966a83-fd87-4d1d-808d-9e015fb5fdd5",
+        "through": 0
+      }
+    }
+  }
 }

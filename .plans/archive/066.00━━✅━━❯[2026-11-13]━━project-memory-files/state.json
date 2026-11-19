@@ -6,7 +6,7 @@
     "slug": "project-memory-files"
   },
   "state": "approved",
-  "updated_at": "2026-11-13T02:29:09-08:00",
+  "updated_at": "2026-11-17T03:02:21-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -167,6 +167,12 @@
       "seconds": 46.5,
       "note": "completed - 4 tool calls; passed; waiting for security-reviewer, staff-reviewer",
       "moves": 9
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -388,6 +394,13 @@
       },
       "held": {
         "session": "d3f22954-1952-44bf-a7af-da9a02eb34af",
+        "through": 0
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "677dbd56-957d-4850-a97e-5049d3b00a98",
         "through": 0
       }
     }

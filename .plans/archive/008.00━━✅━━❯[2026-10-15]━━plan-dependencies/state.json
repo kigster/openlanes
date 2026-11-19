@@ -6,7 +6,7 @@
     "slug": "plan-dependencies"
   },
   "state": "ready_for_review",
-  "updated_at": "2026-10-13T19:26:57-07:00",
+  "updated_at": "2026-11-17T03:01:38-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -107,6 +107,12 @@
       "down": 6783,
       "seconds": 95.8,
       "note": "completed - 12 tool calls"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -235,5 +241,14 @@
       "to": "frontend-coder",
       "body": "Back end done: B1-B4. Gate + blockers-first in dispatcher, Runner#held, and run.rb prints 'N plans held by dependencies' (amended in implementation-plan.md). Integration spec drives exe/openlanes: 3/3 green. Full suite 2248/0, rubocop clean. Proof in pull-requests.md."
     }
-  ]
+  ],
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "1d049a8a-12aa-45f2-b2d0-7ae2503c8967",
+        "through": 0
+      }
+    }
+  }
 }

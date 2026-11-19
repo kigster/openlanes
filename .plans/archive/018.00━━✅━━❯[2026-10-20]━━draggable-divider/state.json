@@ -6,7 +6,7 @@
     "slug": "draggable-divider"
   },
   "state": "approved",
-  "updated_at": "2026-10-21T21:26:12-07:00",
+  "updated_at": "2026-11-17T03:01:45-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -398,6 +398,12 @@
       "seconds": 20.2,
       "note": "no closing ledger line; signed by harness; next: names staff-reviewer, who does not handle 🔴 Changes Requested",
       "moves": 10
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -1556,6 +1562,13 @@
             }
           ]
         }
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "8004bab4-6df4-4fe8-97e2-5aea55844f30",
+        "through": 0
       }
     }
   },

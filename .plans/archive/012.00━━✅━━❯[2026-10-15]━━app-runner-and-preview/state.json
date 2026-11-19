@@ -6,7 +6,7 @@
     "slug": "app-runner-and-preview"
   },
   "state": "blocked",
-  "updated_at": "2026-10-18T04:44:22-07:00",
+  "updated_at": "2026-11-17T03:01:41-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -127,6 +127,12 @@
       "down": 4672,
       "seconds": 101.2,
       "note": "completed - 13 tool calls; next: names staff-reviewer, who does not handle 🔴 Changes Requested"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -346,5 +352,14 @@
       "body": "Back end done: app start/stop/status at 100% (main's bin/coverage-changed: 21 files all >= 95%), rspec 2348/0, rubocop clean. Blocked (technical) B1: PR #38 already merged red and this branch diverged from its remote, so the fix needs a new PR from main. Your useApps files are named in blocked.md.",
       "read": "no"
     }
-  ]
+  ],
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "7a74779c-b91d-474a-b331-11eb67988cf6",
+        "through": 0
+      }
+    }
+  }
 }

@@ -6,7 +6,7 @@
     "slug": "make-openlanes-cheaper"
   },
   "state": "blocked",
-  "updated_at": "2026-11-15T09:44:39-08:00",
+  "updated_at": "2026-11-17T02:56:51-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -46,6 +46,250 @@
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
+    },
+    {
+      "at": "2026-11-17T00:56:53-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T00:57:01-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T00:57:23-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T00:57:28-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T00:57:52-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T00:57:57-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-11-17T00:58:36-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T00:58:39-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T01:29:48-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T01:29:52-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T01:31:38-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T01:31:40-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T01:51:39-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T01:51:45-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T01:53:55-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T01:53:58-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T01:58:14-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T01:58:20-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:02:27-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:02:31-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:04:40-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:04:42-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:22:20-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:22:25-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:23:55-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:23:59-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-11-17T02:25:00-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:25:06-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:25:38-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:25:43-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:26:20-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:26:25-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-11-17T02:48:52-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:48:58-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:50:48-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:50:52-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:56:02-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:56:08-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:56:41-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T02:56:45-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [
@@ -85,10 +329,375 @@
       }
     },
     "unblocker": {
-      "rounds": {},
+      "rounds": {
+        "1": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "The only question (no spec.md) was answered 'a': a human writes spec.md first. Not folded, because no spec.md exists to hold it and creating one would fake a spec."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper has no spec yet, and you chose to write one before research starts. I won't create it myself, because an empty spec would send the plan to research with nothing to look for. Should I a) wait for you to write spec.md, then file your answer there and clear the block, or b) create spec.md now with only your decision and an empty topic for you to fill in?"
+            }
+          ]
+        },
+        "2": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 1 again: still no spec.md and no reply to the follow-up. Nothing folded; blocked.md unchanged; signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper still has no spec, and you chose to write one before research starts. Should I a) keep waiting for you to write spec.md, then file your decision there and clear the block, or b) create spec.md now with only your decision and an empty topic for you to fill in?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper has no spec yet, and you chose to write one before research starts. I won't create it myself, because an empty spec would send the plan to research with nothing to look for. Should I a) wait for you to write spec.md, then file your answer there and clear the block, or b) create spec.md now wi…",
+              "ref": "B1",
+              "answer": "a) Write `spec.md` with the topic and the research questions first, then re-run research. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "3": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper still has no spec, and your answer was to write one before research starts. Should I a) keep waiting until you add spec.md, then file your decision there and clear the block, or b) create spec.md now holding only your decision and an empty topic for you to fill in?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper still has no spec, and your answer was to write one before research starts. Should I a) keep waiting until you add spec.md, then file your decision there and clear the block, or b) create spec.md now holding only your decision and an empty topic for you to fill in? This plan is meant to make …",
+              "ref": "B1",
+              "answer": "a) Write `spec.md` with the topic and the research questions first, then re-run research. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "4": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 4: still no spec.md, and A1 gives the same answer (a) again. Nothing folded, blocked.md left as it was, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper still has no spec.md, and your answer, given again, is to write one before research starts. I can't file that answer until the file exists. Will you add spec.md with the topic and research questions now, or should I create it holding only your decision, with an empty topic for you to fill in?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper still has no spec.md, and your answer, given again, is to write one before research starts. I can't file that answer until the file exists. Will you add spec.md with the topic and research questions now, or should I create it holding only your decision, with an empty topic for you to fill in?…",
+              "ref": "B1",
+              "answer": "a) Write `spec.md` with the topic and the research questions first, then re-run research. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "5": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 5: still no spec.md. A1 gives the same answer, a), again. Nothing folded, blocked.md left unchanged, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper still has no spec.md, and you've now given the same answer five times: write the spec before research starts. I can only file that answer once the file exists. Should I a) wait while you write spec.md with the topic and research questions, or b) create spec.md now with your decision and an empty topic for you to fill in?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper still has no spec.md, and you've now given the same answer five times: write the spec before research starts. I can only file that answer once the file exists. Should I a) wait while you write spec.md with the topic and research questions, or b) create spec.md now with your decision and an em…",
+              "ref": "B1",
+              "answer": "a) Write `spec.md` with the topic and the research questions first, then re-run research. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "6": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 6: still no spec.md, and the answer is still a), the same as every earlier round. Nothing folded, blocked.md not touched, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper still has no spec.md, so I can't file your answer to write one first. Please add spec.md with the topic and research questions, then run unblock again. Or, if you'd rather, tell me to create spec.md holding only your decision and an empty topic for you to fill in."
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper still has no spec.md, so I can't file your answer to write one first. Please add spec.md with the topic and research questions, then run unblock again. Or, if you'd rather, tell me to create spec.md holding only your decision and an empty topic for you to fill in. This plan is meant to make o…",
+              "ref": "B1",
+              "answer": "b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "7": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "A1 now says b): drop the plan and remove the folder by hand. Not folded: there is no spec.md to hold it, and deleting or discarding the folder is a human's call. blocked.md left as it is; signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "You chose to drop the plan to make openlanes cheaper, and I can't carry that out myself. Will you a) move the folder to ❌ Discarded, which keeps its history, or b) delete it by hand? Either way the block goes away with the folder."
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. > > **unblocker asks:** You chose to drop the plan to make openlanes cheaper, and I can't carry that out myself. Will you a) move the folder to ❌ Discarded, which keeps its history, or b) delete it by hand? Either way the block goes away with the folder. This plan is meant to make openlanes cheaper to run, but its folder holds only `state.json`.…",
+              "ref": "B1",
+              "answer": "a) Write `spec.md` with the topic and the research questions first, then re-run research. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "8": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 8: still no spec.md; A1 is back to a) (write spec first). Nothing folded, blocked.md left unchanged, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper still has no spec.md, and your latest answer says to write one before research starts. Answering this again won't move it. Will you a) write spec.md now and run unblock again, or b) give up on the plan and move the folder to Discarded yourself?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper still has no spec.md, and your latest answer says to write one before research starts. Answering this again won't move it. Will you a) write spec.md now and run unblock again, or b) give up on the plan and move the folder to Discarded yourself? This plan is meant to make openlanes cheaper to …",
+              "ref": "B1",
+              "answer": "a) Write `spec.md` with the topic and the research questions first, then re-run research. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "9": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 9: still no spec.md, and A1 is a) (write the spec first) again. Nothing folded, blocked.md unchanged, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper still has no spec.md. Answering 'write the spec first' again won't move it; only the file will. Will you a) add spec.md with the topic and research questions, then run unblock, or b) move the folder to Discarded?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper still has no spec.md. Answering 'write the spec first' again won't move it; only the file will. Will you a) add spec.md with the topic and research questions, then run unblock, or b) move the folder to Discarded? This plan is meant to make openlanes cheaper to run, but its folder holds only `…",
+              "ref": "B1",
+              "answer": "b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "10": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Round 10: A1 is b) again (drop the plan). Not folded: no spec.md, and discarding the folder is a human's call. blocked.md unchanged; signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "You chose to drop the plan to make openlanes cheaper, and that is a step I can't take for you. Answering here again won't change anything. Will you a) move the folder to Discarded yourself, which keeps its history, or b) delete the folder by hand?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. > > **unblocker asks:** You chose to drop the plan to make openlanes cheaper, and that is a step I can't take for you. Answering here again won't change anything. Will you a) move the folder to Discarded yourself, which keeps its history, or b) delete the folder by hand? This plan is meant to make openlanes cheaper to run, but its folder holds o…",
+              "ref": "B1",
+              "answer": "b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "11": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 11: A1 still says b) drop the plan. No spec.md exists to file it in, and discarding the folder is a human's call. Nothing folded, blocked.md not touched, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "You chose to drop the plan to make openlanes cheaper. Running unblock again won't do that, since I can't discard folders. Please either a) move the folder to Discarded yourself, which keeps its history, or b) delete the folder by hand."
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. > > **unblocker asks:** You chose to drop the plan to make openlanes cheaper. Running unblock again won't do that, since I can't discard folders. Please either a) move the folder to Discarded yourself, which keeps its history, or b) delete the folder by hand. This plan is meant to make openlanes cheaper to run, but its folder holds only `state.j…",
+              "ref": "B1",
+              "answer": "b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "12": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 12: A1 still says b) drop the plan. No spec.md to hold it, and discarding the folder is a human's call. Nothing folded, blocked.md unchanged, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "You chose to drop the plan to make openlanes cheaper. Running unblock again can't do that, because I can't remove plan folders. Please either a) move the folder to Discarded yourself, which keeps its history, or b) delete the folder by hand."
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. > > **unblocker asks:** You chose to drop the plan to make openlanes cheaper. Running unblock again can't do that, because I can't remove plan folders. Please either a) move the folder to Discarded yourself, which keeps its history, or b) delete the folder by hand. This plan is meant to make openlanes cheaper to run, but its folder holds only `s…",
+              "ref": "B1",
+              "answer": "a) Write `spec.md` with the topic and the research questions first, then re-run research. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "13": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 13: still no spec.md; A1 is a) (write spec first) again. Nothing folded, blocked.md unchanged, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper has no spec.md, so nothing can move until one exists. Will you a) write spec.md with the topic and research questions, then run unblock, or b) move the folder to Discarded yourself?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper has no spec.md, so nothing can move until one exists. Will you a) write spec.md with the topic and research questions, then run unblock, or b) move the folder to Discarded yourself? This plan is meant to make openlanes cheaper to run, but its folder holds only `state.json`. There is no `spec.…",
+              "ref": "B1",
+              "answer": "a) Write `spec.md` with the topic and the research questions first, then re-run research. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "14": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 14: still no spec.md; A1 is a) again. Nothing folded, blocked.md unchanged, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper still has no spec.md, and running unblock again cannot change that. Will you a) write spec.md with the topic and research questions now, or b) move the folder to Discarded yourself?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper still has no spec.md, and running unblock again cannot change that. Will you a) write spec.md with the topic and research questions now, or b) move the folder to Discarded yourself? This plan is meant to make openlanes cheaper to run, but its folder holds only `state.json`. There is no `spec.…",
+              "ref": "B1",
+              "answer": "a) Write `spec.md` with the topic and the research questions first, then re-run research. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "15": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 15: still no spec.md; A1 is a) again. Nothing folded, blocked.md unchanged, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper still has no spec.md, so your answer (write the spec first) has nowhere to go. Running unblock again won't change that. Will you a) add spec.md with the topic and research questions, then run unblock, or b) move the folder to Discarded yourself?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper still has no spec.md, so your answer (write the spec first) has nowhere to go. Running unblock again won't change that. Will you a) add spec.md with the topic and research questions, then run unblock, or b) move the folder to Discarded yourself? This plan is meant to make openlanes cheaper to…",
+              "ref": "B1",
+              "answer": "b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "16": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Round 16: A1 says b) drop the plan. Not folded: no spec.md, and discarding the folder is a human's call. blocked.md unchanged; signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "You chose to drop the plan to make openlanes cheaper. I can't remove plan folders, so running unblock again won't do it. Will you a) move the folder to Discarded yourself, which keeps its history, or b) delete the folder by hand?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. > > **unblocker asks:** You chose to drop the plan to make openlanes cheaper. I can't remove plan folders, so running unblock again won't do it. Will you a) move the folder to Discarded yourself, which keeps its history, or b) delete the folder by hand? This plan is meant to make openlanes cheaper to run, but its folder holds only `state.json`. …",
+              "ref": "B1",
+              "answer": "a) Write `spec.md` with the topic and the research questions first, then re-run research. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "17": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 17: still no spec.md; A1 is a) (write spec first) again. Nothing folded, blocked.md unchanged, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper still has no spec.md, so running unblock again changes nothing. Please either a) write spec.md with the topic and research questions yourself, then run unblock, or b) move the folder to Discarded yourself. Which will you do?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper still has no spec.md, so running unblock again changes nothing. Please either a) write spec.md with the topic and research questions yourself, then run unblock, or b) move the folder to Discarded yourself. Which will you do? This plan is meant to make openlanes cheaper to run, but its folder …",
+              "ref": "B1",
+              "answer": "a) Write `spec.md` with the topic and the research questions first, then re-run research. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "18": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 18: still no spec.md; A1 is a) (write the spec first) again. Nothing folded, blocked.md unchanged, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "The plan to make openlanes cheaper still has no spec.md, so answering 'write the spec first' again changes nothing. Will you a) write spec.md with the topic and research questions, then run unblock, or b) move the folder to Discarded yourself?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** a) Write `spec.md` with the topic and the research questions first, then re-run research. > > **unblocker asks:** The plan to make openlanes cheaper still has no spec.md, so answering 'write the spec first' again changes nothing. Will you a) write spec.md with the topic and research questions, then run unblock, or b) move the folder to Discarded yourself? This plan is meant to make openlanes cheaper to run, but its folder holds only `stat…",
+              "ref": "B1",
+              "answer": "b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "19": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 19: A1 is b) (drop the plan) again. Still no spec.md to fold it into, and discarding the folder is a human's call. Nothing folded, blocked.md unchanged, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "You chose to drop the plan to make openlanes cheaper, but I can't remove plan folders, so running unblock again does nothing. Please either a) move the folder to Discarded yourself, which keeps its history, or b) write spec.md with the topic and research questions if you want to keep the plan. Which one?"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Is there a spec to research from? > **You answered:** b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. > > **unblocker asks:** You chose to drop the plan to make openlanes cheaper, but I can't remove plan folders, so running unblock again does nothing. Please either a) move the folder to Discarded yourself, which keeps its history, or b) write spec.md with the topic and research questions if you want to keep the plan. Which one? This plan is mean…",
+              "ref": "B1",
+              "answer": "b) Drop this plan: nothing else in it needs researching, so the folder can be removed by hand. Answered by kig on 2026-11-17"
+            }
+          ]
+        },
+        "20": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 20: A1 still says b) drop the plan. There is still no spec.md to put it in, and discarding the folder is a human's call. Nothing folded, blocked.md unchanged, signed Blocked."
+            },
+            {
+              "kind": "question",
+              "text": "You chose to drop the plan to make openlanes cheaper. I can't move or delete plan folders, so running unblock again won't do anything. Please move the folder to Discarded yourself, which keeps its history. Or, if you want to keep the plan after all, write spec.md with the topic and research questions. Which will you do?"
+            }
+          ]
+        }
+      },
       "held": {
-        "session": "b4e0f286-2f41-4524-a038-bbd3babd2842",
-        "through": 0
+        "session": "c0906951-5840-46a0-a2a9-7739a60b7c14",
+        "through": 57
       }
     }
   }

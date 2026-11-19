@@ -6,7 +6,7 @@
     "slug": "durable-run-events"
   },
   "state": "approved",
-  "updated_at": "2026-10-23T22:31:42-07:00",
+  "updated_at": "2026-11-17T03:01:48-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -199,6 +199,12 @@
       "seconds": 448.5,
       "note": "completed - 23 tool calls; next: names staff-reviewer, who does not handle 🟡 Building",
       "moves": 7
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -568,6 +574,13 @@
             }
           ]
         }
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "9e0c8f35-7b2d-444c-8377-d356fea08d4f",
+        "through": 0
       }
     }
   },

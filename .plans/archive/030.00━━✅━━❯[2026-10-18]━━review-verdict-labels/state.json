@@ -6,7 +6,7 @@
     "slug": "review-verdict-labels"
   },
   "state": "approved",
-  "updated_at": "2026-10-18T06:35:38-07:00",
+  "updated_at": "2026-11-17T03:01:55-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -168,6 +168,12 @@
       "seconds": 37.4,
       "note": "no closing ledger line; Interrupted; no rounds left",
       "moves": 8
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -426,6 +432,13 @@
             }
           ]
         }
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "19b4fdf6-4ec2-4b73-a399-70709ba74f1f",
+        "through": 0
       }
     }
   },

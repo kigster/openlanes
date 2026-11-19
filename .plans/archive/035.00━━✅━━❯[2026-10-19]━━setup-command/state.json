@@ -6,7 +6,7 @@
     "slug": "setup-command"
   },
   "state": "approved",
-  "updated_at": "2026-10-19T02:02:49-07:00",
+  "updated_at": "2026-11-17T03:01:59-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -76,6 +76,12 @@
       "seconds": 59.3,
       "note": "completed - 11 tool calls; verified PR #82; final.png pushed in 1edd95e; waiting on CI",
       "moves": 5
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -138,5 +144,14 @@
   "finished": {
     "kind": "merged",
     "at": "2026-10-19T09:02:49Z"
+  },
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "48db97da-c7ff-41ab-98f2-7e9378f78276",
+        "through": 0
+      }
+    }
   }
 }

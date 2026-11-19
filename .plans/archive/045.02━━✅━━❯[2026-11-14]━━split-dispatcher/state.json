@@ -6,7 +6,7 @@
     "slug": "split-dispatcher"
   },
   "state": "approved",
-  "updated_at": "2026-11-14T15:49:48-08:00",
+  "updated_at": "2026-11-17T03:02:06-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -336,6 +336,12 @@
       "seconds": 109.5,
       "note": "completed - 10 tool calls; passed; waiting for security-reviewer",
       "moves": 9
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -976,6 +982,13 @@
       "rounds": {},
       "held": {
         "session": "ba30a92f-a7ec-43c5-bb86-7a52b96cb221",
+        "through": 0
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "7be81f58-424f-4a1c-87cd-4f2bda285e94",
         "through": 0
       }
     }
