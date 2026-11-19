@@ -1,4 +1,4 @@
-import { DOCUMENT_MODAL, LANE_DOCUMENTS } from "../support/selectors";
+import { DOCUMENT_ITEMS, DOCUMENT_MODAL, LANE_DOCUMENTS } from "../support/selectors";
 
 // Plan 070: each wide lane's Documents dropdown opens a plan document in a read-only modal, against the real demo server
 // and the plans tree bin/web-e2e copies to a temp dir (Cypress.env("plansDir")). Nothing is stubbed or intercepted.
@@ -27,7 +27,7 @@ describe("Lane documents", () => {
 
   it("lists Specification first and renders it with highlighted YAML frontmatter and a rendered body", () => {
     openMenu();
-    cy.get('[role="menuitem"]').first().should("have.text", "Specification");
+    cy.get(DOCUMENT_ITEMS).first().should("have.text", "Specification");
     cy.contains('[role="menuitem"]', "Specification").click();
     cy.get(DOCUMENT_MODAL).should("have.length", 1);
     cy.get(`${DOCUMENT_MODAL} .document-frontmatter code.language-yaml`).should("contain", "created:").find(".hljs-attr").should("exist");
@@ -42,8 +42,8 @@ describe("Lane documents", () => {
     cy.then(() => cy.writeFile(`${folder}/pull-requests.md`, "# Pull Requests\n"));
     cy.reload();
     openMenu();
-    cy.get('[role="menuitem"]').last().should("have.text", "Pull requests");
-    cy.get('[role="menuitem"]').last().click();
+    cy.get(DOCUMENT_ITEMS).last().should("have.text", "Pull requests");
+    cy.get(DOCUMENT_ITEMS).last().click();
     cy.get(DOCUMENT_MODAL).contains("button", "Close").click();
     cy.get(DOCUMENT_MODAL).should("not.exist");
   });

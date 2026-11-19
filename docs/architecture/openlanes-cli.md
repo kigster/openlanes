@@ -191,6 +191,8 @@ classDiagram
   class OpenLanes__Web__Launcher["OpenLanes::Web::Launcher"]
   class OpenLanes__Web__Listen["OpenLanes::Web::Listen"]
   class OpenLanes__Web__Listen__Invalid["OpenLanes::Web::Listen::Invalid"]
+  class OpenLanes__Web__Ports["OpenLanes::Web::Ports"]
+  <<module>> OpenLanes__Web__Ports
   class OpenLanes__Web__Stores["OpenLanes::Web::Stores"]
   OpenLanes__CLI__API__Docs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__API__Docs ..> OpenLanes__Presentation : uses
@@ -468,6 +470,7 @@ classDiagram
   OpenLanes__CLI__Web ..> OpenLanes__Web__Demo : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Demo__Interview : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Launcher : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Web__Ports : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Stores : uses
   OpenLanes__CLI__Worktree --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Worktree ..> OpenLanes__Plans__Ordinal : uses

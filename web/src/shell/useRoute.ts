@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type Route = "/" | "/dependencies" | "/settings";
+export type Route = "/" | "/dependencies" | "/settings" | "/worktrees";
 
-const PAGES: Route[] = ["/dependencies", "/settings"];
+const PAGES: Route[] = ["/dependencies", "/settings", "/worktrees"];
 
 /** Any path but a page's own is the board, so an unknown address still lands on something. */
 export const routeOf = (pathname: string): Route => PAGES.find(r => r === pathname.replace(/\/+$/, "")) ?? "/";

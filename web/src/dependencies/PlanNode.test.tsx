@@ -47,7 +47,7 @@ it("lists the plan's documents from its box, asking only once the menu is opened
   vi.stubGlobal("fetch", fetchMock);
   vi.stubGlobal("matchMedia", (q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {} }));
   draw(0);
-  const trigger = await screen.findByRole("button", { name: "Documents of 001.00" });
+  const trigger = await screen.findByRole("button", { name: "Plan Management of 001.00" });
   expect(fetchMock).not.toHaveBeenCalled();
   await userEvent.click(trigger);
   expect(await screen.findByRole("menuitem", { name: "Specification" })).toBeInTheDocument();
