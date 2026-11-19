@@ -6,7 +6,7 @@
     "slug": "plan-dependency-graph"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:54:18-08:00",
+  "updated_at": "2026-11-17T03:02:11-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -1196,7 +1196,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "34f6cf55-ef46-4fb0-a85f-5141d87a80da",
+        "session": "f94d5d73-fca3-4ef0-9a27-eb5c65555481",
         "through": 0
       }
     }

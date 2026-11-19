@@ -6,7 +6,7 @@
     "slug": "durable-round-ledger"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:54:28-08:00",
+  "updated_at": "2026-11-17T03:02:20-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -716,7 +716,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "7efd9454-47c8-468c-80c1-329d2834a42d",
+        "session": "430e4e5e-d734-46d1-8013-9ec68bac238e",
         "through": 0
       }
     }

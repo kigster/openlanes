@@ -6,7 +6,7 @@
     "slug": "resume-sessions-across-rounds"
   },
   "state": "approved",
-  "updated_at": "2026-11-15T10:53:57-08:00",
+  "updated_at": "2026-11-17T03:01:53-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -239,7 +239,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "f72cef3f-3204-4e62-acb2-8d9d41fef67f",
+        "session": "8944f960-5a19-40af-9336-74468f0e76d7",
         "through": 0
       }
     }

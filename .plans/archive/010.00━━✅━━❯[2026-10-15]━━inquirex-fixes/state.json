@@ -6,7 +6,7 @@
     "slug": "inquirex-fixes"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T01:02:33-08:00",
+  "updated_at": "2026-11-17T03:01:40-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -180,7 +180,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "e5915019-1899-4a45-a132-c9c8d951dc12",
+        "session": "6c76d2e4-800d-4ba9-8b1b-eb857be6576e",
         "through": 0
       }
     }

@@ -6,7 +6,7 @@
     "slug": "chewie-verifier"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T01:02:36-08:00",
+  "updated_at": "2026-11-17T03:01:43-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -794,7 +794,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "8f86f76e-761c-46f2-8674-338fc95a7752",
+        "session": "13dde441-531d-4b72-8d08-b7b0155ba8ef",
         "through": 0
       }
     }
