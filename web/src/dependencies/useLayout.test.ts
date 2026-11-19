@@ -4,18 +4,18 @@ import { LAYOUT_KEY, useLayout } from "./useLayout";
 beforeEach(() => localStorage.clear());
 afterEach(() => vi.restoreAllMocks());
 
-it("starts on Adaptive, and keeps a pick for the next visit", () => {
+it("starts on Circular, and keeps a pick for the next visit", () => {
   const { result, unmount } = renderHook(() => useLayout());
-  expect(result.current.layout).toBe("adaptive");
-  act(() => result.current.pick("circular"));
-  expect([result.current.layout, localStorage.getItem(LAYOUT_KEY)]).toEqual(["circular", "circular"]);
+  expect(result.current.layout).toBe("circular");
+  act(() => result.current.pick("adaptive"));
+  expect([result.current.layout, localStorage.getItem(LAYOUT_KEY)]).toEqual(["adaptive", "adaptive"]);
   unmount();
-  expect(renderHook(() => useLayout()).result.current.layout).toBe("circular");
+  expect(renderHook(() => useLayout()).result.current.layout).toBe("adaptive");
 });
 
-it("falls back to Adaptive on a value it does not know", () => {
+it("falls back to Circular on a value it does not know", () => {
   localStorage.setItem(LAYOUT_KEY, "spiral");
-  expect(renderHook(() => useLayout()).result.current.layout).toBe("adaptive");
+  expect(renderHook(() => useLayout()).result.current.layout).toBe("circular");
 });
 
 it("works for the visit when storage refuses", () => {

@@ -67,25 +67,25 @@ describe("plan dependencies", () => {
     cy.get(".dep-canvas, .dep-empty").should("exist");
     cy.get("body").then($body => {
       if ($body.find(".dep-canvas").length === 0) return; // an empty tree has nothing to arrange
-      cy.get('.dep-layout input[value="adaptive"]').should("be.checked");
+      cy.get('.dep-layout input[value="circular"]').should("be.checked");
       count(".dep-node").then(nodes =>
         count("path.dep-edge").then(arrows =>
           corners().then(before => {
-            ["down", "circular", "grid", "right"].forEach(kind => {
+            ["down", "adaptive", "grid", "right"].forEach(kind => {
               cy.get(`.dep-layout input[value="${kind}"]`).check({ force: true });
               cy.get(".dep-canvas").should("have.attr", "data-layout", kind);
               cy.get(".dep-node").should("have.length", nodes);
               cy.get("path.dep-edge").should("have.length", arrows);
-              // Two unlinked plans sit side by side in most arrangements; on a ring they never do.
-              if (nodes > 1 && kind === "circular") corners().should("not.eq", before);
+              // The page opens on a ring, where two unlinked plans never sit side by side; in rows they do.
+              if (nodes > 1 && kind === "adaptive") corners().should("not.eq", before);
             });
           }),
         ),
       );
-      cy.get('.dep-layout input[value="circular"]').check({ force: true });
+      cy.get('.dep-layout input[value="adaptive"]').check({ force: true });
       cy.reload();
-      cy.get('.dep-layout input[value="circular"]').should("be.checked");
-      cy.get(".dep-canvas").should("have.attr", "data-layout", "circular");
+      cy.get('.dep-layout input[value="adaptive"]').should("be.checked");
+      cy.get(".dep-canvas").should("have.attr", "data-layout", "adaptive");
     });
   });
 
