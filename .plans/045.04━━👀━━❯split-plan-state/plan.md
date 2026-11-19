@@ -171,3 +171,14 @@ No. The plan adds and changes no HTTP API; the control room reads `state.json` e
 - `rg "method_missing|public_send|send\(" lib/openlanes/plans/plan_state*`: prints nothing.
 - `bundle exec rspec spec/openlanes/docs/architecture_doc_spec.rb`: passes, so `docs/architecture/` is current.
 - `bundle exec rspec spec/openlanes/web/branch_diff_spec.rb spec/openlanes/adapters`: pass even with `git config diff.external difft` set and a model list cached under `~/.cache/openlanes`.
+
+## Rebase decisions
+
+- `.plans/045.04━━👀━━❯split-plan-state/spec.md`: kept `origin/main`'s copy. Main had already moved the plan to 👀 (review); the branch's only change to the spec was one line, and the content is identical to what main holds.
+- `.plans/045.04━━🟡━━❯split-plan-state/` (`spec.md`, `plan.md`, `pull-requests.md`, `state.json`): dropped. The branch added these under the in-progress state, but main's 👀 folder is the same plan one state later and its `plan.md`, `pull-requests.md` and `state.json` are newer. Keeping both would give two folders for plan 045.04. The dropped copies remain in the branch commit (`REBASE_HEAD`).
+- `.plans/045.04━━📋━━❯split-plan-state/spec.md`: deleted on both sides (main renamed it to 👀, the branch to 🟡), so it stays deleted.
+- Code, specs and docs (`lib/`, `spec/`, `docs/architecture/`, `.rubocop_todo.yml`) merged cleanly; no judgement needed.
+- Second commit replayed (`267570ab`, moves the plan to 🔴): `.plans/045.04━━🔴━━❯split-plan-state/` (`plan.md`, `spec.md`, `pull-requests.md`, `state.json`) dropped. Main's 👀 folder holds the same plan one state later: `state.json` is `in_review` with review 9 `passed` (updated 03:01), while the branch's 🔴 copy is `rejected` (02:49) and older. `plan.md`, `spec.md` and `pull-requests.md` are byte-identical in both. Keeping both would give two folders for plan 045.04. The 🔴 copy remains in `REBASE_HEAD`.
+- `.plans/045.04━━👀━━❯split-plan-state/{plan,spec}.md`: kept `origin/main`'s version (identical to the branch's, apart from this section).
+- `.plans/045.04━━🟡━━❯split-plan-state/{plan,spec}.md`: deleted on both sides, stays deleted.
+- `lib/openlanes/plans/plan_state*.rb` and their specs: the branch's edits applied cleanly; no judgement needed.

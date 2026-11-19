@@ -29,7 +29,8 @@ module OpenLanes
       def call(feature)
         branch = branch_for(feature) or return EMPTY
         range = "#{base}...#{branch}"
-        patch = git("diff", range).to_s
+        # A user's `diff.external` (difftastic, say) would replace the patch the page parses.
+        patch = git("diff", "--no-ext-diff", range).to_s
         { stat: git("diff", "--stat", range).to_s, patch: patch.byteslice(0, @max).scrub, truncated: patch.bytesize > @max }
       end
 
