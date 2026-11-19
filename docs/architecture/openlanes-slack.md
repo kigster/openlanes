@@ -34,9 +34,11 @@ classDiagram
   OpenLanes__Slack__API ..> OpenLanes__Slack__API__Refused : uses
   OpenLanes__Slack__API__RateLimited --|> OpenLanes__Error : inherits
   OpenLanes__Slack__API__Refused --|> OpenLanes__Error : inherits
+  OpenLanes__Slack__Asker ..> OpenLanes__Slack__API__Refused : uses
   OpenLanes__Slack__Asker ..> OpenLanes__Slack__Bridge : uses
   OpenLanes__Slack__Asker ..> OpenLanes__Slack__Poll : uses
   OpenLanes__Slack__Asker ..> OpenLanes__Slack__Room : uses
+  OpenLanes__Slack__Asker ..> OpenLanes__UI : uses
   OpenLanes__Slack__Bridge ..> OpenLanes__Slack__API : uses
   OpenLanes__Slack__Bridge ..> OpenLanes__Slack__API__RateLimited : uses
   OpenLanes__Slack__Bridge ..> OpenLanes__Slack__Asker : uses

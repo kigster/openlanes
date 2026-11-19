@@ -6,7 +6,7 @@ RSpec.describe OpenLanes::Slack::Bridge do
   subject(:bridge) { described_class.new(room:, outbox: OpenLanes::Slack::Outbox.new(store:, keys:), clock: -> { now }) }
 
   let(:slack) { FakeSlack.new }
-  let(:room) { OpenLanes::Slack::Room.new(api: slack.api, channel: "#questions") }
+  let(:room) { OpenLanes::Slack::Room.new(api: slack.api, channel: "#questions", operators: ["UDANA"]) }
   let(:store) { OpenLanes::Live.memory_store }
   let(:keys) { OpenLanes::Live::Keys.new(repo: "github.com/example/openlanes", node: "aaaa:bbbb") }
   let(:options) do
@@ -181,6 +181,63 @@ RSpec.describe OpenLanes::Slack::Bridge do
 
     expect(slack.posts.size).to eq(1)
     expect(slack.called("reactions.add").last(2).map { it["name"] }).to eq(%w[one two])
+  end
+
+  # One poll Slack refuses must not hold up the others (the review's 🛑):
+  # a message deleted by a person, a channel archived since, or a refusal
+  # of that one message.
+  describe "a poll Slack refuses" do
+    let(:other) { question.merge(id: "041.00/B2", heading: "B2 — Which database?", options:) }
+    let(:first) { slack.posts.first }
+    let(:second) { slack.posts.last }
+
+    before { round(question, other) }
+
+    it "still hears the others once its message is deleted and its question settled elsewhere" do
+      slack.delete(first)
+      round(other)
+      later(described_class::GRACE)
+      slack.click(second, "two")
+      4.times { round(other) }
+
+      expect(queued.map { it.dig("payload", "question") }).to eq(["B2"])
+      expect(kept.keys).to all(end_with(OpenLanes::Slack::Poll.new(plan: {}, question: other.transform_keys(&:to_s)).key.split("#").last))
+      expect(OpenLanes::UI).to have_received(:log).with(%r{poll 041\.00/B1#\h+ is gone from Slack \(message_not_found\)}, level: :warn)
+    end
+
+    it "posts a deleted poll afresh while its question is still asked, and does not lose it to a restart" do
+      slack.delete(first)
+      3.times { round(question, other) }
+
+      expect(slack.posts.size).to eq(2)
+      expect(kept.size).to eq(2)
+      expect(slack.posts).not_to include(first)
+    end
+
+    it "keeps reading the others while one redraw keeps failing, and says so once" do
+      slack.refuse_at(first, "cant_update_message")
+      slack.click(second, "one")
+      4.times { round(question.merge(body: "Rewritten."), other) }
+
+      expect(queued.map { it.dig("payload", "question") }).to eq(["B2"])
+      expect(kept.size).to eq(2)
+      expect(OpenLanes::UI).to have_received(:log).with(/poll .* skipped this cycle: .*cant_update_message/, level: :warn).once
+    end
+
+    it "forgets a poll whose channel was archived when it comes to close it" do
+      slack.refuse_at(first, "is_archived")
+      round(other)
+      later(described_class::GRACE)
+      round(other)
+
+      expect(kept.size).to eq(1)
+    end
+
+    it "still ends the cycle on a refusal that holds for every poll" do
+      slack.refuse("conversations.replies", "not_in_channel")
+
+      expect { bridge.cycle }.to raise_error(OpenLanes::Slack::API::Refused, /not_in_channel/)
+    end
   end
 
   describe "across a restart" do

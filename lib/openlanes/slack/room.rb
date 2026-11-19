@@ -26,12 +26,31 @@ module OpenLanes
         "missing_scope"     => "add the scope under OAuth & Permissions, then reinstall the app"
       }.freeze
 
+      # Refusals that say the poll's message is no longer there to work on:
+      # deleted by a person, or in a channel archived since. They end that
+      # poll and nothing else.
+      GONE = %w[message_not_found channel_not_found is_archived thread_not_found].freeze
+
+      # Refusals that hold for every poll alike, so asking the next one in
+      # the same cycle would only be refused again.
+      CHANNEL_WIDE = %w[not_in_channel invalid_auth not_authed missing_scope token_revoked account_inactive].freeze
+
+      # Whether a refusal ends the whole cycle rather than one poll. A
+      # channel that cannot be found when nothing has been posted to it yet
+      # is the configuration, not one message.
+      #
+      # @param code [String] Slack's error code
+      # @param posted [Boolean] whether the poll already has a message
+      # @return [Boolean]
+      def self.channel_wide?(code, posted:) = CHANNEL_WIDE.include?(code) || (!posted && GONE.include?(code))
+
       # @param api [OpenLanes::Slack::API]
       # @param channel [String] an id, or a public channel's `#name`
-      # @param workspace [String, nil] the team's id, name or subdomain the
-      #   token must belong to; nil takes whichever it does
+      # @param workspace [String, nil] the team's id (`T…`), which pins it,
+      #   or its name or subdomain, which are a convenience: a name is not
+      #   unique and can be renamed. nil takes whichever the token is in
       # @param operators [Array<String>] user ids allowed to answer; empty
-      #   lets anyone in the channel
+      #   lets nobody, since an answer steers an agent
       def initialize(api:, channel:, workspace: nil, operators: [])
         @api = api
         @channel = channel
@@ -121,17 +140,21 @@ module OpenLanes
 
       private
 
-      # @return [Array<String>] every way to name the workspace, lower case
+      # Every way to name the workspace, lower case. Only the id is unique
+      # and permanent; the name and subdomain are accepted for convenience.
+      #
+      # @return [Array<String>]
       def names_of(who)
         [who["team_id"], who["team"], who["url"].to_s[%r{//([^./]+)\.}, 1]].compact.map { it.to_s.downcase }
       end
 
-      # @raise [OpenLanes::Error] Slack's refusal, with what to do about it
+      # @raise [OpenLanes::Slack::API::Refused] Slack's refusal, with what
+      #   to do about it, and still with Slack's code
       def hinted
         yield
       rescue API::Refused => e
         hint = HINTS[e.code] or raise
-        raise Error, "#{e.message}; #{hint}"
+        raise API::Refused.new(nil, e.code, message: "#{e.message}; #{hint}")
       end
     end
   end

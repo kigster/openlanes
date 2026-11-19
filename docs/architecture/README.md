@@ -188,7 +188,7 @@ classDiagram
   OpenLanes__Slack ..> OpenLanes : 5
   OpenLanes__Slack ..> OpenLanes__Config : 1
   OpenLanes__Slack ..> OpenLanes__Live : 3
-  OpenLanes__Slack ..> OpenLanes__UI : 3
+  OpenLanes__Slack ..> OpenLanes__UI : 4
   OpenLanes__Supervision ..> OpenLanes : 4
   OpenLanes__Supervision ..> OpenLanes__Config : 1
   OpenLanes__Supervision ..> OpenLanes__Container : 2

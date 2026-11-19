@@ -7,6 +7,11 @@ module OpenLanes
     #
     # Everything here runs on the worker thread and talks to Slack through
     # the {Room}. What it learns goes to the {Outbox}, never to the store.
+    #
+    # Each poll fails on its own. A refusal about one message (deleted by a
+    # person, too long, in a channel since archived) costs that poll and no
+    # other; only what holds for every poll alike ({Room.channel_wide?}),
+    # a rate limit or the network ends the cycle.
     class Asker
       # @param room [OpenLanes::Slack::Room]
       # @param outbox [OpenLanes::Slack::Outbox]
@@ -17,6 +22,7 @@ module OpenLanes
         @clock = clock
         @records = {}
         @missing = {}
+        @said = {}
         @cursor = 0
       end
 
@@ -33,7 +39,7 @@ module OpenLanes
       # @return [void]
       def call(polls)
         asked = polls.to_h { [it.key, it] }
-        asked.each { |key, poll| ask(key, poll) }
+        asked.each { |key, poll| alone(key) { ask(key, poll) } }
         retire(asked)
         listen(asked)
       end
@@ -66,7 +72,7 @@ module OpenLanes
         now = @clock.call.to_f
         @missing.select! { |key, _| @records.key?(key) && !asked.key?(key) }
         @records.to_a.each do |key, record|
-          asked.key?(key) ? reconsider(key, record, asked[key], now) : lapse(key, record, now)
+          alone(key) { asked.key?(key) ? reconsider(key, record, asked[key], now) : lapse(key, record, now) }
         end
       end
 
@@ -104,7 +110,41 @@ module OpenLanes
         return if open.empty?
 
         key = open[(@cursor += 1) % open.size]
-        hear(key, @records[key], asked[key])
+        alone(key) { hear(key, @records[key], asked[key]) }
+      end
+
+      # Work on one poll, so that Slack refusing it stops nothing else. A
+      # message that is gone is forgotten, here and in the store, so it is
+      # posted afresh while its question is still asked and is not tried
+      # again after a restart. Any other refusal of that one message is
+      # said once and tried again next cycle.
+      #
+      # @param key [String]
+      # @return [void]
+      def alone(key)
+        yield
+      rescue API::Refused => e
+        raise if Room.channel_wide?(e.code, posted: @records.key?(key))
+
+        if Room::GONE.include?(e.code)
+          forget(key)
+          UI.log("slack: poll #{key} is gone from Slack (#{e.code}), so it is forgotten", level: :warn)
+        else
+          note(key, e)
+        end
+      end
+
+      # Say it once, not on every cycle that is refused the same way, by
+      # whichever call: a message that cannot be updated cannot be read
+      # either, and that is one thing to say.
+      #
+      # @param refusal [OpenLanes::Slack::API::Refused]
+      # @return [void]
+      def note(key, refusal)
+        return if @said[key] == refusal.code
+
+        @said[key] = refusal.code
+        UI.log("slack: poll #{key} skipped this cycle: #{refusal.message}", level: :warn)
       end
 
       # @return [void]
@@ -138,6 +178,7 @@ module OpenLanes
       def forget(key)
         @records.delete(key)
         @missing.delete(key)
+        @said.delete(key)
         @outbox.forget(key)
       end
 

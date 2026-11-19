@@ -32,9 +32,11 @@ module OpenLanes
         # @param method [String]
         # @param code [String]
         # @param needed [String, nil] the scope Slack says is missing
-        def initialize(method, code, needed: nil)
+        # @param message [String, nil] said in place of the usual message,
+        #   for a caller that adds what to do about it and keeps the code
+        def initialize(method, code, needed: nil, message: nil)
           @code = code
-          super("Slack refused #{method}: #{code}#{" (the app needs the #{needed} scope)" if needed}")
+          super(message || "Slack refused #{method}: #{code}#{" (the app needs the #{needed} scope)" if needed}")
         end
       end
 

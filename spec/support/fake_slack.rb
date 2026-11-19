@@ -23,6 +23,7 @@ class FakeSlack
     @messages = {}
     @calls = []
     @refusals = {}
+    @refused_at = {}
     @clock = 1_700_000_000
     @bare = false
   end
@@ -40,6 +41,14 @@ class FakeSlack
   def refuse(method, code) = @refusals[method] = code
 
   def allow(method) = @refusals.delete(method)
+
+  # Make every call about the message at +stamp+ fail with +code+, as
+  # Slack refuses one message (`cant_update_message`, `msg_too_long`).
+  def refuse_at(stamp, code) = @refused_at[stamp] = code
+
+  # A person deletes the message: every call about it is then
+  # `message_not_found`, as Slack answers.
+  def delete(stamp) = @messages.delete(stamp)
 
   # conversations.replies leaves the reactions off, as an app without the
   # history scope's full view would see.
@@ -63,6 +72,10 @@ class FakeSlack
     params = params.transform_keys(&:to_s)
     @calls << [method, params]
     return { "ok" => false, "error" => @refusals[method] } if @refusals.key?(method)
+
+    about = params["ts"] || params["timestamp"] unless params["thread_ts"]
+    return { "ok" => false, "error" => @refused_at[about] } if about && @refused_at.key?(about)
+    return { "ok" => false, "error" => "message_not_found" } if about && !@messages.key?(about)
 
     route = ROUTES[method] or return { "ok" => false, "error" => "unknown_method" }
     send(route, params)

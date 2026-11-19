@@ -7,7 +7,7 @@ RSpec.describe OpenLanes::Slack::Room do
 
   let(:slack) { FakeSlack.new }
   let(:workspace) { nil }
-  let(:operators) { [] }
+  let(:operators) { ["UDANA"] }
   let(:question) do
     { "id" => "003.00/B1", "kind" => "block", "heading" => "B1 — Ship it?",
       "options" => [{ "label" => "yes", "answer" => "yes" }, { "label" => "no", "answer" => "no" }] }
@@ -54,6 +54,20 @@ RSpec.describe OpenLanes::Slack::Room do
     slack.refuse("chat.postMessage", "not_in_channel")
 
     expect { room.post(poll) }.to raise_error(OpenLanes::Error, %r{not_in_channel; invite the app to the channel: /invite})
+  end
+
+  it "keeps Slack's code on a refusal it adds advice to" do
+    slack.refuse("chat.postMessage", "not_in_channel")
+
+    expect { room.post(poll) }.to raise_error(OpenLanes::Slack::API::Refused) { expect(it.code).to eq("not_in_channel") }
+  end
+
+  it "tells a refusal of one message from one of the whole channel" do
+    expect(described_class.channel_wide?("missing_scope", posted: true)).to be(true)
+    expect(described_class.channel_wide?("message_not_found", posted: true)).to be(false)
+    expect(described_class.channel_wide?("channel_not_found", posted: true)).to be(false)
+    expect(described_class.channel_wide?("channel_not_found", posted: false)).to be(true)
+    expect(described_class.channel_wide?("msg_too_long", posted: false)).to be(false)
   end
 
   it "leaves a refusal it has no advice for as Slack worded it" do
