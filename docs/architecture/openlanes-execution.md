@@ -62,8 +62,6 @@ classDiagram
   class OpenLanes__Execution__Executor__Refusal["Executor::Refusal"]
   <<module>> OpenLanes__Execution__Executor__Refusal
   class OpenLanes__Execution__Executor__Replacements["Executor::Replacements"]
-  class OpenLanes__Execution__Executor__Reporting["Executor::Reporting"]
-  <<module>> OpenLanes__Execution__Executor__Reporting
   class OpenLanes__Execution__Executor__Retake["Executor::Retake"]
   class OpenLanes__Execution__Executor__Said["Executor::Said"]
   <<module>> OpenLanes__Execution__Executor__Said
@@ -145,7 +143,6 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Preferences : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__PromptAssembly : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Refusal : uses
-  OpenLanes__Execution__Executor ..|> OpenLanes__Execution__Executor__Reporting : includes
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Retake : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Said : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Sessions : uses
@@ -196,7 +193,6 @@ classDiagram
   OpenLanes__Execution__Executor__PromptAssembly ..> OpenLanes__Memory : uses
   OpenLanes__Execution__Executor__PromptAssembly ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor__Refusal ..> OpenLanes__Execution__Executor : uses
-  OpenLanes__Execution__Executor__Reporting ..> OpenLanes__Execution__Executor__Said : uses
   OpenLanes__Execution__Executor__Retake ..> OpenLanes__Execution__AgentProcess : uses
   OpenLanes__Execution__Executor__Retake ..> OpenLanes__Execution__Boundary__Snapshot : uses
   OpenLanes__Execution__Executor__Retake ..> OpenLanes__Execution__Control : uses

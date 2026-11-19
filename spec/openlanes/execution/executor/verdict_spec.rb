@@ -56,4 +56,14 @@ RSpec.describe OpenLanes::Execution::Executor::Verdict do
   it "names a kill by request" do
     expect(verdict.killed_note(:key)).to eq("killed by request")
   end
+
+  it "reports what an invocation spent" do
+    expect(verdict.spent(sessions, OpenLanes::UI.monotonic, ok: true, note: "completed").to_h.slice(:ok, :note, :up, :down, :cached))
+      .to eq(ok: true, note: "completed", up: 10, down: 2, cached: 1)
+  end
+
+  it "reports a failure with its note and what it spent" do
+    result = verdict.failure(sessions, OpenLanes::UI.monotonic, note: "exited 3", killed: :key)
+    expect(result.to_h.slice(:ok, :note, :up, :killed)).to eq(ok: false, note: "exited 3", up: 10, killed: :key)
+  end
 end

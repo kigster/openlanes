@@ -15,7 +15,6 @@ module OpenLanes
     class Executor
       include Choices
       include Permissions
-      include Reporting
       extend Shortcuts
 
       # The names callers and agent documentation use, each documented at its source.
