@@ -25,7 +25,10 @@ module OpenLanes
         #   there was none, and the agent's own stop stands
         def carry_on(compaction, attempt, &)
           killed = attempt.handle.killed
-          return compaction.refuse!("#{attempt.agent.name} was stopped first (#{killed})") && nil if killed
+          if killed
+            compaction.refuse!("#{attempt.agent.name} was stopped first (#{killed})")
+            return nil
+          end
 
           on = attempt.with(profile: attempt.profile.with(model: compaction.model || attempt.profile.model))
           why = uncompactable(attempt) || compact(on)

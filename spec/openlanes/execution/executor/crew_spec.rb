@@ -9,7 +9,6 @@ RSpec.describe OpenLanes::Execution::Executor::Crew do
   let(:invocations) { instance_double(OpenLanes::Execution::Executor::Invocation) }
 
   it "wires one of each collaborator" do
-    expect([crew.launcher, crew.supervision, crew.verdict]).to all(be_a(Object))
     expect(crew.launcher).to be_a(OpenLanes::Execution::Executor::Launcher)
     expect(crew.supervision).to be_a(OpenLanes::Execution::Executor::Supervision)
     expect(crew.verdict).to be_a(OpenLanes::Execution::Executor::Verdict)
