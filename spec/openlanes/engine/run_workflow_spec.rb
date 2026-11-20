@@ -77,6 +77,58 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     expect(given[:executor]).to be(given[:runner]).and be_a(OpenLanes::Execution::Throttle::AdapterPause)
   end
 
+  # C1: the memory pull request the engine opens once a run ends.
+  describe "the memory pull request at the end of a run" do
+    let(:autopromotion) { instance_double(OpenLanes::Memory::Autopromotion) }
+    let(:published) { OpenLanes::Memory::Autopromotion::Outcome.new(status: :published, url: "https://example.com/pr/7", lessons: 2, why: nil) }
+
+    before do
+      allow(OpenLanes::Memory).to receive(:autopromotion).and_return(autopromotion)
+      allow(OpenLanes::UI).to receive(:log)
+    end
+
+    def promote(**) = workflow(isolation: "worktree", dry_run: false, **).send(:promote_memory)
+
+    it "publishes and logs the pull request" do
+      allow(autopromotion).to receive(:call).and_return(published)
+
+      promote
+
+      expect(OpenLanes::UI).to have_received(:log).with("memory pull request: https://example.com/pr/7 (2 lessons)")
+      expect(OpenLanes::Memory).to have_received(:autopromotion).with(root: File.dirname(plans_root))
+    end
+
+    it "logs why nothing was opened" do
+      allow(autopromotion).to receive(:call)
+        .and_return(OpenLanes::Memory::Autopromotion::Outcome.new(status: :skipped, url: nil, lessons: 0, why: "no candidate in the inbox is eligible"))
+
+      promote
+
+      expect(OpenLanes::UI).to have_received(:log).with("no memory pull request: no candidate in the inbox is eligible")
+    end
+
+    it "costs the run nothing when publishing fails: it is logged, never raised" do
+      allow(autopromotion).to receive(:call).and_raise(RuntimeError, "git push: rejected") # not an OpenLanes::Error, as a refused push is not
+
+      expect { promote }.not_to raise_error
+      expect(OpenLanes::UI).to have_received(:log).with(/memory pull request not opened/, level: :warn)
+    end
+
+    {
+      "a dry run"          => { dry_run: true },
+      "--no-memory"        => { memory: false },
+      "--no-memory-pr"     => { memory_pr: false },
+      "--no-git-push"      => { git_push: false },
+      "--isolation shared" => { isolation: "shared" }
+    }.each do |name, options|
+      it "does nothing under #{name}" do
+        promote(**options)
+
+        expect(OpenLanes::Memory).not_to have_received(:autopromotion)
+      end
+    end
+  end
+
   describe "refusals, before anything is set up" do
     {
       "--prompt without --agent"        => [{ prompt: "be brief" }, 64, "--prompt only works with --agent"],
