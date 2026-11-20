@@ -74,7 +74,7 @@ module OpenLanes
         # process is in. `root` above is the parent of the plans directory,
         # which `-D docs/plans` makes `docs`, where no note is ever left.
         restart_note(Dir.pwd, stores:, keys:) unless demo
-        port = OpenLanes::Web::Ports.first_free(options[:port]) || options[:port]
+        port = listen_port(options[:port])
         server = OpenLanes::Web.server(app: OpenLanes::Web.app(context), context:, port:, listen:)
         serve(server, options, keys:, node:, url: stores.current.url, credentials:)
       ensure
@@ -212,6 +212,19 @@ module OpenLanes
       # moved up, and the address is the one fact a person starting it reads.
       #
       # @return [String]
+      # The default port moves up to the next free one, so a second
+      # checkout's control room starts beside the first. A port asked for is
+      # kept as asked: `bin/web-e2e` and a demo peer rely on it, and one that
+      # quietly moved breaks them in confusing ways, so a taken one fails.
+      #
+      # @param asked [String, Integer]
+      # @return [String, Integer]
+      def listen_port(asked)
+        return asked unless asked.to_i == OpenLanes::Web::DEFAULT_PORT
+
+        OpenLanes::Web::Ports.first_free(asked) || asked
+      end
+
       def listening_on(server, options)
         moved = " (#{options[:port]} was taken)" unless server.port.to_s == options[:port].to_s
         "Control room: #{server.url}#{" (demo)" if options[:demo]}#{moved}"
