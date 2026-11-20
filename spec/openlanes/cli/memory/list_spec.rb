@@ -77,6 +77,46 @@ RSpec.describe OpenLanes::CLI::Memory::List do
     expect(list(agent: "planner").first).to eq("No active lesson is for planner.\n")
   end
 
+  it "prints, for a phase, exactly the section the engine's shared path builds for that phase" do
+    write_lesson(dir, "L-0001", lesson_meta("L-0001", title: "For builders", applies_to: ["build"]))
+    write_lesson(dir, "L-0002", lesson_meta("L-0002", title: "For everyone", applies_to: ["all"], severity: "high"))
+    write_lesson(dir, "L-0003", lesson_meta("L-0003", title: "Named", applies_to: ["backend-coder"]))
+    write_lesson(dir, "L-0004", lesson_meta("L-0004", title: "Reviewers", applies_to: ["review"]))
+    publish_lessons(root)
+
+    engine = Dir.chdir(root) do
+      OpenLanes::Memory.section(agent: OpenLanes::Memory.audience(phase: "build"), library: OpenLanes::Memory.library(root:))
+    end
+    out, = list(phase: "build")
+
+    expect(out).to eq(engine)
+    expect(out.scan(/^- (L-\d+)/).flatten).to eq(%w[L-0002 L-0001])
+  end
+
+  it "gives a phase the lessons a builder of ours gets, less those addressed to it by name" do
+    write_lesson(dir, "L-0001", lesson_meta("L-0001", applies_to: ["build"]))
+    write_lesson(dir, "L-0003", lesson_meta("L-0003", applies_to: ["backend-coder"]))
+    publish_lessons(root)
+
+    expect([list(phase: "build").first.scan(/- (L-\d+)/).flatten, list(agent: "backend-coder").first.scan(/- (L-\d+)/).flatten])
+      .to eq([%w[L-0001], %w[L-0001 L-0003]])
+  end
+
+  it "says so when no lesson is for the phase" do
+    publish_lessons(root)
+    expect(list(phase: "planning").first).to eq("No active lesson is for the planning phase.\n")
+  end
+
+  it "refuses a phase no agent has, naming the ones there are" do
+    _, err, status = list(phase: "lunch")
+    expect([status, err]).to match([64, include("No phase named lunch. The phases are: ", "build", "review")])
+  end
+
+  it "refuses an agent and a phase together" do
+    _, err, status = list(agent: "backend-coder", phase: "build")
+    expect([status, err]).to match([64, include("give one")])
+  end
+
   it "refuses an agent that does not exist" do
     _, err, status = list(agent: "nobody")
     expect([status, err]).to match([64, include("No agent named nobody")])

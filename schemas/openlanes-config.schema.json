@@ -1202,7 +1202,7 @@
         },
         "memory list": {
           "type": "object",
-          "description": "List the lessons in .openlanes/memory/lessons and your global memory, or with --agent, the section that agent's prompt carries",
+          "description": "List the lessons in .openlanes/memory/lessons and your global memory, or with --agent or --phase, the section that prompt carries",
           "default": {},
           "additionalProperties": false,
           "properties": {
@@ -1220,6 +1220,13 @@
               ],
               "description": "The .plans directory",
               "default": ".plans"
+            },
+            "phase": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Print the section any agent in this phase would carry, e.g. --phase build"
             },
             "quiet": {
               "type": "boolean",
@@ -1261,6 +1268,101 @@
               "type": "boolean",
               "description": "Suppress progress output on STDERR",
               "default": false
+            }
+          }
+        },
+        "memory propose": {
+          "type": "object",
+          "description": "File a lesson into .openlanes/memory/inbox through the checks the curator's proposals pass",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "applies_to": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              },
+              "description": "Agent names or phases that should follow it, comma-separated, or `all`"
+            },
+            "body": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Two to five sentences: why, and what to do instead"
+            },
+            "checked_by": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              },
+              "description": "Reviewers or phases that should cite it when it is broken"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Check it and print the file that would be written; write nothing",
+              "default": false
+            },
+            "finding": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "One line of evidence: what happened, and where"
+            },
+            "from": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Read the proposal from FILE (`-` for STDIN): a lesson file, or the curator's JSON lines"
+            },
+            "kind": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "practice, pitfall, decision or struck"
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The plan it was learnt on, NNN or NNN.MM; left out, the sighting counts toward no promotion"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "severity": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "high, medium or low"
+            },
+            "title": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "One line, under 200 characters, an instruction a stranger could follow"
             }
           }
         },

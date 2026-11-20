@@ -27,4 +27,21 @@ RSpec.describe OpenLanes::Memory::Proposal do
       expect(described_class.scan(text).map(&:reason)).to match([reason])
     end
   end
+
+  it "builds the same proposal from fields as from the line that holds them" do
+    expect(described_class.build(fields)).to eq(described_class.read(line))
+  end
+
+  it "reads a lesson file back as a proposal, its id as the slug and its first source as the finding" do
+    meta = { "id" => "real-plan-trees", "title" => "T", "applies_to" => ["build"], "severity" => "high",
+             "source" => [{ "plan" => "1", "finding" => "seen" }] }
+    text = "#{YAML.dump(meta)}---\n\nThe body.\n"
+    read = described_class.markdown(text)
+    expect([read.slug, read.finding, read.body, read.severity]).to eq(["real-plan-trees", "seen", "The body.", "high"])
+  end
+
+  it "rejects markdown with no frontmatter, or frontmatter that is not YAML" do
+    expect([described_class.markdown("just prose").reason, described_class.markdown("---\n: [\n---\nbody").reason])
+      .to match(["no frontmatter", start_with("frontmatter is not valid YAML")])
+  end
 end
