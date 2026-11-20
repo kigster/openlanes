@@ -181,6 +181,17 @@ describe("PlanManagement", () => {
       expect(JSON.parse(String((post?.[1] as RequestInit).body))).toEqual({ action: "defer", reason: "when the API is stable" });
     });
 
+    it("says a running plan's agents are stopped before a discard, and Cancel closes it untouched", async () => {
+      actionsMock.mockImplementation(async () => json(offer({ started: true, running: true, actions: ["discard", "defer"] })));
+      await openMenu();
+      await userEvent.click(await screen.findByRole("menuitem", { name: "Abort & Discard" }));
+      const dialog = await screen.findByRole("dialog", { name: "Abort & Discard: 070.00?" });
+      expect(dialog).toHaveTextContent("The agents working on 070.00 are stopped first. It moves to ❌ Discarded");
+      await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(actionsMock.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === "POST")).toBe(false);
+    });
+
     it("keeps the dialog open with the server's reason when it refuses", async () => {
       await openMenu();
       await userEvent.click(await screen.findByRole("menuitem", { name: "Clear Dependencies" }));
