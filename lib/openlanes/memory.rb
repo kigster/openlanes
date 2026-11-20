@@ -73,6 +73,13 @@ module OpenLanes
       # @return [OpenLanes::Memory::Inbox] the candidates waiting in this checkout
       def inbox(root:) = Inbox.new(dir: File.join(File.expand_path(root), INBOX_DIR))
 
+      # The section a curator's prompt carries: the ids and slugs it may
+      # reuse, so a lesson met again counts as a second sighting (C2).
+      #
+      # @param root [String] the project root
+      # @return [String]
+      def known(root:) = Known.new(inbox: inbox(root:), lessons_dir: File.join(File.expand_path(root), PROJECT_DIR)).to_s
+
       # @param root [String] the project root
       # @return [OpenLanes::Memory::Promotion]
       def promotion(root:)

@@ -21,6 +21,7 @@ classDiagram
   class OpenLanes__Memory__Entry["Entry"]
   class OpenLanes__Memory__Folder["Folder"]
   class OpenLanes__Memory__Inbox["Inbox"]
+  class OpenLanes__Memory__Known["Known"]
   class OpenLanes__Memory__Lesson["Lesson"]
   class OpenLanes__Memory__Library["Library"]
   class OpenLanes__Memory__Promotion["Promotion"]
@@ -41,6 +42,7 @@ classDiagram
   OpenLanes__Memory ..> OpenLanes__Memory__Entry : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Folder : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Inbox : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__Known : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Lesson : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Library : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Promotion : uses
@@ -59,6 +61,8 @@ classDiagram
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Folder : uses
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Lesson : uses
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Secrets : uses
+  OpenLanes__Memory__Known ..> OpenLanes__Memory__Folder : uses
+  OpenLanes__Memory__Known ..> OpenLanes__Memory__Library : uses
   OpenLanes__Memory__Promotion ..> OpenLanes__Memory__Inbox : uses
   OpenLanes__Memory__Promotion ..> OpenLanes__Memory__Secrets : uses
   OpenLanes__Memory__Publication ..> OpenLanes__Error : uses

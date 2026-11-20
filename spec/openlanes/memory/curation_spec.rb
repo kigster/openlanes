@@ -8,11 +8,13 @@ RSpec.describe OpenLanes::Memory::Curation, :tree do
   let(:plan) { OpenLanes::Plans::Tree.new(dir: plans_root).find("002.00") }
   let(:result) { instance_double(OpenLanes::Execution::Executor::Result, ok: true, note: "Completed") }
   let(:executor) do
-    lambda do |_agent, _subject, root:, handle:|
+    lambda do |_agent, _subject, root:, handle:, brief:|
+      briefs << brief
       handle.trace = File.join(root, "trace.ndjson")
       result
     end
   end
+  let(:briefs) { [] }
   let(:lesson) do
     JSON.generate("lesson" => { "slug" => "flaky-redis-specs", "title" => "Run the Redis outage specs alone", "applies_to" => ["build"],
                                 "kind" => "pitfall", "finding" => "two rounds lost to a flapping spec", "body" => "They race on one client." })
@@ -25,6 +27,16 @@ RSpec.describe OpenLanes::Memory::Curation, :tree do
     report = curation.call(plan)
     expect([report.ok, report.outcomes.map { [it.status, it.slug, it.reason] }, OpenLanes::Memory.inbox(root:).find("flaky-redis-specs").plans])
       .to eq([true, [[:added, "flaky-redis-specs", nil], [:dropped, nil, "lesson is not an object"]], ["002.00"]])
+  end
+
+  # Decision C2: the curator is shown what it may reuse, read when its plan
+  # comes up, so a lesson the previous plan filed is offered to the next.
+  it "shows the curator the slugs already waiting, and a reuse counts as a second plan" do
+    curation.call(plan)
+    plans { |t| t.plan "003.00", :rejected, "again" }
+    curation.call(OpenLanes::Plans::Tree.new(dir: plans_root).find("003.00"))
+    expect([briefs.first, briefs.last, OpenLanes::Memory.inbox(root:).find("flaky-redis-specs").plans])
+      .to match([/inbox is empty/, /candidate `flaky-redis-specs` \(seen in 1 plan\)/, %w[002.00 003.00]])
   end
 
   context "when the curator does not finish" do
