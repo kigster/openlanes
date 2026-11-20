@@ -19,7 +19,7 @@ module OpenLanes
       END_MARK = "----> Lessons: quoted data ends <----"
 
       # @param lessons [Array<OpenLanes::Memory::Lesson>] ranked, as {Library#for} returns them
-      # @param agent [OpenLanes::Agents::Agent]
+      # @param agent [OpenLanes::Agents::Agent, OpenLanes::Memory::Audience]
       # @param budget [Integer] characters
       def initialize(lessons, agent:, budget: BUDGET)
         @lessons = lessons
@@ -44,7 +44,7 @@ module OpenLanes
           #{BEGIN_MARK}
           #{shown.map { line(it) }.join("\n")}
           #{END_MARK}
-          #{"(#{omitted} more not shown: `openlanes memory list --agent #{@agent.name}`.)" if omitted.positive?}
+          #{"(#{omitted} more not shown: `openlanes memory list #{selector}`.)" if omitted.positive?}
         SECTION
       end
 
@@ -57,6 +57,9 @@ module OpenLanes
 
         "Lessons marked `check` are yours to enforce: when the work in front of you breaks one, say so in the finding and cite its id.\n"
       end
+
+      # How `memory list` is told to print this same section in full.
+      def selector = @agent.name ? "--agent #{@agent.name}" : "--phase #{@agent.phase}"
 
       def within_budget
         used = 0

@@ -14,6 +14,7 @@ classDiagram
   <<module>> OpenLanes__Frontmatter
   class OpenLanes__Memory["OpenLanes::Memory"]
   <<module>> OpenLanes__Memory
+  class OpenLanes__Memory__Audience["Audience"]
   class OpenLanes__Memory__Candidate["Candidate"]
   class OpenLanes__Memory__Committed["Committed"]
   class OpenLanes__Memory__Curation["Curation"]
@@ -34,6 +35,7 @@ classDiagram
   class OpenLanes__Vcs__Worktree["OpenLanes::Vcs::Worktree"]
   OpenLanes__Memory ..> OpenLanes__Execution : uses
   OpenLanes__Memory ..> OpenLanes__Frontmatter : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__Audience : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Committed : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Curation : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Entry : uses

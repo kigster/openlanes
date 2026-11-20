@@ -49,4 +49,11 @@ RSpec.describe OpenLanes::Memory::Section do
     expect(text).not_to include("L-0003")
     expect(text).to include("(3 more not shown: `openlanes memory list --agent backend-coder`.)")
   end
+
+  it "points a phase's reader at the phase, since it has no agent name" do
+    two = "- L-0001 (medium) Lesson L-0001 — `#{File.join(dir, "L-0001.md")}`".size + 1
+    text = described_class.new(lessons(2), agent: OpenLanes::Memory.audience(phase: "build"), budget: two).to_s
+
+    expect(text).to include("(1 more not shown: `openlanes memory list --phase build`.)")
+  end
 end

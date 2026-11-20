@@ -56,6 +56,7 @@ classDiagram
   class OpenLanes__CLI__Memory__Inbox["Memory::Inbox"]
   class OpenLanes__CLI__Memory__List["Memory::List"]
   class OpenLanes__CLI__Memory__Promote["Memory::Promote"]
+  class OpenLanes__CLI__Memory__Propose["Memory::Propose"]
   class OpenLanes__CLI__Memory__Scan["Memory::Scan"]
   class OpenLanes__CLI__Memory__Table["Memory::Table"]
   <<module>> OpenLanes__CLI__Memory__Table
@@ -140,6 +141,7 @@ classDiagram
   <<module>> OpenLanes__Memory
   class OpenLanes__Memory__Curation["OpenLanes::Memory::Curation"]
   class OpenLanes__Memory__Promotion["OpenLanes::Memory::Promotion"]
+  class OpenLanes__Memory__Proposal["OpenLanes::Memory::Proposal"]
   class OpenLanes__Plans["OpenLanes::Plans"]
   <<module>> OpenLanes__Plans
   class OpenLanes__Plans__Estimate["OpenLanes::Plans::Estimate"]
@@ -337,6 +339,10 @@ classDiagram
   OpenLanes__CLI__Memory__Promote --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Memory__Promote ..> OpenLanes__Memory : uses
   OpenLanes__CLI__Memory__Promote ..> OpenLanes__Memory__Promotion : uses
+  OpenLanes__CLI__Memory__Propose --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Propose ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Propose ..> OpenLanes__Memory__Proposal : uses
+  OpenLanes__CLI__Memory__Propose ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__CLI__Memory__Scan --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Memory__Scan ..> OpenLanes__Memory : uses
   OpenLanes__CLI__Preview__Registry ..> OpenLanes__Apps : uses

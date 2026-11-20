@@ -196,6 +196,7 @@ module OpenLanes
       prefix.register "list", Memory::List, aliases: %w[ls]
       prefix.register "curate", Memory::Curate
       prefix.register "inbox", Memory::Inbox
+      prefix.register "propose", Memory::Propose
       prefix.register "approve", Memory::Approve
       prefix.register "promote", Memory::Promote
       prefix.register "scan", Memory::Scan

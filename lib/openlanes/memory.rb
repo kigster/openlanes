@@ -55,10 +55,19 @@ module OpenLanes
 
       # The prompt section +agent+ is given, empty when no lesson is for it.
       #
-      # @param agent [OpenLanes::Agents::Agent]
+      # The engine calls this for every agent it runs; `memory list` calls
+      # it too, so what the command prints is what a prompt carries.
+      #
+      # @param agent [OpenLanes::Agents::Agent, OpenLanes::Memory::Audience]
       # @param library [OpenLanes::Memory::Library] as {library} read it
       # @return [String]
       def section(agent:, library:) = Section.new(library.for(agent), agent:).to_s
+
+      # The audience an agent in +phase+ is, without naming one of ours.
+      #
+      # @param phase [String] one of {Agents.phases}
+      # @return [OpenLanes::Memory::Audience]
+      def audience(phase:) = Audience.new(phase: phase.to_s)
 
       # @param root [String] the project root
       # @return [OpenLanes::Memory::Inbox] the candidates waiting in this checkout
@@ -94,12 +103,23 @@ module OpenLanes
       # @param plan [String] the ordinal it was looking at
       # @param root [String] the project root
       # @return [Array<OpenLanes::Memory::Inbox::Outcome>] one per proposal line, malformed ones dropped with a reason
-      def propose(text, plan:, root:)
-        box = inbox(root:)
-        Proposal.scan(text).map do |read|
-          next box.add(read, plan:) if read.is_a?(Proposal)
+      def propose(text, plan:, root:) = file(Proposal.scan(text), plan:, root:)
 
-          Inbox::Outcome.new(slug: nil, status: :dropped, reason: read.reason)
+      # File proposals however they were read: from the curator's answer, or
+      # from `openlanes memory propose`. One path into the inbox, so a
+      # proposal typed at the command line passes exactly the curator's checks.
+      #
+      # @param reads [Array<OpenLanes::Memory::Proposal, OpenLanes::Memory::Proposal::Rejection>]
+      # @param plan [String, nil] the ordinal it was learnt on, nil when none
+      # @param root [String] the project root
+      # @param dry_run [Boolean] true checks and renders, and writes nothing
+      # @return [Array<OpenLanes::Memory::Inbox::Outcome>]
+      def file(reads, plan:, root:, dry_run: false)
+        box = inbox(root:)
+        reads.map do |read|
+          next box.add(read, plan:, dry_run:) if read.is_a?(Proposal)
+
+          Inbox::Outcome.new(slug: nil, status: :dropped, reason: read.reason, check: :format)
         end
       end
 
