@@ -43,6 +43,27 @@ RSpec.describe "openlanes memory, the writer's commands" do
     expect(run(OpenLanes::CLI::Memory::Inbox).first).to include("Nothing is waiting", "openlanes memory curate NNN")
   end
 
+  context "with --global" do
+    let(:home) { ENV.fetch("OPENLANES_MEMORY_HOME") }
+
+    after { FileUtils.rm_rf(Dir.glob(File.join(home, "*"))) }
+
+    it "lists the global candidates and the projects each came from" do
+      meta = lesson_meta("real-trees",
+        status:   "candidate",
+        title:    "Specs build real trees",
+        projects: [{ "project" => "github.com/example/one", "lesson" => "L-0001" }])
+      write_lesson(OpenLanes::Memory.global_inbox_dir, "real-trees", meta)
+
+      expect(run(OpenLanes::CLI::Memory::Inbox, global: true).first.lines.map(&:split))
+        .to eq([%w[SLUG PROJECTS FOR TITLE], %w[real-trees github.com/example/one build Specs build real trees]])
+    end
+
+    it "says where global candidates come from when there are none" do
+      expect(run(OpenLanes::CLI::Memory::Inbox, global: true).first).to include("No global candidate")
+    end
+  end
+
   it "previews a promotion without writing, then writes it" do
     propose("flaky-redis-specs", "056.00", "060.00")
     propose("seen-once", "056.00")

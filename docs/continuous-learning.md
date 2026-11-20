@@ -132,7 +132,14 @@ Memory is committed, so several people's factories will add to it concurrently.
 
 ### Global memory
 
-Global lessons are the human's own. They are never committed and never leave the machine. A project lesson is **proposed** for global scope when the curator sees the same lesson active in two or more projects on this machine, and the human approves it with `openlanes memory promote L-0042 --global`. Global memory is read-only to every agent.
+Global lessons are the human's own. They are never committed and never leave the machine. Global memory is read-only to every agent. Decided in C3 (`docs/decisions/decisions-on-memory-compounding.md`), built by `Memory::Mirror` over `Memory::GlobalStore`:
+
+- At the end of every run (not a dry run, not `--no-memory`), the project's **merged** lessons, read from `origin/<default branch>`, are mirrored into `$OPENLANES_MEMORY_HOME` (default `${XDG_CONFIG_HOME:-~/.config}/openlanes/memory/lessons`). An open memory pull request is never mirrored: a person may still reject it.
+- A lesson no global record matches becomes a candidate in `inbox/` inside that directory, tagged with the project's key: its `origin` remote, normalised (`github.com/owner/repo`, credentials dropped), or the checkout's real path when it has none.
+- The same lesson is the same slug, or the same title once case and punctuation are dropped. Ids are not compared: they are per project.
+- Once two different projects hold it, it turns active as `G-NNNN-<slug>.md`, with no review. A third project is added to it. A project is not shown a global lesson it contributed, since its own copy is already in the prompt.
+- A global lesson the human wrote by hand (no `projects:`) is never edited.
+- `openlanes memory inbox --global` lists the global candidates and their projects; `openlanes memory list` shows the active ones with scope `global`.
 
 ### Graduation: memory is a waiting room, not a destination
 
@@ -177,7 +184,7 @@ With those, the factory improving itself is the same as the factory building any
 - [x] **1. Read path.** Built: the lesson format, `OpenLanes::Memory` (`Lesson`, `Library`, `Section`, and the two sources `Committed` and `Folder`), the prompt section with its budget, project and global scopes, `run --no-memory`, `eval --live --no-memory`, `openlanes memory list [--agent]`. Lessons are hand-written; reviewers are asked to cite ids. Deferred: `usage.json` citation counting.
   - Recursion safety already holds for the read path (PR 196 security review): project lessons are read from the commit `origin/<default branch>` names when a run starts, never from a checkout, and kept for the whole run; a lesson without `status: active` is a candidate; ids, titles and names must be single plain lines; symlinks, unreadable and non-UTF-8 files are skipped and reported; the prompt fences the lessons as quoted data the rest of the prompt overrules.
 - [ ] **2. Curator.** Built: the `curator` agent (reads one plan, writes nothing, answers with one line of JSON per lesson), `Memory::Proposal`, the inbox (`Memory::Inbox`, one file per slug, each proposal read back through `Lesson.parse`), deterministic promotion (`Memory::Promotion`: two plans or a person's approval; a lesson met again is confirmed in place, which is what moves it up the ranking), and the secret scan (`Memory::Secrets`) that runs before a candidate is written, before it is promoted, and over the whole `.openlanes/` folder in the suite. Commands: `openlanes memory curate NNN`, `propose [SLUG] [--from FILE]`, `inbox`, `approve SLUG`, `promote [-n]`, `scan`; `list --phase PHASE` shows an agent outside a run what its phase is told. Still to do: the engine running the curator by itself when a plan ends, and opening the memory pull request through `Publisher`; today a person runs `curate` and `promote` and commits the result.
-- [ ] **3. Global scope.** XDG directory, `promote --global`, cross-project proposals.
+- [x] **3. Global scope.** XDG directory, the end-of-run mirror, and activation once two projects hold a lesson (C3). Not built: retiring a global lesson when its projects retire theirs.
 - [ ] **4. Graduation and evals.** Graduation report, lesson-to-eval-case generation, retire on disuse.
 
 Phases 1 and 2 are each a plan of their own; 0 and 3 are small.

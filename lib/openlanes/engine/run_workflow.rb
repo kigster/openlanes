@@ -64,6 +64,7 @@ module OpenLanes
         attempts = run(runner, live, web)
         curate(ended)
         promote_memory
+        mirror_memory
         Success(finish(runner, attempts, seconds: UI.monotonic - started))
       end
 
@@ -820,6 +821,26 @@ module OpenLanes
         UI.log("memory pull request: #{outcome.url} (#{outcome.lessons} lesson#{"s" unless outcome.lessons == 1})")
       rescue StandardError => e
         UI.log("memory pull request not opened: #{e.message.lines.first.to_s.strip}", level: :warn)
+      end
+
+      # The project's merged lessons, mirrored into the operator's global
+      # store (C3). At the end of every run rather than when the memory pull
+      # request opens: only a merged lesson is promoted, and the sync is
+      # idempotent, so a lesson merged since the last run is carried by
+      # this one. It pushes nothing, so `--no-git-push` and shared
+      # isolation mirror too; only a dry run and `--no-memory` do not.
+      #
+      # Logged and swallowed like {#promote_memory}: the global store is a
+      # by-product, and an unwritable `~/.config` must not fail the run.
+      #
+      # @return [void]
+      def mirror_memory
+        return if @dry_run || !@options.fetch(:memory, true)
+
+        written = Memory.mirror(root: @root).reject { it.kind == :known }
+        written.each { UI.log("global memory: #{it.kind} #{it.id || it.slug}#{": #{it.why}" if it.why}", level: it.kind == :refuse ? :warn : :info) }
+      rescue StandardError => e
+        UI.log("lessons not mirrored to global memory: #{e.message.lines.first.to_s.strip}", level: :warn)
       end
 
       # @param runner [OpenLanes::Engine::Runner]

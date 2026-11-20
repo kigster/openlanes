@@ -78,7 +78,7 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Linear : 5
   OpenLanes__CLI ..> OpenLanes__Live : 15
   OpenLanes__CLI ..> OpenLanes__Log : 7
-  OpenLanes__CLI ..> OpenLanes__Memory : 12
+  OpenLanes__CLI ..> OpenLanes__Memory : 13
   OpenLanes__CLI ..> OpenLanes__Plans : 29
   OpenLanes__CLI ..> OpenLanes__Presentation : 8
   OpenLanes__CLI ..> OpenLanes__Setup : 9
@@ -165,7 +165,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Slack : 1
   OpenLanes__Live ..> OpenLanes__Supervision : 1
   OpenLanes__Live ..> OpenLanes__UI : 7
-  OpenLanes__Memory ..> OpenLanes : 3
+  OpenLanes__Memory ..> OpenLanes : 4
   OpenLanes__Memory ..> OpenLanes__Agents : 1
   OpenLanes__Memory ..> OpenLanes__Execution : 3
   OpenLanes__Memory ..> OpenLanes__Vcs : 2

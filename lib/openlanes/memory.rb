@@ -47,7 +47,7 @@ module OpenLanes
       # @return [OpenLanes::Memory::Library]
       def library(root:, env: ENV)
         project = reviewed(root:)
-        library = Library.load([project, global(env:)].compact)
+        library = own_copies_dropped(Library.load([project, global(env:)].compact), root:, env:)
         return library if project
 
         library.with(problems: ["project lessons skipped: no #{ref(root)} to read reviewed ones from", *library.problems])
@@ -168,9 +168,50 @@ module OpenLanes
         Committed.at(name: :project, root: File.expand_path(root), ref: ref(root), dir: PROJECT_DIR)
       end
 
+      # A global lesson this project mirrored from its own: the project's
+      # copy is already in the library, and the prompt would say it twice.
+      #
+      # @param library [OpenLanes::Memory::Library]
+      # @return [OpenLanes::Memory::Library]
+      def own_copies_dropped(library, root:, env:)
+        return library unless library.lessons.any? { it.scope == :global }
+
+        own = global_store(env:).held_by(ProjectKey.for(File.expand_path(root)))
+        library.with(lessons: library.lessons.reject { it.scope == :global && own.include?(it.id) })
+      end
+      private :own_copies_dropped
+
       # @param root [String]
       # @return [String] e.g. `origin/main`
       def ref(root) = "origin/#{Vcs.default_branch(File.expand_path(root))}"
+
+      # Mirror the project's merged lessons into the operator's global store
+      # (C3), and turn active there every lesson a second project holds.
+      # Nothing to mirror when the default branch is unknown: an unmerged
+      # lesson is never mirrored.
+      #
+      # @param root [String] the project root
+      # @param env [Hash{String => String}]
+      # @return [Array<OpenLanes::Memory::Mirror::Change>]
+      def mirror(root:, env: ENV)
+        source = reviewed(root:) or return []
+        Mirror.new(project: ProjectKey.for(File.expand_path(root)), source:, store: global_store(env:)).call
+      end
+
+      # Where global candidates wait: `inbox/` inside {global_dir}, not beside
+      # it. `$OPENLANES_MEMORY_HOME` names the lessons directory itself, so a
+      # sibling would land in whatever directory holds it (for the suite, the
+      # system temp directory every run shares). {Folder} reads only the
+      # `.md` files directly in {global_dir}, so nothing in `inbox/` reaches
+      # a prompt.
+      #
+      # @param env [Hash{String => String}]
+      # @return [String]
+      def global_inbox_dir(env: ENV) = File.join(global_dir(env:), "inbox")
+
+      # @param env [Hash{String => String}]
+      # @return [OpenLanes::Memory::GlobalStore] what {mirror} writes, and `memory inbox --global` reads
+      def global_store(env: ENV) = GlobalStore.new(lessons_dir: global_dir(env:), inbox_dir: global_inbox_dir(env:))
 
       # @param env [Hash{String => String}]
       # @return [OpenLanes::Memory::Folder]

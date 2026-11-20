@@ -1198,6 +1198,11 @@
               "description": "The .plans directory",
               "default": ".plans"
             },
+            "global": {
+              "type": "boolean",
+              "description": "List the global candidates, mirrored from your projects' merged lessons, and the projects each came from",
+              "default": false
+            },
             "quiet": {
               "type": "boolean",
               "description": "Suppress progress output on STDERR",

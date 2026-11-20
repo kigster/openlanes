@@ -129,6 +129,42 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     end
   end
 
+  # C3: the project's merged lessons, mirrored into the global store.
+  describe "mirroring lessons at the end of a run" do
+    before { allow(OpenLanes::UI).to receive(:log) }
+
+    def mirror(**) = workflow(isolation: "shared", dry_run: false, **).send(:mirror_memory)
+
+    def change(kind, why: nil) = OpenLanes::Memory::Mirror::Change.new(kind:, slug: "real-trees", id: "G-0001", why:)
+
+    it "logs what it wrote, warns on a refusal, and says nothing of what was known" do
+      allow(OpenLanes::Memory).to receive(:mirror).and_return([change(:activate), change(:known), change(:refuse, why: "looks like it holds a GitHub token")])
+
+      mirror
+
+      expect(OpenLanes::Memory).to have_received(:mirror).with(root: File.dirname(plans_root))
+      expect(OpenLanes::UI).to have_received(:log).with("global memory: activate G-0001", level: :info)
+      expect(OpenLanes::UI).to have_received(:log).with("global memory: refuse G-0001: looks like it holds a GitHub token", level: :warn)
+      expect(OpenLanes::UI).to have_received(:log).twice
+    end
+
+    it "costs the run nothing when the store cannot be written" do
+      allow(OpenLanes::Memory).to receive(:mirror).and_raise(Errno::EACCES, "~/.config/openlanes")
+
+      expect { mirror }.not_to raise_error
+      expect(OpenLanes::UI).to have_received(:log).with(/lessons not mirrored to global memory/, level: :warn)
+    end
+
+    { "a dry run" => { dry_run: true }, "--no-memory" => { memory: false } }.each do |name, options|
+      it "does nothing under #{name}" do
+        allow(OpenLanes::Memory).to receive(:mirror)
+        mirror(**options)
+
+        expect(OpenLanes::Memory).not_to have_received(:mirror)
+      end
+    end
+  end
+
   describe "refusals, before anything is set up" do
     {
       "--prompt without --agent"        => [{ prompt: "be brief" }, 64, "--prompt only works with --agent"],

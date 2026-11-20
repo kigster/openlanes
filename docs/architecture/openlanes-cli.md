@@ -140,6 +140,7 @@ classDiagram
   class OpenLanes__Memory["OpenLanes::Memory"]
   <<module>> OpenLanes__Memory
   class OpenLanes__Memory__Curation["OpenLanes::Memory::Curation"]
+  class OpenLanes__Memory__GlobalStore["OpenLanes::Memory::GlobalStore"]
   class OpenLanes__Memory__Promotion["OpenLanes::Memory::Promotion"]
   class OpenLanes__Memory__Proposal["OpenLanes::Memory::Proposal"]
   class OpenLanes__Plans["OpenLanes::Plans"]
@@ -332,6 +333,7 @@ classDiagram
   OpenLanes__CLI__Memory__Inbox --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Memory__Inbox ..> OpenLanes__CLI__Memory__Table : uses
   OpenLanes__CLI__Memory__Inbox ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Inbox ..> OpenLanes__Memory__GlobalStore : uses
   OpenLanes__CLI__Memory__List ..> OpenLanes__Agents : uses
   OpenLanes__CLI__Memory__List --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Memory__List ..> OpenLanes__CLI__Memory__Table : uses
