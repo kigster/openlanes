@@ -22,6 +22,12 @@ RSpec.describe OpenLanes::Engine::Dispatcher::Assign::IdleReason, :tree do
     expect(reason.call([plan])).to eq("idle: waiting for answers on 002.00")
   end
 
+  it "names a plan held back because its state lacks a required file" do
+    plans { |t| t.plan "002.00", :new, "no-spec" }
+    held = tree.reload.subjects.find { it.feature.ordinal.to_s == "002.00" }
+    expect(reason.call([plan, held])).to include("missing files: 002.00 (New needs spec.md)")
+  end
+
   it "names a failed unblock with its reason" do
     allow(desk).to receive(:waiting).and_return(["002.00"])
     desk.unblocking = drainer({ "002.00" => "boom" })

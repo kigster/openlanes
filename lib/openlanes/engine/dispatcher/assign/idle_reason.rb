@@ -54,7 +54,22 @@ module OpenLanes
           # Every reason, not the first: a run idle on answers and on a held
           # plan named only the answers, and the held plan looked forgotten.
           def reasons(subjects)
-            waiting_reasons + verifying.map { |plan, note| "#{plan} #{note}" } + start_reasons(subjects) + hold_reasons
+            waiting_reasons + verifying.map { |plan, note| "#{plan} #{note}" } + start_reasons(subjects) +
+              hold_reasons + unfounded_reasons(subjects)
+          end
+
+          # Plans {Candidates} will not start because their state's required
+          # files are missing. Named, or the run would sit idle on "nothing
+          # to do" beside a plan that looks perfectly workable in the listing.
+          def unfounded_reasons(subjects)
+            held = subjects.filter_map do |subject|
+              state = subject.status
+              missing = state.missing(subject)
+              next if missing.empty? || Plans::StateMachine::SETTLED.include?(state.key)
+
+              "#{subject.feature.ordinal} (#{state.label} needs #{missing.join(", ")})"
+            end
+            held.empty? ? [] : ["missing files: #{held.join("; ")}"]
           end
 
           # A CLI that cannot log in, and agents whose starts keep failing.

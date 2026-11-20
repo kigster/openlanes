@@ -19,6 +19,21 @@ RSpec.describe OpenLanes::Engine::Dispatcher::Assign, :tree do
     expect(assign.next_dispatchable).to be_nil
   end
 
+  # The backstop behind {OpenLanes::Plans::Tree#husks}: researcher was once
+  # sent into a ⚪ New folder with no spec.md.
+  it "offers nothing on a plan whose state lacks a file it requires" do
+    desk.finished_plans << "001.00"
+    plans { |t| t.plan "002.00", :new, "no-spec" }
+    expect(assign.next_dispatchable).to be_nil
+  end
+
+  it "offers the same plan once the required file is there" do
+    desk.finished_plans << "001.00"
+    plans { |t| t.plan "002.00", :new, "with-spec", files: { "spec.md" => spec_body } }
+    _, picked = assign.next_dispatchable
+    expect(picked.feature.ordinal.to_s).to eq("002.00")
+  end
+
   it "starts what it picked, on a pass that begins with no refusals left over" do
     started = []
     desk.refusals << "stale"

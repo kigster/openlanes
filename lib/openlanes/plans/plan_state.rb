@@ -87,9 +87,18 @@ module OpenLanes
 
       # Change the document under the lock and write it back atomically.
       #
+      # The first write into a {Husk} is refused: that write is what turned a
+      # folder holding only a `.DS_Store` into one that looked like a plan.
+      # Refused with a warning rather than an error, because the callers that
+      # reach it (a stage the curator pends, a round recovery records) run
+      # inside a round, and a raise there takes the whole run down over a
+      # folder that should simply be left alone. The block is not run.
+      #
       # @yieldparam data [Hash] mutate in place
-      # @return [Hash] what was written
+      # @return [Hash] what was written, or what is there when the write was refused
       def update
+        return refuse_husk if !exist? && Husk.husk?(dir)
+
         locked do
           data = read
           yield data
@@ -950,6 +959,14 @@ module OpenLanes
       def identity
         feature = Feature.parse(dir)
         feature ? { "ordinal" => feature.ordinal.to_s, "slug" => feature.slug } : { "ordinal" => nil, "slug" => File.basename(dir) }
+      end
+
+      # @return [Hash] the skeleton, unwritten
+      def refuse_husk
+        UI.log("#{path} not written: #{File.basename(dir)} is a husk, not a plan",
+          level: :warn,
+          plan:  identity["ordinal"])
+        read
       end
 
       # @param data [Hash]
