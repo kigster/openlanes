@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 require "tmpdir"
 
 RSpec::Matchers.define_negated_matcher :not_to_output, :output
@@ -784,6 +786,16 @@ RSpec.describe OpenLanes::UI do
       allow(described_class).to receive(:color?).and_return(true)
       expect { described_class.highlight("Control room: http://127.0.0.1:11001\nRedis: memory://") }
         .to output(%r{\e\[(?:\d+;)*(?:42|37)[;m].*Control room: http://127\.0\.0\.1:11001}m).to_stderr
+    end
+
+    # In this process something else has loaded Strings and TTY::Box by now;
+    # `openlanes web` had not, and died on its first coloured box.
+    it "draws in colour from a bare require \"openlanes\"" do
+      script = 'require "openlanes"; OpenLanes::UI.define_singleton_method(:color?) { true }; ' \
+               'OpenLanes::UI.highlight("Control room: up")'
+      lib = File.expand_path("../../lib", __dir__)
+      out, status = Open3.capture2e({ "NO_COLOR" => nil }, RbConfig.ruby, "-I", lib, "-e", script)
+      expect([status.success?, out]).to match([true, /Control room: up/])
     end
   end
 

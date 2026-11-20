@@ -5,6 +5,8 @@ require "etc"
 require "dry/cli/ui"
 require "pastel"
 require "stringio"
+require "strings"
+require "tty/box"
 require "tty/screen"
 require "unicode/display_width"
 
