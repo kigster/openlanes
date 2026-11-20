@@ -14,6 +14,10 @@ module OpenLanes
       Limit = Data.define(:kind, :retry_after, :detail) do
         # @return [String] "rate limited" or "overloaded", as a person reads it
         def to_s = kind == :overloaded ? "provider overloaded" : "rate limited"
+
+        # @return [String] "rate limit" or "provider overload", what an
+        #   {AdapterPause} is for
+        def cause = kind == :overloaded ? "provider overload" : "rate limit"
       end
     end
   end

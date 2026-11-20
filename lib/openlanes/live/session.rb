@@ -38,6 +38,7 @@ module OpenLanes
         @outage = outage
         @claims = Claims.new(store:, keys: @keys)
         @cli_pause = Engine::CliPause.new
+        @adapter_pause = Execution::Throttle::AdapterPause.new(clock:)
         @publisher = Publisher.new(store:,
           keys: @keys,
           node:,
@@ -48,7 +49,7 @@ module OpenLanes
           project: project || File.basename(root),
           clock:,
           availability: @probes.method(:current),
-          paused_clis: @cli_pause.method(:entries))
+          paused_clis: method(:paused_clis))
         @commands = Commands.new(store:,
           keys: @keys,
           node:,
@@ -62,6 +63,11 @@ module OpenLanes
       # @return [OpenLanes::Engine::CliPause] the CLIs the engine holds, shared
       #   with the runner so the page shows what the dispatcher paused
       attr_reader :cli_pause
+
+      # @return [OpenLanes::Execution::Throttle::AdapterPause] the adapters
+      #   an agent is waiting out a rate limit on (C13), shared with the
+      #   runner and its executor so the page shows them beside {#cli_pause}
+      attr_reader :adapter_pause
 
       # @return [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       attr_reader :store
@@ -172,6 +178,10 @@ module OpenLanes
       def described = ["#{Live.mask(@store.url)} as #{@node.label}", "(#{@node.name})"]
 
       private
+
+      # @return [Array<OpenLanes::Engine::CliPause::Entry, OpenLanes::Execution::Throttle::AdapterPause::Entry>]
+      #   every CLI no new agent starts on, for a login or for a rate limit
+      def paused_clis = @cli_pause.entries + @adapter_pause.entries
 
       # RedisClient is not thread-safe. On the session's own connection the
       # probe thread's replies reached the engine's HGETALL as strings, so a

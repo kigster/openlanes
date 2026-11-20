@@ -35,6 +35,7 @@ classDiagram
   class OpenLanes__Execution__Deadline["OpenLanes::Execution::Deadline"]
   <<module>> OpenLanes__Execution__Deadline
   class OpenLanes__Execution__Executor["OpenLanes::Execution::Executor"]
+  class OpenLanes__Execution__Throttle__AdapterPause["OpenLanes::Execution::Throttle::AdapterPause"]
   class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
   <<module>> OpenLanes__Lifecycle
   class OpenLanes__Lifecycle__Aging["OpenLanes::Lifecycle::Aging"]
@@ -324,6 +325,7 @@ classDiagram
   OpenLanes__Live__Session ..> OpenLanes__Adapters__Probes : uses
   OpenLanes__Live__Session ..> OpenLanes__Config : uses
   OpenLanes__Live__Session ..> OpenLanes__Engine__CliPause : uses
+  OpenLanes__Live__Session ..> OpenLanes__Execution__Throttle__AdapterPause : uses
   OpenLanes__Live__Session ..> OpenLanes__Live : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Claims : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Commands : uses

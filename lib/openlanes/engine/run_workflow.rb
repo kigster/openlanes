@@ -440,36 +440,40 @@ module OpenLanes
       # @param web [OpenLanes::Web::Launcher, nil]
       # @return [OpenLanes::Engine::Runner]
       def runner_for(agents, plans, live, web)
+        # One for the run, before the executor is built: its throttle waits
+        # set it and the dispatcher reads it (C13).
+        @adapter_pause = live&.adapter_pause || Execution::Throttle::AdapterPause.new
         worktree = (OpenLanes::Vcs.worktree(root: @root) if isolation == :worktree)
         publisher = publisher_for(@root, isolation)
         Engine.runner(
-          tree:         @tree,
+          tree:          @tree,
           agents:,
           isolation:,
-          jobs:         (@options[:jobs] || UI.default_jobs).to_i,
+          jobs:          (@options[:jobs] || UI.default_jobs).to_i,
           plans:,
-          state:        Engine.state_file(@tree),
+          state:         Engine.state_file(@tree),
           worktree:,
-          rounds:       @options[:rounds]&.to_i,
-          executor:     executor(usable: usable_for(live)),
-          dry_run:      @dry_run,
+          rounds:        @options[:rounds]&.to_i,
+          executor:      executor(usable: usable_for(live)),
+          dry_run:       @dry_run,
           publisher:,
-          verification: verification_for(publisher, worktree),
-          merging:      merging_for(publisher, worktree),
-          arbitration:  arbitration_for(publisher, worktree),
-          upkeep:       upkeep_for(publisher, worktree),
-          reviews:      reviews_for(agents, publisher, worktree),
-          on_board:     on_board_for(live),
-          claims:       live&.claims,
-          cli_pause:    live&.cli_pause,
-          ignore_bombs: @options.fetch(:ignore_bombs, false),
-          aging_since:  Config.current.aging_since,
-          events:       events,
-          journal:      (journal_for(live) unless @dry_run),
-          quality_gate: (-> { Config.current.quality_unset? } unless @dry_run),
-          lock_ttl:     -> { Config.current.refactor_lock_seconds },
+          verification:  verification_for(publisher, worktree),
+          merging:       merging_for(publisher, worktree),
+          arbitration:   arbitration_for(publisher, worktree),
+          upkeep:        upkeep_for(publisher, worktree),
+          reviews:       reviews_for(agents, publisher, worktree),
+          on_board:      on_board_for(live),
+          claims:        live&.claims,
+          cli_pause:     live&.cli_pause,
+          adapter_pause: @adapter_pause,
+          ignore_bombs:  @options.fetch(:ignore_bombs, false),
+          aging_since:   Config.current.aging_since,
+          events:        events,
+          journal:       (journal_for(live) unless @dry_run),
+          quality_gate:  (-> { Config.current.quality_unset? } unless @dry_run),
+          lock_ttl:      -> { Config.current.refactor_lock_seconds },
           stop_at:,
-          memory:       @options.fetch(:memory, true),
+          memory:        @options.fetch(:memory, true),
           **staying(web, live)
         )
       end
@@ -514,7 +518,8 @@ module OpenLanes
           # pull request whose diff could be fetched.
           packets:      (Execution.review_packets(root: @root) if publishing? && !@dry_run),
           lean:         !@options[:user_config],
-          memory:       @options.fetch(:memory, true))
+          memory:       @options.fetch(:memory, true),
+          **{ pauses: @adapter_pause }.compact)
       end
 
       # What the live board's probes said of each adapter (plan 031, D12): one

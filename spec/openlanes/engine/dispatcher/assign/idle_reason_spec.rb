@@ -16,6 +16,11 @@ RSpec.describe OpenLanes::Engine::Dispatcher::Assign::IdleReason, :tree do
     expect(reason.call([plan])).to eq("idle: nothing to do")
   end
 
+  it "names an adapter paused for a rate limit, and until when" do
+    pause = desk.adapter_pause.hold("claude", 120)
+    expect(reason.call([plan])).to eq("idle: claude paused for rate limit until #{pause.ends_at.strftime("%H:%M")}")
+  end
+
   it "names the plans waiting for answers" do
     allow(desk).to receive(:waiting).and_return(["002.00"])
     desk.unblocking = drainer

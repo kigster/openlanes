@@ -80,9 +80,14 @@ module OpenLanes
           end
 
           # Held by its own failed starts, or with every agent on its CLI
-          # while that CLI cannot log in (plan 065.00).
+          # while that CLI cannot log in (plan 065.00) or while another agent
+          # on it waits out a rate limit (C13). Not a round: nothing is spent,
+          # and the plan starts on the first tick after the pause.
           def held?(agent, subject)
-            !failed_start_hold(subject, agent).nil? || cli_pause.paused?(adapter_of(agent, subject).name)
+            return true unless failed_start_hold(subject, agent).nil?
+
+            adapter = adapter_of(agent, subject).name
+            cli_pause.paused?(adapter) || adapter_pause.paused?(adapter)
           end
 
           def allowance(agent, subject)

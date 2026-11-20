@@ -10,15 +10,19 @@ module OpenLanes
       # the limit outlasts the waiting, or somebody stops the agent while it
       # waits, {Handle#throttled} says so, and the verdict reports that
       # instead of the CLI's last words.
+      #
+      # Each wait also pauses the agent's adapter for as long (C13), so the
+      # dispatcher starts nobody new into the same limit meanwhile.
       class ThrottleWait
         # @param throttle [OpenLanes::Execution::Throttle::Backoff]
-        # @param launcher [OpenLanes::Execution::Executor::Launcher]
-        # @param invocations [OpenLanes::Execution::Executor::Invocation]
+        # @param start_again [OpenLanes::Execution::Executor::StartAgain] the start after a wait
         # @param drain [OpenLanes::Execution::Executor::Drain]
-        def initialize(throttle:, launcher:, invocations:, drain:)
+        # @param pauses [OpenLanes::Execution::Throttle::AdapterPause] the
+        #   run's paused adapters, which each wait extends
+        def initialize(throttle:, start_again:, drain:, pauses: Throttle::AdapterPause.new)
           @throttle = throttle
-          @launcher = launcher
-          @invocations = invocations
+          @pauses = pauses
+          @start_again = start_again
           @drain = drain
         end
 
@@ -43,7 +47,7 @@ module OpenLanes
 
         # @return [OpenLanes::Execution::AgentProcess, nil] the start after the wait
         def retried(wait, attempt, again, &)
-          wait.seconds && wait_out(wait, attempt, &) && StartAgain.new(@launcher, @invocations).call(wait.limit, attempt, again, &)
+          wait.seconds && wait_out(wait, attempt, &) && @start_again.call(wait.limit, attempt, again, &)
         end
 
         # One wait: said, given back to the clock, and sat through unless
@@ -56,7 +60,7 @@ module OpenLanes
         # @return [Boolean] false when the wait was cut short by a stop
         def wait_out(wait, attempt, &)
           handle = attempt.handle
-          announce(wait, attempt, &)
+          begin_wait(wait, attempt, &)
           standing = StandingOrder.of(handle)
           handle.extend!(wait.seconds.ceil)
           Control.write(handle.control, standing) if standing
@@ -72,6 +76,15 @@ module OpenLanes
           passed = @throttle.pause(seconds, &stopped)
           passed = @throttle.pause(Throttle::Backoff::SLICE, &stopped) while passed && Control.paused?
           passed
+        end
+
+        # The wait said, and the agent's adapter paused for as long, so the
+        # dispatcher starts nobody new into the same limit (C13).
+        #
+        # @return [void]
+        def begin_wait(wait, attempt, &)
+          announce(wait, attempt, &)
+          @pauses.hold(attempt.profile.adapter.name, wait.seconds, cause: wait.limit.cause)
         end
 
         # The wait, in the log and over the agent's own line on the board.

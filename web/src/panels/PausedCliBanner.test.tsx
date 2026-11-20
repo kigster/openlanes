@@ -27,6 +27,13 @@ describe("PausedCliBanner", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  it("says until when a rate-limit pause lifts, instead of since when", () => {
+    render(<PausedCliBanner paused={[cli({ reason: "paused for rate limit", until: "2026-11-12T10:05:00Z" })]} />);
+    expect(within(banner()).getByText("paused for rate limit")).toBeInTheDocument();
+    expect(within(banner()).getByText(/^until /)).toHaveAttribute("datetime", "2026-11-12T10:05:00Z");
+    expect(within(banner()).queryByText(/^since /)).toBeNull();
+  });
+
   it("lists every paused CLI under a count when there are several", () => {
     render(<PausedCliBanner paused={[cli(), cli({ adapter: "codex", reason: "not signed in" })]} />);
     expect(banner()).toHaveTextContent("2 CLIs paused");

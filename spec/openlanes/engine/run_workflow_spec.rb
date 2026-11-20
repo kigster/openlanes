@@ -61,6 +61,22 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     end
   end
 
+  # C13: the executor's throttle waits set the pause the dispatcher reads.
+  it "hands the runner and its executor the one adapter pause" do
+    given = {}
+    allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
+      given[:runner] = keywords[:adapter_pause]
+      original.call(**keywords, sleeper: ->(_) {}, quality_gate: nil)
+    end
+    allow(OpenLanes::Execution).to receive(:executor).and_wrap_original do |original, **keywords|
+      given[:executor] ||= keywords[:pauses]
+      original.call(**keywords)
+    end
+    call
+
+    expect(given[:executor]).to be(given[:runner]).and be_a(OpenLanes::Execution::Throttle::AdapterPause)
+  end
+
   describe "refusals, before anything is set up" do
     {
       "--prompt without --agent"        => [{ prompt: "be brief" }, 64, "--prompt only works with --agent"],

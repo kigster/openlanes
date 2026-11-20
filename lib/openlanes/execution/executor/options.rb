@@ -7,7 +7,8 @@ module OpenLanes
       # executor, so no two share a throttle.
       OPTION_DEFAULTS = {
         dry_run: false, lean: true, fresh_budget: false, memory: true,
-        usable: -> { Agents::Dealing::ANY }, trace_dir: -> { TRACE_DIR }, throttle: -> { Throttle::Backoff.new }
+        usable: -> { Agents::Dealing::ANY }, trace_dir: -> { TRACE_DIR }, throttle: -> { Throttle::Backoff.new },
+        pauses: -> { Throttle::AdapterPause.new }
       }.freeze
 
       # The keywords {Executor#initialize} takes, with their defaults, in
@@ -48,6 +49,9 @@ module OpenLanes
       # @!attribute [r] throttle [OpenLanes::Execution::Throttle::Backoff] how long an
       #   agent waits out a provider's rate limit or overload, and when it
       #   stops waiting; the suite hands in one that does not sleep
+      # @!attribute [r] pauses [OpenLanes::Execution::Throttle::AdapterPause] the adapters
+      #   no new agent starts on while one waits out a limit (C13); a run hands in the
+      #   one its dispatcher reads, anything else gets one of its own
       Options = Data.define(:root,
         :spawn,
         :timeout,
@@ -61,7 +65,8 @@ module OpenLanes
         :usable,
         :packets,
         :memory,
-        :throttle) do
+        :throttle,
+        :pauses) do
         def initialize(root:, **given)
           nils = self.class.members.to_h { [it, nil] }
           defaults = OPTION_DEFAULTS.transform_values { it.respond_to?(:call) ? it.call : it }

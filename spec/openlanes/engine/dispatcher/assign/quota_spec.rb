@@ -16,6 +16,19 @@ RSpec.describe OpenLanes::Engine::Dispatcher::Assign::Quota, :tree do
     expect(quota.eligible?(coder, plan)).to be(false)
   end
 
+  # C13: an agent on another plan is waiting out a rate limit on this
+  # agent's CLI, so nobody new starts on it until the wait ends.
+  it "refuses an agent whose adapter is paused for a rate limit, spending no round" do
+    desk.adapter_pause.hold(OpenLanes::Agents::Profile.resolve(coder).adapter.name, 120)
+
+    expect([quota.eligible?(coder, plan), desk.past_rounds(plan, coder)]).to eq([false, []])
+  end
+
+  it "lets an agent on another adapter start while one adapter is paused" do
+    desk.adapter_pause.hold("some-other-cli", 120)
+    expect(quota.eligible?(coder, plan)).to be(true)
+  end
+
   it "refuses an agent already running on the plan" do
     desk.running << job_for(plan, coder)
     expect(quota.eligible?(coder, plan)).to be(false)

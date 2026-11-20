@@ -72,8 +72,9 @@ module OpenLanes
             held.empty? ? [] : ["missing files: #{held.join("; ")}"]
           end
 
-          # A CLI that cannot log in, and agents whose starts keep failing.
-          def start_reasons(subjects) = [cli_pause.reason, @stalls.reason(subjects)].compact
+          # A CLI that cannot log in or is rate limited, and agents whose
+          # starts keep failing.
+          def start_reasons(subjects) = [cli_pause.reason, adapter_pause.reason, @stalls.reason(subjects)].compact
 
           def waiting_reasons
             failures = unblocking.failures
