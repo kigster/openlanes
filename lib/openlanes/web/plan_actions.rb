@@ -108,7 +108,7 @@ module OpenLanes
       end
 
       # `delayed.md` goes in first, since 💤 refuses a folder without one; a
-      # move that is refused takes back a file this call created.
+      # move that fails, refused or not, takes back a file this call created.
       #
       # @return [void]
       def defer(subject, reason)
@@ -117,10 +117,20 @@ module OpenLanes
         path = File.join(subject.feature.path, "delayed.md")
         created = !File.exist?(path)
         File.open(path, "a") { it.write(delayed(reason, fresh: created)) }
-        subject.machine.promote!(:deferred)
+        taking_back(created ? path : nil) { subject.machine.promote!(:deferred) }
       rescue Plans::StateMachine::Refused => e
-        File.delete(path) if created && File.exist?(path)
         raise Refused, e.message
+      end
+
+      # Runs the block, removing `path` if the block raises, and raising on.
+      #
+      # @param path [String, nil] the file to take back; nil keeps whatever is there
+      # @return [void]
+      def taking_back(path)
+        yield
+      rescue StandardError
+        File.delete(path) if path && File.exist?(path)
+        raise
       end
 
       # @return [String]
