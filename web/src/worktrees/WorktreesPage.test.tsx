@@ -116,3 +116,13 @@ it("lists the worktrees in the nav menu, and hands back the one picked", async (
   expect(onPick).toHaveBeenCalledWith("bbb222");
   expect(screen.getByRole("button", { name: /~\/wt\/003.00-tax-rule-dsl/ })).toHaveTextContent("someone/003.00-tax-rule-dsl");
 });
+
+it("says so in the nav menu when there are no worktrees, or they cannot be read", async () => {
+  answer([]);
+  const { unmount } = draw(<WorktreesMenu onPick={vi.fn()} />);
+  expect(await screen.findByText("No worktrees")).toBeInTheDocument();
+  unmount();
+  answer(json({}, 500));
+  draw(<WorktreesMenu onPick={vi.fn()} />);
+  expect(await screen.findByText("Worktrees unavailable")).toBeInTheDocument();
+});
