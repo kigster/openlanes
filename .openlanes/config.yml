@@ -133,5 +133,5 @@ refactor:
 sizing:
 chime: false
 budget:
-  plan_usd:
+  plan_usd: 25
 agents:
