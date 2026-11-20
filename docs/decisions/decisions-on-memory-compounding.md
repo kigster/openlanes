@@ -44,7 +44,7 @@ The folders `061.00` to `064.00` in `.plans/` hold only `state.json` (062 also `
 
 ### C7. Plan 060 moves to the archive as Done
 
-It was discarded on 2026-11-14 because its pull request #223 closed unmerged, yet four of its six items landed by direct commits. It moves to `.plans/archive/` as Done, with a note listing which items landed in which commits, and that the review gate moved to its own plan (C8).
+It was discarded on 2026-11-14 because its pull request #223 closed unmerged, yet four of its five items landed through other pull requests. It moves to `.plans/archive/` as Done, with a note listing which items landed in which commits, and that the review gate moved to its own plan (C8).
 
 ### C8. The review gate gets its own plan
 

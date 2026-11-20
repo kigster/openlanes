@@ -3,6 +3,11 @@
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
 | 223 | [\[060.00\](A) Improve Openlanes Low Hanging Fruit](https://github.com/kigster/openlanes/pull/223) | Closed 🔴 |
+| 201 | [Give every reviewer one harness-built packet](https://github.com/kigster/openlanes/pull/201) | Merged 🟣 |
+| 204 | [Wait out a provider rate limit inside one attempt](https://github.com/kigster/openlanes/pull/204) | Merged 🟣 |
+| 205 | [Split the dispatcher into steps over one Desk](https://github.com/kigster/openlanes/pull/205) | Merged 🟣 |
+| 243 | [\[045.02\](A) Split Dispatcher](https://github.com/kigster/openlanes/pull/243) | Merged 🟣 |
+| 245 | [Pick the builders' model by the plan's unit size](https://github.com/kigster/openlanes/pull/245) | Merged 🟣 |
 
 ## Round 1, backend-coder
 
