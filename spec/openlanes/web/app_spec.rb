@@ -617,6 +617,26 @@ RSpec.describe OpenLanes::Web::App, :tree do
       get "/api/plans/009/actions"
       expect(last_response.status).to eq(404)
     end
+
+    context "with a demo" do
+      let(:context) do
+        OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store),
+          keys:,
+          plans_dir: plans_root,
+          url: "memory://",
+          demo: instance_double(OpenLanes::Web::Demo))
+      end
+
+      it "offers nothing, since the plans on disk are not the ones the board shows" do
+        get "/api/plans/004/actions"
+        expect([last_response.status, body["error"]]).to eq([404, OpenLanes::Web::App::NO_DEMO_ACTIONS])
+      end
+
+      it "moves nothing on disk" do
+        act({ action: "discard", reason: "gone" })
+        expect([last_response.status, Dir.children(plans_root).grep(/\A004\.00/).first]).to match([404, include("⭐")])
+      end
+    end
   end
 
   describe "GET /api/plans/:ordinal/review" do
