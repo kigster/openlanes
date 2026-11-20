@@ -55,6 +55,10 @@ RSpec.describe OpenLanes::Vcs::SnapshotReads do
     expect(github).to have_received(:swap_label).with(number: 7, add: :x)
   end
 
+  it "says when a held pull request was read, and nil for one read live" do
+    expect([reads.taken_at(number: 7, repo: "o/r"), reads.taken_at(number: 8), reads.taken_at(number: 7, repo: "x/y")]).to eq([Time.at(0), nil, nil])
+  end
+
   it "passes every other call straight through" do
     reads.merge(number: 7, head: "abc")
     expect(github).to have_received(:merge).with(number: 7, head: "abc")

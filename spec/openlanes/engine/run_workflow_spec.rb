@@ -79,6 +79,27 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     end
   end
 
+  # C11: spend is summed from the event log, so a cap with the log off
+  # would never hold a plan.
+  describe "a dollar cap the event log cannot count" do
+    before do
+      root = File.dirname(plans_root)
+      FileUtils.mkdir_p(File.join(root, ".openlanes"))
+      File.write(File.join(root, ".openlanes", "config.yml"), "budget:\n  plan_usd: 25\nevents:\n  enabled: false\n")
+    end
+
+    it "refuses to start, with 78, and says why" do
+      result, = call(dry_run: false)
+
+      expect([result.failure.status, result.failure.message])
+        .to match([78, a_string_including("budget.plan_usd is $25 but events.enabled is false")])
+    end
+
+    it "lets a dry run through, which spends nothing" do
+      expect(workflow.send(:countable)).to be_success
+    end
+  end
+
   # Issue 174: backend-coder covers 🎨 once the front end is off, so naming
   # it for such a plan is not refused as a state it does not take.
   it "accepts an --agent that covers the plan's state" do

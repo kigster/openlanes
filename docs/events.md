@@ -14,7 +14,7 @@ events:
   dir: /var/lib/openlanes/events   # optional, absolute
 ```
 
-- `enabled`: `true` or `false`. Anything else is an error. Absent means off.
+- `enabled`: `true` or `false`. Anything else is an error. Absent means off. `budget.plan_usd` is counted from this log, so a run with a cap and the log off refuses to start.
 - `dir`: an absolute path (a leading `~` is expanded). A relative path is an error, because it would land wherever the command was typed.
 
 Without `dir`, the log lives outside the repository, so `git status` and the autonomy boundary never see it:
