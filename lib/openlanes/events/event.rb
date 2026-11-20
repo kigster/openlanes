@@ -55,7 +55,7 @@ module OpenLanes
     class Event
       # Every kind the log records.
       KINDS = %w[run_started run_finished agent_started agent_finished block_raised human_answered
-                 pr_opened pr_reviewed pr_merged pr_closed failure].freeze
+                 pr_opened pr_reviewed pr_merged pr_closed failure lesson_offered lesson_cited].freeze
 
       # The usage keys an `agent_finished` carries, from {Usage#to_h}.
       USAGE_KEYS = %w[input_tokens output_tokens cache_read_tokens cache_write_tokens cost_usd estimated
@@ -73,7 +73,12 @@ module OpenLanes
         "pr_reviewed"    => %w[number verdict],
         "pr_merged"      => %w[number],
         "pr_closed"      => %w[number],
-        "failure"        => %w[round invocation_start error_class]
+        "failure"        => %w[round invocation_start error_class],
+        # One per lesson id, per invocation (decision C5): what the prompt
+        # carried, and which of those the agent's report named. The id is a
+        # lesson file's own token ({Memory::Lesson::ID}), never prose.
+        "lesson_offered" => %w[round invocation_start lesson],
+        "lesson_cited"   => %w[round invocation_start lesson]
       }.freeze
 
       # The one free string the log keeps is a class name, and a class name

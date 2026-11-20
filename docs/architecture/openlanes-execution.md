@@ -154,6 +154,7 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Verdict : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Throttle__AdapterPause : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Throttle__Backoff : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Memory : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor__CompactReply ..> OpenLanes__Execution__Executor__Said : uses
   OpenLanes__Execution__Executor__Compactor ..> OpenLanes__Execution__Control : uses

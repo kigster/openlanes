@@ -126,4 +126,50 @@ RSpec.describe OpenLanes::Memory::Publication do
     expect(opened.first[:files]).not_to include(".openlanes/memory/lessons/L-0003-old.md")
     expect(result.held_back).to eq([])
   end
+
+  describe "proposing retirements (C5)" do
+    def publish_lesson(id)
+      write_lesson(File.join(root, OpenLanes::Memory::PROJECT_DIR), id, lesson_meta(id, title: "Ignored #{id}"))
+      lessons_git(root, "add", "-A")
+      lessons_git(root, "commit", "-q", "-m", "lesson #{id}")
+      lessons_git(root, "push", "-q", "origin", "main")
+      lessons_git(root, "fetch", "-q", "origin")
+    end
+
+    let(:seen) { [] }
+    let(:retiring) do
+      lambda { |lessons|
+        seen.concat(lessons.map(&:id))
+        usage = lessons.to_h { [it.id, OpenLanes::Events::LessonUsage.new(id: it.id, offered: 15, cited: 0, last_cited: nil)] }
+        OpenLanes::Memory::Retirement.new(usage).call(lessons)
+      }
+    end
+
+    before do
+      publish_lesson("L-0004")
+      inbox = OpenLanes::Memory.inbox(root:)
+      inbox.add(proposal("redis-specs"), plan: "001.00")
+      inbox.add(proposal("redis-specs"), plan: "002.00")
+    end
+
+    it "lists, in the body, the default branch's lessons offered on fifteen plans and cited on none" do
+      described_class.new(root:, publisher:, base: "main", retiring:).call
+
+      body = opened.first[:body]
+      expect(seen).to include("L-0004")
+      expect(body).to include("### Proposed for retirement", "- L-0004 Ignored L-0004: offered on 15 plans, cited on none")
+    end
+
+    it "proposes only: the lesson it lists is not changed by the pull request" do
+      described_class.new(root:, publisher:, base: "main", retiring:).call
+
+      expect(opened.first[:files]).not_to include(a_string_including("L-0004"))
+    end
+
+    it "lists nothing with the event log off, the default" do
+      publication.call
+
+      expect(opened.first[:body]).not_to include("Proposed for retirement")
+    end
+  end
 end

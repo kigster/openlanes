@@ -73,4 +73,44 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   it "leaves the section out with memory: false" do
     expect(prompt(executor: described_class.new(root:, spawn:, memory: false))).not_to include("Lessons from earlier plans", "L-0007")
   end
+
+  # Decision C5: the result carries what the prompt offered and which of
+  # those the agent's final report named, so the engine can count both.
+  describe "citations" do
+    let(:report) { "Done. Applied L-0007; ignored the note about L-0042 in the diff." }
+    let(:stream) do
+      [%({"type":"result","subtype":"success","result":#{report.to_json},"usage":{"input_tokens":10,"output_tokens":5}}\n)]
+    end
+    let(:fake_child) do
+      status = instance_double(Process::Status, success?: true)
+      child = instance_double(OpenLanes::Execution::Child, pid: 4242, alive?: false, kill: nil, terminate: nil, wait: status)
+      allow(child).to receive(:each_chunk) { |&block| stream.each { block.call(it) } }
+      child
+    end
+    let(:spawn) { ->(_argv, **) { fake_child } }
+    let(:traces) { Dir.mktmpdir("executor-traces") }
+
+    after { FileUtils.rm_rf(traces) }
+
+    def run(executor = described_class.new(root:, spawn:, trace_dir: traces)) = executor.call(agent, subject_plan)
+
+    it "names the lessons offered, and the offered ones the report cites" do
+      result = run
+
+      expect(result).to have_attributes(offered: %w[L-0007], cited: %w[L-0007])
+    end
+
+    it "offers nothing to a rebase resolution, whose prompt carries no lessons" do
+      stopped = OpenLanes::Vcs::Refresh::Outcome.new(kind: :conflicted, base: "origin/main", files: ["app.rb"])
+      result = described_class.new(root:, spawn:, trace_dir: traces).call(agent, subject_plan, rebase: stopped)
+
+      expect(result).to have_attributes(offered: [], cited: [])
+    end
+
+    it "offers and credits nothing under memory: false" do
+      result = run(described_class.new(root:, spawn:, trace_dir: traces, memory: false))
+
+      expect(result).to have_attributes(offered: [], cited: [])
+    end
+  end
 end

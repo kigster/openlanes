@@ -146,14 +146,14 @@ A lesson is a rule the factory does not yet enforce. The best lesson is one that
 | about one agent's craft | that agent's `agents/*.md` (human PR only) | `graduated` |
 | not violated or cited in N plans (_my call_: 15) | nothing | `retired` (kept in git history) |
 
-`openlanes memory report` lists graduation candidates: lessons violated often (worth enforcing) and lessons never cited (worth retiring).
+`openlanes memory report` shows, per lesson, the plans it was offered on and the plans whose agents cited it, counted from `lesson_offered` and `lesson_cited` events (decision C5). A lesson offered on 15 plans and cited on none is proposed for retirement in the next memory pull request, as a list in its body; a person applies it by setting `status: retired` before the merge. Graduation stays a person's call.
 
 ### Measuring it
 
 Without measurement, memory is just a longer prompt. openlanes already has what it needs:
 
 - **Per-plan outcomes** from `state.json` and `pr_reviewed` events: review rounds to approval, `rejected`/`slop` counts, questions asked, tokens spent.
-- **Per-lesson usage** in `usage.json`: how often a reviewer cited the lesson as _violated_ after it was active. A lesson that is still violated is not working: reword it or graduate it to a check.
+- **Per-lesson usage** from the event log, never a `usage.json`: every lesson offered to an invocation, and every offered id its agent's report cites (`openlanes memory report`).
 - **Evals** (`evals/cases/<agent>/`): a lesson that came from a real rejection becomes an eval case (the rejected diff is the `fail/` fixture, the fixed one `pass/`). `openlanes evals --live` with and without memory answers "does memory help this agent?" before the factory trusts it.
 
 The headline metric: _rounds-to-approval per plan, rolling average over the last 20 plans, with memory on against a `--no-memory` baseline._
