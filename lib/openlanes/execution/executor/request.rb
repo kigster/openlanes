@@ -22,8 +22,11 @@ module OpenLanes
       #   @return [String, nil] the previous round's session id (M1), carried on
       #   with this round's prompt; ignored by a CLI that cannot resume, and
       #   dropped for a fresh start when the CLI cannot find it
-      Request = Data.define(:root, :control, :round, :successor, :partners, :rebase, :resume) do
-        def initialize(root:, control: nil, round: 1, successor: nil, partners: [], rebase: nil, resume: nil) = super
+      # @!attribute [r] brief
+      #   @return [String] a section the caller adds for this invocation alone,
+      #   such as the slugs a curator may reuse ({Memory.known})
+      Request = Data.define(:root, :control, :round, :successor, :partners, :rebase, :resume, :brief) do
+        def initialize(root:, control: nil, round: 1, successor: nil, partners: [], rebase: nil, resume: nil, brief: "") = super
       end
     end
   end

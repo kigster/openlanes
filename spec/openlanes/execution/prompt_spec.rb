@@ -33,6 +33,11 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
     expect(text).not_to include("snapshot the harness overwrites")
   end
 
+  it "carries the caller's brief after the lessons, inside the invocation" do
+    text = described_class.new(agent:, subject: plan, root: "/repo", profile:, memory: "## Lessons\n\n", brief: "## Lessons you may meet again\n\n").to_s
+    expect(text).to match(/## This invocation.*## Lessons\n\n## Lessons you may meet again\n\n/m)
+  end
+
   describe "a reviewer's packet (plan 060.00)" do
     let(:agent) { OpenLanes::Agents.find("staff-reviewer") }
     let(:packet) { "# Review packet\n\n<diff pr=\"4\">\n+x\n</diff>\n\n---\n\n" }
