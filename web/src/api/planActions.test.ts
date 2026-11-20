@@ -44,12 +44,37 @@ it("does not retry a 409 for a plan it did not stop, or a refusal of another kin
   await expect(runPlanAction(offer(), "defer", "x", { sleep })).rejects.toBeInstanceOf(ApiError);
   sendCommand.mockResolvedValue({ status: "done" });
   postJson.mockResolvedValue(json({ error: "say why it is discarded" }, 422));
-  await expect(runPlanAction(offer({ running: true }), "discard", "", { sleep })).rejects.toThrow("say why it is discarded");
+  await expect(runPlanAction(offer({ running: true }), "discard", "", { sleep }))
+    .rejects.toThrow("The agents on 070.00 were stopped, but the plan was not moved: say why it is discarded");
   expect(sleep).not.toHaveBeenCalled();
 });
 
 it("stops asking once the wait is over", async () => {
   sendCommand.mockResolvedValue({ status: "done" });
   postJson.mockImplementation(async () => json({ error: "still working" }, 409));
-  await expect(runPlanAction(offer({ running: true }), "discard", "x", { waitMs: 0, sleep })).rejects.toThrow("still working");
+  await expect(runPlanAction(offer({ running: true }), "discard", "x", { waitMs: 0, sleep }))
+    .rejects.toThrow("The agents on 070.00 were stopped, but the plan was not moved: still working");
+});
+
+it("says the agents were stopped when the request itself fails", async () => {
+  sendCommand.mockResolvedValue({ status: "done" });
+  postJson.mockRejectedValue(new TypeError("Failed to fetch"));
+  await expect(runPlanAction(offer({ running: true }), "defer", "x", { sleep }))
+    .rejects.toMatchObject({ status: 0, message: "The agents on 070.00 were stopped, but the plan was not moved: Failed to fetch" });
+});
+
+it("reads a refusal whose body is not JSON as the fallback", async () => {
+  postJson.mockResolvedValue(new Response("<html>bad gateway</html>", { status: 502 }));
+  await expect(runPlanAction(offer(), "defer", "x", { sleep })).rejects.toMatchObject({ status: 502 });
+});
+
+it("waits on a real timer when no sleep is given", async () => {
+  vi.useFakeTimers();
+  sendCommand.mockResolvedValue({ status: "done" });
+  postJson
+    .mockResolvedValueOnce(json({ error: "busy" }, 409))
+    .mockResolvedValueOnce(json(offer({ status: "deferred" })));
+  const run = runPlanAction(offer({ running: true }), "defer", "x", { pollMs: 50 });
+  await vi.advanceTimersByTimeAsync(50);
+  expect((await run).status).toBe("deferred");
 });
