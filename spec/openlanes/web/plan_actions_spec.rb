@@ -57,6 +57,24 @@ RSpec.describe OpenLanes::Web::PlanActions, :tree do
       expect(File.read(File.join(plans_root, folder("004.00"), "delayed.md"))).to include("Revisit when the API is stable")
     end
 
+    def stub_move(&)
+      machine = instance_double(OpenLanes::Plans::StateMachine)
+      allow(machine).to receive(:promote!, &)
+      allow(OpenLanes::Plans::StateMachine).to receive(:new).and_return(machine)
+    end
+
+    it "takes back the delayed.md it wrote when the move is refused" do
+      stub_move { raise OpenLanes::Plans::StateMachine::Refused, "no" }
+      expect { service.call("004.00", "defer", reason: "later") }.to raise_error(described_class::Refused, "no")
+      expect(File).not_to exist(File.join(plans_root, folder("004.00"), "delayed.md"))
+    end
+
+    it "takes it back when the move fails any other way, and lets the error through" do
+      stub_move { raise Errno::EACCES }
+      expect { service.call("004.00", "defer", reason: "later") }.to raise_error(Errno::EACCES)
+      expect(File).not_to exist(File.join(plans_root, folder("004.00"), "delayed.md"))
+    end
+
     it "keeps a reason that already names its trigger as typed" do
       service.call("004.00", "defer", reason: "Until Q3")
       expect(File.read(File.join(plans_root, folder("004.00"), "delayed.md"))).to include("\nUntil Q3\n")
