@@ -35,8 +35,13 @@ module OpenLanes
         @working = working
       end
 
+      # The plans are read once for the whole list, not once per worktree.
+      #
       # @return [Array<Hash>] `{ id:, path:, branch:, plan:, modified:, lines: }`, in git's order
-      def list = entries.map { |e| e.merge(plan: plan_of(e[:branch]), modified: status_of(e[:path]), lines: lines_of(e[:path])) }
+      def list
+        tree = Plans.tree(@plans_dir)
+        entries.map { |e| e.merge(plan: plan_of(e[:branch], tree), modified: status_of(e[:path]), lines: lines_of(e[:path])) }
+      end
 
       # @param id [String]
       # @return [Hash] `{ stat:, patch:, truncated:, base:, compare_url: }`
@@ -85,15 +90,16 @@ module OpenLanes
       # @raise [NotFound]
       def entry(id) = entries.find { it[:id] == id } || raise(NotFound, "there is no worktree #{id}")
 
+      # @param tree [OpenLanes::Plans::Tree] one already read, when the caller has it
       # @return [OpenLanes::Plans::Subject, nil]
-      def subject_of(branch)
+      def subject_of(branch, tree = Plans.tree(@plans_dir))
         match = PLAN_BRANCH.match(branch) or return nil
-        Plans.tree(@plans_dir).find(match[:ordinal])
+        tree.find(match[:ordinal])
       end
 
       # @return [Hash, nil]
-      def plan_of(branch)
-        subject = subject_of(branch) or return nil
+      def plan_of(branch, tree)
+        subject = subject_of(branch, tree) or return nil
         feature = subject.feature
         ordinal = feature.ordinal.to_s
         { ordinal:, title: feature.title, status: feature.status.key.to_s, label: feature.status.label,
