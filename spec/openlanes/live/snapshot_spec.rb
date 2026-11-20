@@ -339,7 +339,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
       it { is_expected.to include(name: "claude", available: nil, reason: nil, checked_at: nil) }
       it { expect(claude[:models].map { it[:id] }).to eq(OpenLanes::Adapters::Claude::Pricing::BUNDLED.map(&:id)) }
-      it("puts Fable first: there is no ceiling") { expect(claude[:models].first[:id]).to eq("claude-fable-5-1") }
+      it("puts Fable first: there is no ceiling") { expect(claude[:models].first[:id]).to eq("claude-fable-5-2") }
       it { expect(claude[:capabilities]).to eq(compacts: true, resumes: true, enforces_tool_denial: true) }
     end
 

@@ -17,10 +17,10 @@ module OpenLanes
         TIERS = %w[haiku sonnet opus fable].freeze
 
         # Dollars per million tokens, in and out, for the newest model of each
-        # tier as of 2026-10-13: what a model nobody has priced is assumed to
+        # tier as of 2026-11-20: what a model nobody has priced is assumed to
         # cost. https://platform.claude.com/docs/en/about-claude/pricing
         RATES = {
-          "fable"  => [10, 50],
+          "fable"  => [8, 40],
           "opus"   => [4, 20],
           "sonnet" => [2, 10],
           "haiku"  => [0.10, 0.50]
@@ -30,11 +30,12 @@ module OpenLanes
         WINDOW = 1_000_000
 
         # What the gem ships, for a machine that cannot fetch: every model
-        # Anthropic served on 2026-10-13, priced from the pricing page, most
+        # Anthropic served on 2026-11-20, priced from the pricing page, most
         # capable first and newest first within a tier. Haiku 5.5 is priced
         # for prompts up to 100k tokens; above that it is $0.50 in and $2.50
         # out, which this table does not model.
         BUNDLED = [
+          Model.new(id: "claude-fable-5-2", label: "Fable 5.2", rate_in: 8, rate_out: 40, context: WINDOW),
           Model.new(id: "claude-fable-5-1", label: "Fable 5.1", rate_in: 10, rate_out: 50, context: WINDOW),
           Model.new(id: "claude-fable-5", label: "Fable 5", rate_in: 10, rate_out: 50, context: WINDOW),
           Model.new(id: "claude-opus-5-5", label: "Opus 5.5", rate_in: 4, rate_out: 20, context: WINDOW),
