@@ -205,6 +205,7 @@ classDiagram
   class OpenLanes__Execution__Executor__Handle["OpenLanes::Execution::Executor::Handle"]
   class OpenLanes__Execution__ProcessStart["OpenLanes::Execution::ProcessStart"]
   <<module>> OpenLanes__Execution__ProcessStart
+  class OpenLanes__Execution__Throttle__AdapterPause["OpenLanes::Execution::Throttle::AdapterPause"]
   class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
   <<module>> OpenLanes__Frontmatter
   class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
@@ -415,6 +416,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Rebase : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Recovery__Records : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Execution__Throttle__AdapterPause : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__LockClock : uses
   OpenLanes__Engine__Dispatcher__Desk__Budgeting ..> OpenLanes__UI : uses
   OpenLanes__Engine__Dispatcher__Desk__FailedStarts ..> OpenLanes__Execution__Executor : uses
@@ -731,6 +733,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Events__NullSink : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Execution : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Execution__Throttle__AdapterPause : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__Holder : uses
@@ -759,6 +762,7 @@ classDiagram
   OpenLanes__Engine__Runner ..> OpenLanes__Engine__Reviews : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Error : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Events__NullSink : uses
+  OpenLanes__Engine__Runner ..> OpenLanes__Execution__Throttle__AdapterPause : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Lifecycle : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Lifecycle__Lanes : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Lifecycle__Resync__Dirs : uses

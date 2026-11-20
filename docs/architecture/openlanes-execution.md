@@ -88,6 +88,7 @@ classDiagram
   <<module>> OpenLanes__Execution__ShutdownGrace
   class OpenLanes__Execution__Throttle["Throttle"]
   <<module>> OpenLanes__Execution__Throttle
+  class OpenLanes__Execution__Throttle__AdapterPause["Throttle::AdapterPause"]
   class OpenLanes__Execution__Throttle__Backoff["Throttle::Backoff"]
   class OpenLanes__Execution__Throttle__Backoff__Waits["Throttle::Backoff::Waits"]
   class OpenLanes__Execution__Throttle__Limit["Throttle::Limit"]
@@ -147,9 +148,11 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Said : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Sessions : uses
   OpenLanes__Execution__Executor ..|> OpenLanes__Execution__Executor__Shortcuts : includes
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__StartAgain : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Supervision : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__ThrottleWait : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Verdict : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Throttle__AdapterPause : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Throttle__Backoff : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor__CompactReply ..> OpenLanes__Execution__Executor__Said : uses
@@ -212,8 +215,8 @@ classDiagram
   OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Executor__StandingOrder : uses
-  OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Executor__StartAgain : uses
   OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Throttle : uses
+  OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Throttle__AdapterPause : uses
   OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Throttle__Backoff : uses
   OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor__Verdict ..> OpenLanes__Execution__Clock : uses

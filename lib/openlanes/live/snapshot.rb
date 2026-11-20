@@ -47,7 +47,9 @@ module OpenLanes
       #   same way
       # @param chime [#call] `chime:`, asked the same way
       # @param paused_clis [#call] returns {Engine::CliPause::Entry}s, the CLIs
-      #   the engine has stopped starting agents on (plan 065.00)
+      #   the engine has stopped starting agents on (plan 065.00), and
+      #   {Execution::Throttle::AdapterPause::Entry}s, those paused for a rate
+      #   limit until a time (C13)
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
         availability: -> { [] }, judge: Live.choice_judge, redis_url: nil,

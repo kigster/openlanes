@@ -111,7 +111,7 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Container : 10
   OpenLanes__Engine ..> OpenLanes__Coverage : 4
   OpenLanes__Engine ..> OpenLanes__Events : 7
-  OpenLanes__Engine ..> OpenLanes__Execution : 27
+  OpenLanes__Engine ..> OpenLanes__Execution : 30
   OpenLanes__Engine ..> OpenLanes__Lifecycle : 11
   OpenLanes__Engine ..> OpenLanes__Live : 11
   OpenLanes__Engine ..> OpenLanes__Log : 3
@@ -159,7 +159,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Config : 6
   OpenLanes__Live ..> OpenLanes__Engine : 11
   OpenLanes__Live ..> OpenLanes__Events : 1
-  OpenLanes__Live ..> OpenLanes__Execution : 7
+  OpenLanes__Live ..> OpenLanes__Execution : 8
   OpenLanes__Live ..> OpenLanes__Lifecycle : 7
   OpenLanes__Live ..> OpenLanes__Plans : 29
   OpenLanes__Live ..> OpenLanes__Slack : 1

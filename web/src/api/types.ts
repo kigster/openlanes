@@ -276,11 +276,15 @@ export interface Snapshot {
   paused_clis?: PausedCli[]; // optional: an engine older than plan 065 never sends it, which reads as nothing paused
 }
 
-/** A coding CLI the engine stopped starting agents on after an authentication failure, until its probe passes (plan 065). */
+/**
+ * A coding CLI the engine stopped starting agents on: after an authentication failure, until its probe passes (plan 065),
+ * or while an agent on it waits out a rate limit, until `until` (C13).
+ */
 export interface PausedCli {
   adapter: string; // claude, codex, pi, grok or gemini
-  reason: string; // the CLI's own words, "OAuth session expired"
+  reason: string; // the CLI's own words, "OAuth session expired", or "paused for rate limit"
   since: Iso;
+  until?: Iso; // only on a rate-limit pause: when it lifts by itself
 }
 
 /** The refactor running alone (R6): nothing new starts until it merges or its lock lapses. */

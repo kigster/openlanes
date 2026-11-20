@@ -414,6 +414,16 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
       expect(paused(cli.entries)).to eq([{ adapter: "claude", reason: "OAuth session expired", since: "2026-10-13T09:00:00Z" }])
     end
+
+    it "names an adapter paused for a rate limit, and until when (C13)" do
+      limited = OpenLanes::Execution::Throttle::AdapterPause.new(clock: -> { at })
+      limited.hold("claude", 120)
+
+      expect(paused(limited.entries)).to eq([{ adapter: "claude",
+                                               reason:  "paused for rate limit",
+                                               since:   "2026-10-13T09:00:00Z",
+                                               until:   "2026-10-13T09:02:00Z" }])
+    end
   end
 
   describe "plans on a dependency cycle" do

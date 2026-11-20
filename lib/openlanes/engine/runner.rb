@@ -93,13 +93,18 @@ module OpenLanes
       #   next; nil keeps {Plans::GlobalLock::DEFAULT_HOURS}
       # @param cli_pause [OpenLanes::Engine::CliPause, nil] the CLIs no agent
       #   is started on, shared with the live page; nil makes one of its own
+      # @param adapter_pause [OpenLanes::Execution::Throttle::AdapterPause, nil]
+      #   the adapters an agent is waiting out a rate limit on (C13), shared
+      #   with the executor that sets it and the live page; nil makes one of
+      #   its own
       def initialize(tree:, executor:, agents: Agents::Registry.new, isolation: :shared, jobs: 1, worktree: nil,
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
         watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil, verification: nil, journal: nil,
         merging: nil, arbitration: nil, upkeep: nil, quality_gate: nil, stop_at: nil, events: Events::NullSink.new,
-        reviews: nil, lock_ttl: nil, memory: true, cli_pause: nil)
+        reviews: nil, lock_ttl: nil, memory: true, cli_pause: nil, adapter_pause: nil)
         @tree = tree
+        @adapter_pause = adapter_pause || Execution::Throttle::AdapterPause.new
         @memory = memory
         @cli_pause = cli_pause || CliPause.new
         @lock_ttl = lock_ttl || -> { Plans::GlobalLock::DEFAULT_HOURS * 3600 }
@@ -143,6 +148,9 @@ module OpenLanes
 
       # @return [OpenLanes::Engine::CliPause]
       attr_reader :cli_pause
+
+      # @return [OpenLanes::Execution::Throttle::AdapterPause]
+      attr_reader :adapter_pause
 
       # @return [OpenLanes::Engine::Merging, nil]
       attr_reader :merging
