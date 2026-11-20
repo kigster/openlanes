@@ -55,10 +55,12 @@ module OpenLanes
       #   {Memory.section}; empty with `--no-memory` or when none is for it
       # @param resume [String, nil] the session this round carries on, which
       #   decides how much of the journal it is sent ({JournalWindow})
+      # @param brief [String] a section the caller adds, placed after the lessons
       def initialize(agent:, subject:, root:, profile:, round: 1, successor: nil, partners: [], control: nil,
         instructions: "", max_tokens: nil, fresh_budget: false, seconds: nil, denied: [], granted: [], rebase: nil,
-        max_rejections: -> { Config.current.max_rejections }, packet: "", memory: "", resume: nil)
+        max_rejections: -> { Config.current.max_rejections }, packet: "", memory: "", resume: nil, brief: "")
         @memory = memory.to_s
+        @brief = brief.to_s
         @rebase = rebase
         @resume = resume
         @packet = packet.to_s
@@ -100,7 +102,7 @@ module OpenLanes
 
           #{"The folder's name is not currently justified: #{subject.violation}" if subject.violation}
           #{snapshot_note}
-          #{operator_instructions}#{@memory}#{requirements_section}#{review_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
+          #{operator_instructions}#{@memory}#{@brief}#{requirements_section}#{review_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
           ## Boundary — enforced, not requested
 
           You may read anything, and write source, tests and the plan's own

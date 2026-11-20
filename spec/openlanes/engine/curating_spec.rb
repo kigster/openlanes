@@ -14,7 +14,7 @@ RSpec.describe OpenLanes::Engine::Curating, :tree do
   let(:asked) { [] }
   let(:result) { instance_double(OpenLanes::Execution::Executor::Result, ok: true, note: "Completed") }
   let(:executor) do
-    lambda do |_agent, subject, root:, handle:|
+    lambda do |_agent, subject, root:, handle:, **|
       asked << subject.feature.ordinal.to_s
       handle.trace = File.join(root, subject.feature.ordinal.to_s)
       result

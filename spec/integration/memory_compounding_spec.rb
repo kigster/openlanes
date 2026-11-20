@@ -17,7 +17,7 @@ RSpec.describe "memory compounding across plans", :tree do
   end
   let(:result) { instance_double(OpenLanes::Execution::Executor::Result, ok: true, note: "Completed") }
   let(:executor) do
-    lambda do |_agent, subject, root:, handle:|
+    lambda do |_agent, subject, root:, handle:, **|
       handle.trace = File.join(root, subject.feature.ordinal.to_s)
       result
     end

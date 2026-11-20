@@ -23,6 +23,7 @@ classDiagram
   class OpenLanes__Memory__Folder["Folder"]
   class OpenLanes__Memory__GlobalStore["GlobalStore"]
   class OpenLanes__Memory__Inbox["Inbox"]
+  class OpenLanes__Memory__Known["Known"]
   class OpenLanes__Memory__Lesson["Lesson"]
   class OpenLanes__Memory__Library["Library"]
   class OpenLanes__Memory__Mirror["Mirror"]
@@ -48,6 +49,7 @@ classDiagram
   OpenLanes__Memory ..> OpenLanes__Memory__Folder : uses
   OpenLanes__Memory ..> OpenLanes__Memory__GlobalStore : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Inbox : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__Known : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Lesson : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Library : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Mirror : uses
@@ -73,6 +75,8 @@ classDiagram
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Folder : uses
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Lesson : uses
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Secrets : uses
+  OpenLanes__Memory__Known ..> OpenLanes__Memory__Folder : uses
+  OpenLanes__Memory__Known ..> OpenLanes__Memory__Library : uses
   OpenLanes__Memory__Mirror ..> OpenLanes__Frontmatter : uses
   OpenLanes__Memory__Mirror ..> OpenLanes__Memory__Candidate : uses
   OpenLanes__Memory__Mirror ..> OpenLanes__Memory__Entry : uses
