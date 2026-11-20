@@ -37,6 +37,7 @@ classDiagram
   class OpenLanes__Presentation__EventsReport["EventsReport"]
   class OpenLanes__Presentation__PrChanges["PrChanges"]
   class OpenLanes__Presentation__Reporter["Reporter"]
+  class OpenLanes__Presentation__Reporter__Spend["Reporter::Spend"]
   class OpenLanes__Presentation__Viewer["Viewer"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
@@ -66,10 +67,13 @@ classDiagram
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__UnitSizes : uses
   OpenLanes__Presentation__PrChanges ..> OpenLanes : uses
   OpenLanes__Presentation__PrChanges ..|> OpenLanes__UI : includes
+  OpenLanes__Presentation__Reporter ..> OpenLanes__Engine : uses
   OpenLanes__Presentation__Reporter ..> OpenLanes__Plans : uses
   OpenLanes__Presentation__Reporter ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Presentation__Reporter ..> OpenLanes__Plans__PullRequests : uses
   OpenLanes__Presentation__Reporter ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Presentation__Reporter ..> OpenLanes__Presentation__Reporter__Spend : uses
   OpenLanes__Presentation__Reporter ..> OpenLanes__UI : uses
+  OpenLanes__Presentation__Reporter__Spend ..> OpenLanes__Error : uses
   OpenLanes__Presentation__Viewer ..> OpenLanes__Error : uses
 ```

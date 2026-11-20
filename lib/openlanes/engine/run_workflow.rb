@@ -48,6 +48,7 @@ module OpenLanes
         yield stopping
         yield assignable(agents, plans) if @options[:agent]
         yield isolatable
+        yield countable
         yield logging
         migrated = yield labels_migrated
 
@@ -235,6 +236,18 @@ module OpenLanes
         refusal("#{@root} is not a git repository, so plans cannot be isolated.\n\n" \
                 "Run with --isolation shared to work in one tree, serially.",
           66)
+      end
+
+      # A dollar cap with the event log off is refused (C11): spend is read
+      # back from that log, so the cap would never hold a plan. A dry run
+      # spends nothing, and its sink is null on purpose, so it passes.
+      #
+      # @return [Dry::Monads::Result]
+      def countable
+        return Success(nil) if @dry_run
+
+        why = Budget::Guard.new(cap: Events::PlanSpend.cap_for(Config.current), events:).refusal
+        why ? refusal(why, 78) : Success(nil)
       end
 
       # Opens the log every event of the run is written to, the one the
@@ -621,7 +634,7 @@ module OpenLanes
 
         Arbitration.new(tree_dir: @tree.dir,
           agents: Agents::Registry.new,
-          github: Vcs.github,
+          github: snapshot_github,
           root: @root,
           executor: ->(brief) { executor(instructions: brief) })
       end
@@ -690,7 +703,7 @@ module OpenLanes
       # @return [Steps::Snapshot]
       def pull_snapshot = @pull_snapshot ||= Steps::Snapshot.new(github: Vcs.github)
 
-      # @return [Vcs::SnapshotReads] GitHub, with labels and checks read from {#pull_snapshot}
+      # @return [Vcs::SnapshotReads] GitHub, with pull requests, labels and checks read from {#pull_snapshot}
       def snapshot_github = Vcs::SnapshotReads.new(Vcs.github, snapshot: pull_snapshot)
 
       # @return [OpenLanes::Engine::PrWatch, nil]

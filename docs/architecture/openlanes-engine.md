@@ -42,6 +42,7 @@ classDiagram
   class OpenLanes__Engine__Arbitration__Retries["Arbitration::Retries"]
   class OpenLanes__Engine__Board["Board"]
   class OpenLanes__Engine__Budget["Budget"]
+  class OpenLanes__Engine__Budget__Guard["Budget::Guard"]
   class OpenLanes__Engine__CliPause["CliPause"]
   class OpenLanes__Engine__Conversions["Conversions"]
   class OpenLanes__Engine__CoverageGate["CoverageGate"]
@@ -715,6 +716,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Config : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Arbitration : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Budget__Guard : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Curating : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__EventJournal : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Merging : uses
@@ -731,6 +733,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Error : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Events : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Events__NullSink : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Events__PlanSpend : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Execution : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Execution__Control : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Execution__Throttle__AdapterPause : uses
