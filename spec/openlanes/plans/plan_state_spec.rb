@@ -22,6 +22,30 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     expect([state.exist?, state.stages, state.signatures, state.messages]).to eq([false, [], [], []])
   end
 
+  describe "a husk" do
+    let(:husk) do
+      path = nil
+      plans do |t|
+        t.plan "002.00", :approved, "shipped", under: "archive", archived_on: Date.new(2026, 9, 1), files: { "spec.md" => spec_body }
+        path = t.raw("002.00━━⚪━━❯shipped", files: { ".DS_Store" => "" })
+      end
+      path
+    end
+
+    it "is never given a state.json, so it never comes to look like a plan" do
+      husk_state = described_class.for(husk)
+      husk_state.stage!(agent: "researcher", round: 1, status: "Started")
+      expect([husk_state.exist?, Dir.children(husk)]).to eq([false, [".DS_Store"]])
+    end
+
+    it "still lets a fresh, empty plan folder have its first state.json" do
+      fresh = File.join(plans_root, "003.00━━⚪━━❯fresh")
+      FileUtils.mkdir_p(fresh)
+      described_class.for(fresh).state!(:new)
+      expect(described_class.for(fresh).read["state"]).to eq("new")
+    end
+  end
+
   describe "#stage!" do
     before do
       state.stage!(agent: "backend-coder",

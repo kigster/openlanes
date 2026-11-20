@@ -135,4 +135,15 @@ RSpec.describe OpenLanes::Engine::Curating, :tree do
       expect(inbox_text).not_to include(fake_key)
     end
   end
+
+  # A husk wearing ✅ at the top level would otherwise be an ending of its own.
+  it "never curates or writes into a husk left beside the plan it was archived as" do
+    husk = nil
+    plans do |t|
+      t.plan "005.00", :approved, "shipped", under: "archive", archived_on: Date.new(2026, 9, 1), files: { "spec.md" => spec_body }
+      husk = t.raw("005.00━━✅━━❯shipped", files: { ".DS_Store" => "" })
+    end
+    curating.call(OpenLanes::Plans::Tree.new(dir: plans_root, all: true).subjects)
+    expect([asked.count("005.00"), Dir.children(husk)]).to eq([1, [".DS_Store"]])
+  end
 end
