@@ -176,6 +176,16 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
     end
   end
 
+  context "with a port asked for outright" do
+    let(:result) { run(port: "11100") }
+
+    it "keeps it as asked and never looks for another" do
+      result
+      expect(built[:server][:port]).to eq("11100")
+      expect(OpenLanes::Web::Ports).not_to have_received(:first_free)
+    end
+  end
+
   it "opens the page" do
     result
     expect(OpenLanes::Web).to have_received(:open).with("http://127.0.0.1:11000")
