@@ -26,6 +26,9 @@ module OpenLanes
       HTML
 
       # A plan and a question number, as an interview's path names them.
+      # Why the demo answers 404 to the Plan Management actions.
+      NO_DEMO_ACTIONS = "the demo has no plan actions: its plans are the fixture's, not this checkout's"
+
       INTERVIEW = %r{\A\d{3}\.\d{2}/\d{1,3}\z}
 
       configure do
@@ -508,11 +511,17 @@ module OpenLanes
 
       # The "Plan Management" menu: which actions one plan offers, and doing
       # one. {PlanActions} holds the rules; a plan an agent is on is a 409.
+      # The demo has none: its board is the fixture's, but the plans
+      # directory is still the real one under the working directory, so a
+      # click would discard a real plan that shares a fixture's number.
       get "/api/plans/:ordinal/actions" do
+        halt 404, json(error: NO_DEMO_ACTIONS) if context.demo
+
         json(plan_actions.offer(params[:ordinal]).to_h)
       end
 
       post "/api/plans/:ordinal/actions" do
+        halt 404, json(error: NO_DEMO_ACTIONS) if context.demo
         halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
 
         data = body_json
