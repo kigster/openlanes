@@ -78,7 +78,7 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Linear : 5
   OpenLanes__CLI ..> OpenLanes__Live : 15
   OpenLanes__CLI ..> OpenLanes__Log : 7
-  OpenLanes__CLI ..> OpenLanes__Memory : 11
+  OpenLanes__CLI ..> OpenLanes__Memory : 12
   OpenLanes__CLI ..> OpenLanes__Plans : 29
   OpenLanes__CLI ..> OpenLanes__Presentation : 8
   OpenLanes__CLI ..> OpenLanes__Setup : 9

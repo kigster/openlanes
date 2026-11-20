@@ -15,6 +15,7 @@ classDiagram
   class OpenLanes__Memory["OpenLanes::Memory"]
   <<module>> OpenLanes__Memory
   class OpenLanes__Memory__Audience["Audience"]
+  class OpenLanes__Memory__Autopromotion["Autopromotion"]
   class OpenLanes__Memory__Candidate["Candidate"]
   class OpenLanes__Memory__Committed["Committed"]
   class OpenLanes__Memory__Curation["Curation"]
@@ -36,6 +37,7 @@ classDiagram
   OpenLanes__Memory ..> OpenLanes__Execution : uses
   OpenLanes__Memory ..> OpenLanes__Frontmatter : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Audience : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__Autopromotion : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Committed : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Curation : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Entry : uses
@@ -49,6 +51,7 @@ classDiagram
   OpenLanes__Memory ..> OpenLanes__Memory__Secrets : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Section : uses
   OpenLanes__Memory ..> OpenLanes__Vcs : uses
+  OpenLanes__Memory__Autopromotion ..> OpenLanes__Memory__Publication : uses
   OpenLanes__Memory__Curation ..> OpenLanes__Agents__Names : uses
   OpenLanes__Memory__Curation ..> OpenLanes__Execution : uses
   OpenLanes__Memory__Curation ..> OpenLanes__Execution__Executor__Handle : uses

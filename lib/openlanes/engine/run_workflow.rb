@@ -63,6 +63,7 @@ module OpenLanes
         ended    = Curating.snapshot(Plans::Tree.new(dir: @tree.dir, all: true).subjects)
         attempts = run(runner, live, web)
         curate(ended)
+        promote_memory
         Success(finish(runner, attempts, seconds: UI.monotonic - started))
       end
 
@@ -797,6 +798,28 @@ module OpenLanes
         end
       rescue OpenLanes::Error => e
         UI.log("plans not curated this time: #{e.message.lines.first.to_s.strip}", level: :warn)
+      end
+
+      # The memory pull request, once the curator has filed this run's
+      # candidates (C1): what `openlanes memory promote` opens, opened
+      # without anybody typing it. Only a run that publishes its own pull
+      # requests opens one, so `--no-git-push` and `--isolation shared` push
+      # nothing here either.
+      #
+      # Every failure is logged and swallowed, not only {OpenLanes::Error}:
+      # a refused push surfaces as `TTY::Command::ExitError`, and memory is
+      # a by-product of the run, so it must never cost the run its exit status.
+      #
+      # @return [void]
+      def promote_memory
+        return if @dry_run || !@options.fetch(:memory, true) || @options[:memory_pr] == false || !publishing?
+
+        outcome = Memory.autopromotion(root: @root).call
+        return UI.log("no memory pull request: #{outcome.why}") unless outcome.status == :published
+
+        UI.log("memory pull request: #{outcome.url} (#{outcome.lessons} lesson#{"s" unless outcome.lessons == 1})")
+      rescue StandardError => e
+        UI.log("memory pull request not opened: #{e.message.lines.first.to_s.strip}", level: :warn)
       end
 
       # @param runner [OpenLanes::Engine::Runner]
