@@ -279,6 +279,51 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
         expect(gh_calls.count { it.first(2) == %w[pr view] }).to eq(1)
       end
 
+      describe "read through the tick's shared snapshot (C9)" do
+        let(:snapshot) { Struct.new(:current) { def call = current; def refresh! = nil }.new(taken(now, %w[review-passed])) }
+        let(:briefs) { [] }
+        let(:reading) do
+          described_class.new(tree_dir: plans_root,
+            agents:,
+            github: OpenLanes::Vcs::SnapshotReads.new(github, snapshot:),
+            quality: -> { :mvp },
+            ask: ->(_agent, _plan, brief) { briefs << brief; "no block" },
+            clock: -> { now })
+        end
+
+        def taken(at, labels, pulls: [{ number: 7, url: "https://github.com/example/repo/pull/7", labels:, files: [], checks: [] }])
+          OpenLanes::Vcs::PullSnapshot.new(pulls:, taken_at: at)
+        end
+
+        def checked? = briefs.any? { it.include?("Trigger: passed_check") }
+        def label_reads = gh_calls.count { it.first(2) == %w[pr view] }
+
+        it "answers from the snapshot that holds the pull request, with no gh pr view" do
+          reading.tick([plan])
+          reading.join
+
+          expect([checked?, label_reads]).to eq([true, 0])
+        end
+
+        it "does not cache a no from a snapshot older than the review's signature, and asks the next one" do
+          snapshot.current = taken(now - 60, [])
+          reading.tick([plan])
+          snapshot.current = taken(now + 10, %w[review-passed])
+          reading.tick([plan])
+          reading.join
+
+          expect([checked?, label_reads]).to eq([true, 0])
+        end
+
+        it "reads a pull request the snapshot does not hold live" do
+          snapshot.current = taken(now, [], pulls: [])
+          reading.tick([plan])
+          reading.join
+
+          expect([checked?, label_reads]).to eq([true, 1])
+        end
+      end
+
       context "when the plan is at 🟡" do
         let(:state_key) { :ready_for_review }
 
