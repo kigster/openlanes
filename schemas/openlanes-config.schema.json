@@ -522,6 +522,11 @@
               "description": "Tell each agent the lessons in .openlanes/memory/lessons meant for it; --no-memory leaves them out, the baseline that shows whether they help",
               "default": true
             },
+            "memory_pr": {
+              "type": "boolean",
+              "description": "Once the run ends, open the memory pull request for every lesson candidate seen on 2 plans, as `openlanes memory promote` does. A person merges it. --no-memory-pr leaves them waiting in the inbox",
+              "default": true
+            },
             "model": {
               "type": [
                 "string",
@@ -1800,6 +1805,11 @@
               "description": "Tell each agent the lessons in .openlanes/memory/lessons meant for it; --no-memory leaves them out, the baseline that shows whether they help",
               "default": true
             },
+            "memory_pr": {
+              "type": "boolean",
+              "description": "Once the run ends, open the memory pull request for every lesson candidate seen on 2 plans, as `openlanes memory promote` does. A person merges it. --no-memory-pr leaves them waiting in the inbox",
+              "default": true
+            },
             "model": {
               "type": [
                 "string",
@@ -2088,6 +2098,11 @@
             "memory": {
               "type": "boolean",
               "description": "Tell each agent the lessons in .openlanes/memory/lessons meant for it; --no-memory leaves them out, the baseline that shows whether they help",
+              "default": true
+            },
+            "memory_pr": {
+              "type": "boolean",
+              "description": "Once the run ends, open the memory pull request for every lesson candidate seen on 2 plans, as `openlanes memory promote` does. A person merges it. --no-memory-pr leaves them waiting in the inbox",
               "default": true
             },
             "model": {

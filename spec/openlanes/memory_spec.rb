@@ -66,4 +66,41 @@ RSpec.describe OpenLanes::Memory do
       expect(library.problems).to eq(["project lessons skipped: no origin/main to read reviewed ones from"])
     end
   end
+
+  # The facade's wiring: a real inbox decides eligibility; the publication is injected.
+  describe ".autopromotion" do
+    let(:root) { Dir.mktmpdir("autopromotion") }
+    let(:github) { instance_double(OpenLanes::Vcs::GitHub, pulls: []) }
+    let(:published) { [] }
+    let(:publication) { -> { published.push(true).then { OpenLanes::Memory::Publication::Result.new(branch: "memory/x", url: "u", changes: [], held_back: []) } } }
+
+    after { FileUtils.rm_rf(root) }
+
+    def propose(plan)
+      proposal = OpenLanes::Memory::Proposal.new(slug: "redis-specs",
+        title: "Run redis specs alone",
+        applies_to: ["build"],
+        checked_by: [],
+        kind: "pitfall",
+        severity: "high",
+        finding: "F1",
+        body: "They race.")
+      described_class.inbox(root:).add(proposal, plan:)
+    end
+
+    it "publishes once a candidate has been seen on two plans" do
+      propose("001.00")
+      propose("002.00")
+
+      expect(described_class.autopromotion(root:, github:, publication:).call.status).to eq(:published)
+      expect(published).to eq([true])
+    end
+
+    it "leaves a candidate seen once where it is" do
+      propose("001.00")
+
+      expect(described_class.autopromotion(root:, github:, publication:).call.status).to eq(:skipped)
+      expect(published).to eq([])
+    end
+  end
 end

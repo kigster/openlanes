@@ -29,6 +29,10 @@ module OpenLanes
       # The changes that put something in a pull request.
       LANDED = %i[promote confirm].freeze
 
+      # Every memory branch starts with it; {Autopromotion} reads it back to
+      # find a memory pull request still open.
+      BRANCH_PREFIX = "memory/"
+
       # @param root [String] the project root, whose inbox is promoted
       # @param publisher [#publish_memory]
       # @param base [String] the default branch the memory branch is cut from
@@ -107,7 +111,7 @@ module OpenLanes
         landed = changes.select { LANDED.include?(it.kind) }
         return nil if landed.empty?
 
-        branch = "memory/#{@today.call.iso8601}-#{landed.first.slug}"
+        branch = "#{BRANCH_PREFIX}#{@today.call.iso8601}-#{landed.first.slug}"
         git(dir, "checkout", "-q", "-b", branch) or raise OpenLanes::Error, "could not create #{branch}"
         branch
       end
@@ -170,7 +174,7 @@ module OpenLanes
         lines = landed.map { "- #{it.id} (#{it.kind}) #{it.slug}: #{it.why}" }
         held = held_back.map { "- held back, a secret was found: #{it}" }
         <<~MARKDOWN
-          Lessons promoted from the inbox by `openlanes memory promote`. A person merges this; no agent can.
+          Lessons promoted from the inbox by `openlanes memory promote`, or by the engine at the end of a run. A person merges this; no agent can.
 
           #{(lines + held).join("\n")}
         MARKDOWN

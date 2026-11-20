@@ -393,6 +393,7 @@ classDiagram
   OpenLanes__CLI__Run ..> OpenLanes__Engine__RunWorkflow : uses
   OpenLanes__CLI__Run ..> OpenLanes__Live : uses
   OpenLanes__CLI__Run ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Run ..> OpenLanes__Memory__Promotion : uses
   OpenLanes__CLI__Run ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Setup --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Setup ..> OpenLanes__Live : uses

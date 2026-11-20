@@ -96,6 +96,19 @@ module OpenLanes
         Publication.new(root:, publisher:, base:, dry_run:)
       end
 
+      # What the engine runs once a run ends: {publication}, when a candidate
+      # is eligible and no memory pull request is open already.
+      #
+      # @param root [String] the project root
+      # @param github [#pulls] defaults to {Vcs.github}
+      # @param publication [#call, nil] defaults to {publication} on +root+
+      # @return [OpenLanes::Memory::Autopromotion]
+      def autopromotion(root:, github: Vcs.github, publication: nil)
+        Autopromotion.new(preview: -> { promotion(root:).call(commit: false) },
+          publication: publication || -> { publication(root:).call },
+          github:)
+      end
+
       # @param root [String] the project root
       # @param agent [OpenLanes::Agents::Agent]
       # @param dry_run [Boolean] true invokes no agent
