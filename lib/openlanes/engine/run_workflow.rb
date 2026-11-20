@@ -616,7 +616,7 @@ module OpenLanes
 
         Arbitration.new(tree_dir: @tree.dir,
           agents: Agents::Registry.new,
-          github: Vcs.github,
+          github: snapshot_github,
           root: @root,
           executor: ->(brief) { executor(instructions: brief) })
       end
@@ -685,7 +685,7 @@ module OpenLanes
       # @return [Steps::Snapshot]
       def pull_snapshot = @pull_snapshot ||= Steps::Snapshot.new(github: Vcs.github)
 
-      # @return [Vcs::SnapshotReads] GitHub, with labels and checks read from {#pull_snapshot}
+      # @return [Vcs::SnapshotReads] GitHub, with pull requests, labels and checks read from {#pull_snapshot}
       def snapshot_github = Vcs::SnapshotReads.new(Vcs.github, snapshot: pull_snapshot)
 
       # @return [OpenLanes::Engine::PrWatch, nil]

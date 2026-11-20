@@ -39,6 +39,15 @@ module OpenLanes
       # @return [Array<Hash>] `{name:, bucket:}`
       def checks(number:, repo: nil) = (row = held(number, repo)) ? row[:checks] : __getobj__.checks(number:, repo:)
 
+      # When the answer {#labels} would give for that pull request was read.
+      # A caller that caches an answer asks this first: a label an agent put
+      # on from its own `gh` process passes no {WRITES} hook here, so caching
+      # a snapshot taken before that label would keep its absence for good.
+      #
+      # @return [Time, nil] the snapshot's time when it holds that pull
+      #   request; nil when it would be read live, which is now
+      def taken_at(number:, repo: nil) = held(number, repo) && @snapshot.call.taken_at
+
       WRITES.each do |name|
         define_method(name) do |*args, **kwargs, &block|
           @snapshot.refresh!
