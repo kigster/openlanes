@@ -61,6 +61,16 @@ const ABORT_POLL_MS = 1_000;
  * Runs an action, stopping the plan's agents first when one is on it. The engine answers `stop_plan` once it has
  * signalled them, but an agent takes a moment to exit, so a 409 (still working) is asked again until it lets go.
  */
+/**
+ * The agents were stopped, and then the plan did not move: say both, so
+ * nobody is left guessing whether the abort half-happened.
+ */
+function stoppedOnly(ordinal: string, error: unknown): ApiError {
+  const why = error instanceof Error ? error.message : String(error);
+  const status = error instanceof ApiError ? error.status : 0;
+  return new ApiError(`The agents on ${ordinal} were stopped, but the plan was not moved: ${why}`, status);
+}
+
 export async function runPlanAction(
   offer: PlanOffer,
   action: PlanActionKey,
@@ -76,7 +86,9 @@ export async function runPlanAction(
     try {
       return await postPlanAction(offer.ordinal, action, reason);
     } catch (error) {
-      if (!(error instanceof ApiError) || error.status !== 409 || !offer.running || Date.now() >= until) throw error;
+      const busy = error instanceof ApiError && error.status === 409;
+      if (!offer.running) throw error;
+      if (!busy || Date.now() >= until) throw stoppedOnly(offer.ordinal, error);
       await sleep(pollMs);
     }
   }
