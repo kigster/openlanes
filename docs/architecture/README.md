@@ -165,7 +165,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Slack : 1
   OpenLanes__Live ..> OpenLanes__Supervision : 1
   OpenLanes__Live ..> OpenLanes__UI : 7
-  OpenLanes__Memory ..> OpenLanes : 3
+  OpenLanes__Memory ..> OpenLanes : 4
   OpenLanes__Memory ..> OpenLanes__Agents : 1
   OpenLanes__Memory ..> OpenLanes__Config : 1
   OpenLanes__Memory ..> OpenLanes__Events : 1
