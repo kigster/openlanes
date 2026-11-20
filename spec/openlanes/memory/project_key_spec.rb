@@ -19,6 +19,10 @@ RSpec.describe OpenLanes::Memory::ProjectKey do
     expect(described_class.normalise(" ")).to be_nil
   end
 
+  it "keeps a remote URI cannot parse as a path, rather than raising" do
+    expect(described_class.normalise("https://exa mple.com/repo.git")).to eq("/https://exa mple.com/repo")
+  end
+
   describe ".for" do
     let(:root) { Dir.mktmpdir("project") }
 
@@ -33,6 +37,12 @@ RSpec.describe OpenLanes::Memory::ProjectKey do
 
     it "is the real path of the root when there is no remote" do
       expect(described_class.for(root)).to eq(File.realpath(root))
+    end
+
+    it "is the expanded root when git cannot be run" do
+      allow(Open3).to receive(:capture2).and_raise(Errno::ENOENT)
+
+      expect(described_class.for(root)).to eq(File.expand_path(root))
     end
   end
 end
