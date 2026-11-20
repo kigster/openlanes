@@ -59,7 +59,7 @@ module OpenLanes
         refused = Refusal.unconfinable(agent, attempt.profile)
         return refused if refused
 
-        @first_start.call(attempt.with(trace: @invocations.trace_path(agent, subject)), request, started, &)
+        cited(@first_start.call(attempt.with(trace: @invocations.trace_path(agent, subject)), request, started, &), attempt, request)
       end
 
       # Take back an agent an earlier engine started and did not see end ({Retake}).
@@ -73,7 +73,7 @@ module OpenLanes
       def reattach(agent, subject, restart:, handle: Handle.new, &)
         started = UI.monotonic
         attempt = attempt_for(agent, subject, restart.fetch("cwd"), handle)
-        @retake.call(attempt.with(trace: restart.fetch("trace")), restart, started, &)
+        cited(@retake.call(attempt.with(trace: restart.fetch("trace")), restart, started, &), attempt, nil)
       end
 
       # The exact argv {#call} would start, so a spec can assert the boundary
@@ -86,6 +86,25 @@ module OpenLanes
       end
 
       private
+
+      # The result with the lessons its prompt offered and the ones the
+      # report named (decision C5). A taken-back invocation was prompted by
+      # an earlier engine; this run's snapshot stands in for that one's, since
+      # its offering was never recorded anywhere else.
+      #
+      # @param result [OpenLanes::Execution::Executor::Result]
+      # @param attempt [OpenLanes::Execution::Executor::Attempt] whose sessions the run filled
+      # @param request [OpenLanes::Execution::Executor::Request, nil] nil for a taken-back invocation
+      # @return [OpenLanes::Execution::Executor::Result]
+      def cited(result, attempt, request)
+        # A rebase resolution's prompt carries no lessons (Prompt#resolution).
+        return result if request&.rebase
+
+        offered = @invocations.prompts.offered_to(attempt.agent)
+        return result if offered.empty?
+
+        result.with(offered:, cited: Memory.cited(attempt.sessions.report, offered:))
+      end
 
       # @return [OpenLanes::Execution::Executor::Attempt] not yet started, and with no trace yet
       def attempt_for(agent, subject, root, handle)

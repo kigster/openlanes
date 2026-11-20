@@ -56,4 +56,22 @@ RSpec.describe OpenLanes::Memory::Section do
 
     expect(text).to include("(1 more not shown: `openlanes memory list --phase build`.)")
   end
+
+  describe "#offered" do
+    it "names the ids the section shows, in its order, so a citation can be checked against them" do
+      two = (1..2).sum { "- L-000#{it} (medium) Lesson L-000#{it} — `#{File.join(dir, "L-000#{it}.md")}`".size + 1 }
+
+      expect(described_class.new(lessons(5), agent: coder, budget: two).offered).to eq(%w[L-0001 L-0002])
+    end
+
+    it "is empty when no lesson is for the agent" do
+      expect(described_class.new([], agent: coder).offered).to eq([])
+    end
+  end
+
+  it "asks every agent to name the lessons it applied in its report, with an id it was shown" do
+    text = described_class.new(lessons(2), agent: coder).to_s
+
+    expect(text).to include("name the id of each lesson you applied", "(for example `L-0001`)")
+  end
 end

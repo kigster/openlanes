@@ -57,6 +57,7 @@ classDiagram
   class OpenLanes__CLI__Memory__List["Memory::List"]
   class OpenLanes__CLI__Memory__Promote["Memory::Promote"]
   class OpenLanes__CLI__Memory__Propose["Memory::Propose"]
+  class OpenLanes__CLI__Memory__Report["Memory::Report"]
   class OpenLanes__CLI__Memory__Scan["Memory::Scan"]
   class OpenLanes__CLI__Memory__Table["Memory::Table"]
   <<module>> OpenLanes__CLI__Memory__Table
@@ -113,6 +114,7 @@ classDiagram
   class OpenLanes__Evals__Run["OpenLanes::Evals::Run"]
   class OpenLanes__Events["OpenLanes::Events"]
   <<module>> OpenLanes__Events
+  class OpenLanes__Events__LessonUsage["OpenLanes::Events::LessonUsage"]
   class OpenLanes__Execution["OpenLanes::Execution"]
   <<module>> OpenLanes__Execution
   class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
@@ -345,6 +347,11 @@ classDiagram
   OpenLanes__CLI__Memory__Propose ..> OpenLanes__Memory : uses
   OpenLanes__CLI__Memory__Propose ..> OpenLanes__Memory__Proposal : uses
   OpenLanes__CLI__Memory__Propose ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__CLI__Memory__Report --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Report ..> OpenLanes__CLI__Memory__Table : uses
+  OpenLanes__CLI__Memory__Report ..> OpenLanes__Events__LessonUsage : uses
+  OpenLanes__CLI__Memory__Report ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Report ..> OpenLanes__Project : uses
   OpenLanes__CLI__Memory__Scan --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Memory__Scan ..> OpenLanes__Memory : uses
   OpenLanes__CLI__Preview__Registry ..> OpenLanes__Apps : uses

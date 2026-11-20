@@ -6,7 +6,9 @@ module OpenLanes
       class Settle < Step
         # The durable record of one settled attempt: `agent_finished` always,
         # `block_raised` when the agent signed Blocked, `failure` when the
-        # attempt failed. Fire and forget: the sink never raises.
+        # attempt failed, and one `lesson_offered` per lesson its prompt
+        # carried and one `lesson_cited` per lesson its report named
+        # (decision C5). Fire and forget: the sink never raises.
         class Announcement < Step
           # @param job [OpenLanes::Engine::Dispatcher::Job]
           # @param attempt [OpenLanes::Engine::Runner::Attempt]
@@ -26,6 +28,17 @@ module OpenLanes
             finished(fields, attempt, status)
             runner.events.record(:block_raised, **fields, blocks: blocked_count(job)) if status.start_with?("Blocked")
             failure(job, fields) unless attempt.ok
+            lessons(fields, job.result)
+          end
+
+          # The lesson id is the event's `seq`, so two lessons on one
+          # invocation are two events and a replay of either is still one.
+          # An executor double, or an exception, offers nothing.
+          def lessons(fields, result)
+            return unless result.respond_to?(:offered)
+
+            result.offered.each { runner.events.record(:lesson_offered, **fields, seq: it, lesson: it) }
+            result.cited.each { runner.events.record(:lesson_cited, **fields, seq: it, lesson: it) }
           end
 
           def finished(fields, attempt, status)

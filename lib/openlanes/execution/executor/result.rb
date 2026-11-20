@@ -4,8 +4,10 @@ module OpenLanes
   module Execution
     class Executor
       # What a {Result} that says nothing of them was: not killed, no
-      # process, nothing cached, not throttled, no tool call.
-      RESULT_DEFAULTS = { killed: nil, pid: nil, cached: 0, throttled: false, tools: 0 }.freeze
+      # process, nothing cached, not throttled, no tool call, no lesson
+      # offered and none cited.
+      RESULT_DEFAULTS = { killed: nil, pid: nil, cached: 0, throttled: false, tools: 0, offered: [].freeze,
+                          cited: [].freeze }.freeze
 
       # What one invocation did, and what it spent doing it.
       #
@@ -43,6 +45,10 @@ module OpenLanes
       #     rather than at anything the agent did
       # @!attribute [r] tools
       #   @return [Integer] tool calls the agent made
+      # @!attribute [r] offered
+      #   @return [Array<String>] the lesson ids its prompt carried (decision C5)
+      # @!attribute [r] cited
+      #   @return [Array<String>] of {#offered}, the ids its final report named
       # @return [Data]
       Result = Data.define(:ok,
         :note,
@@ -55,7 +61,9 @@ module OpenLanes
         :pid,
         :cached,
         :throttled,
-        :tools) do
+        :tools,
+        :offered,
+        :cited) do
         def initialize(**fields) = super(**RESULT_DEFAULTS, **fields)
 
         # @return [Integer] new input, cache writes and output

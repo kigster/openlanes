@@ -48,6 +48,13 @@ module OpenLanes
         # @return [Integer]
         def tools = @all.sum(&:tools)
 
+        # What the agent said at the end of each session, joined: where it
+        # names the lessons it applied. Before a compaction counts too, since
+        # a report written then is still this invocation's.
+        #
+        # @return [String]
+        def report = @all.filter_map { it.result if it.respond_to?(:result) }.join("\n")
+
         # @return [Boolean] whether any session of the invocation was
         #   compacted, at a person's request or at the CLI's own threshold
         def compacted? = @all.any? { it.respond_to?(:compacted) && it.compacted }

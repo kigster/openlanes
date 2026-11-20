@@ -19,6 +19,10 @@ module OpenLanes
           @prompts = prompts
         end
 
+        # @return [OpenLanes::Execution::Executor::PromptAssembly, nil] what the
+        #   first start's prompt, and the lessons it offered, are built from
+        attr_reader :prompts
+
         # The argv a round starts with, its prompt assembled for the request.
         #
         # @param attempt [OpenLanes::Execution::Executor::Attempt]

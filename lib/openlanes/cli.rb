@@ -194,6 +194,7 @@ module OpenLanes
     # The lessons agents are told. See {OpenLanes::Memory}.
     register "memory" do |prefix|
       prefix.register "list", Memory::List, aliases: %w[ls]
+      prefix.register "report", Memory::Report
       prefix.register "curate", Memory::Curate
       prefix.register "inbox", Memory::Inbox
       prefix.register "propose", Memory::Propose
