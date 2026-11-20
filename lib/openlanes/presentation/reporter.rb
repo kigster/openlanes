@@ -233,6 +233,8 @@ module OpenLanes
           dirnames.each { |d| lines << "    #{UI.paint(d, :bright_black)}" }
         end
 
+        tree.husks.each { lines << "  #{UI.paint(it.to_s, :yellow)}" }
+
         lines.join("\n")
       end
     end

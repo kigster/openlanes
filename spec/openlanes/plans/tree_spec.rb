@@ -81,4 +81,55 @@ RSpec.describe OpenLanes::Plans::Tree, :tree do
       end
     end
   end
+
+  # Git removes a renamed folder only once it is empty, so an ignored
+  # .DS_Store kept a plan archived in another checkout alive at the top.
+  describe "#husks" do
+    let(:husk) do
+      path = nil
+      plans { |t| path = t.raw("002.00━━⚪━━❯shipped", files: { ".DS_Store" => "", "state.json" => "{}" }) }
+      path
+    end
+
+    before do
+      File.write(File.join(tree.everything.find("002.00").feature.path, "spec.md"), spec_body)
+      husk
+    end
+
+    it "leaves a folder holding only bookkeeping out of the plans, and reports it with its twin" do
+      everything = described_class.new(dir: plans_root, all: true)
+      aggregate_failures do
+        expect(tree.ordinals.map(&:to_s)).to eq(%w[000.00 001.00])
+        expect(everything.duplicates).to be_empty
+        expect(tree.husks.map(&:dirname)).to eq(["002.00━━⚪━━❯shipped"])
+        expect(tree.husks.first.twin).to start_with("archive/002.00")
+        expect(tree.husks.first.to_s).to include("the plan lives on as archive/002.00")
+      end
+    end
+
+    it "calls a folder with only a .DS_Store a husk when an archived plan carries its number" do
+      File.delete(File.join(husk, "state.json"))
+      expect(tree.reload.husks.map(&:dirname)).to eq(["002.00━━⚪━━❯shipped"])
+    end
+
+    it "keeps a real plan that shares an archived plan's number" do
+      File.write(File.join(husk, "spec.md"), spec_body)
+      aggregate_failures do
+        expect(tree.reload.husks).to be_empty
+        expect(tree.duplicates.keys.map(&:to_s)).to eq(%w[002.00])
+      end
+    end
+
+    it "keeps an empty folder with a number of its own, as openlanes create leaves it for a moment" do
+      plans { |t| t.raw("009.00━━⚪━━❯fresh") }
+      expect([tree.reload.husks.map(&:dirname), tree.ordinals.map(&:to_s)]).to eq([["002.00━━⚪━━❯shipped"], %w[000.00 001.00 009.00]])
+    end
+
+    it "finds an archived husk too, beside the archived plan it duplicates" do
+      File.write(File.join(tree.everything.find("003.00").feature.path, "spec.md"), spec_body)
+      plans { |t| t.raw("archive/003.00━━💤━━❯[2026-09-01]━━later", files: { "state.json" => "{}" }) }
+      husks = described_class.new(dir: plans_root, all: true).husks
+      expect(husks.map(&:dirname)).to include("003.00━━💤━━❯[2026-09-01]━━later")
+    end
+  end
 end

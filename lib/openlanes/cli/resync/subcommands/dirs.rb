@@ -23,6 +23,7 @@ module OpenLanes
           rewrites = resync.rewrites
           changes = resync.call(commit: !dry_run?(options))
 
+          report_husks(resync.tree.everything.husks, options)
           report_locks(locks, options)
           report_rewrites(rewrites, options)
 
@@ -64,6 +65,19 @@ module OpenLanes
             puts "#{rewrite.dirname}/spec.md\t#{rewrite.dirname}/spec.md\t#{rewrite.reason}"
             say("#{rewrite.dirname}/spec.md: #{paint(rewrite.reason, :yellow)}") unless quiet?(options)
           end
+        end
+
+        # A husk is no plan, so there is nothing to rename; it is named so a
+        # human removes it, since only a human can tell it from a plan in the
+        # middle of being written by hand.
+        #
+        # @param husks [Array<OpenLanes::Plans::Husk>]
+        # @param options [Hash]
+        # @return [void]
+        def report_husks(husks, options)
+          return if quiet?(options)
+
+          husks.each { say(paint(it.to_s, :yellow)) }
         end
 
         # A lock keeps its folder's name, so a folder that did not move needs

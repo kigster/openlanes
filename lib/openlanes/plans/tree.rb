@@ -88,6 +88,14 @@ module OpenLanes
       # @return [Array<String>]
       def skipped = @skipped ||= directories.reject { |p| Feature.parse(p) }.map { |p| File.basename(p) }
 
+      # Plan-numbered folders that hold no plan ({Husk}). Left out of every
+      # other reader, so no agent is ever sent into one, but reported rather
+      # than dropped: a folder that vanished from the listing in silence is
+      # how one sat in the tree for a week being researched.
+      #
+      # @return [Array<OpenLanes::Plans::Husk>]
+      def husks = @husks ||= folders.filter_map { Husk.at(it) }
+
       # Numbers claimed by more than one folder.
       #
       # A plan's number is its identity: branch names, pull request titles and
@@ -140,7 +148,7 @@ module OpenLanes
       #
       # @return [self]
       def reload
-        @features = @subjects = @skipped = @dependencies = nil
+        @features = @subjects = @skipped = @husks = @dependencies = nil
         @everything&.reload
         self
       end
@@ -154,8 +162,11 @@ module OpenLanes
         File.dirname(feature.path) == dir ? 0 : SUBFOLDERS.index(parent).to_i + 1
       end
 
-      # @return [Array<String>] absolute paths of every plan-shaped subdirectory
-      def directories
+      # @return [Array<String>] absolute paths of every plan-shaped subdirectory, husks left out
+      def directories = folders.reject { Husk.husk?(it) }
+
+      # @return [Array<String>] absolute paths of every subdirectory this tree reads
+      def folders
         return [] unless exist?
 
         top = children(dir).reject { |p| SUBFOLDERS.include?(File.basename(p)) }

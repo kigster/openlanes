@@ -376,6 +376,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Assign__IdleReason ..> OpenLanes__Engine__Dispatcher__Assign__Stalls : uses
   OpenLanes__Engine__Dispatcher__Assign__IdleReason --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Assign__IdleReason ..> OpenLanes__Engine__QualityQuestion : uses
+  OpenLanes__Engine__Dispatcher__Assign__IdleReason ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Engine__Dispatcher__Assign__QualityGate ..> OpenLanes__Config : uses
   OpenLanes__Engine__Dispatcher__Assign__QualityGate --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Assign__QualityGate ..> OpenLanes__Engine__QualityQuestion : uses
