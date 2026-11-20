@@ -6,14 +6,14 @@ RSpec.describe "The adapters' models" do
 
     it "offers every model it ships, Fable at the top, priced as the pricing page says" do
       expect(adapter.models.map(&:wire).first(2)).to eq([
-                                                          { id: "claude-fable-5-1", label: "Fable 5.1", rates: { in: 10, out: 50 }, context: 1_000_000, estimated: false },
-                                                          { id: "claude-fable-5", label: "Fable 5", rates: { in: 10, out: 50 }, context: 1_000_000, estimated: false }
+                                                          { id: "claude-fable-5-2", label: "Fable 5.2", rates: { in: 8, out: 40 }, context: 1_000_000, estimated: false },
+                                                          { id: "claude-fable-5-1", label: "Fable 5.1", rates: { in: 10, out: 50 }, context: 1_000_000, estimated: false }
                                                         ])
     end
 
     it "puts Fable on the menu" do
       expect([adapter.model_entry("fable")&.id, adapter.model_entry("claude-fable-5-1")&.id])
-        .to eq(%w[claude-fable-5-1 claude-fable-5-1])
+        .to eq(%w[claude-fable-5-2 claude-fable-5-1])
     end
 
     it "gives every model a context window" do
