@@ -74,7 +74,8 @@ module OpenLanes
         # process is in. `root` above is the parent of the plans directory,
         # which `-D docs/plans` makes `docs`, where no note is ever left.
         restart_note(Dir.pwd, stores:, keys:) unless demo
-        server = OpenLanes::Web.server(app: OpenLanes::Web.app(context), context:, port: options[:port], listen:)
+        port = listen_port(options[:port])
+        server = OpenLanes::Web.server(app: OpenLanes::Web.app(context), context:, port:, listen:)
         serve(server, options, keys:, node:, url: stores.current.url, credentials:)
       ensure
         probes&.stop
@@ -197,14 +198,36 @@ module OpenLanes
         %w[INT TERM].each { |name| Signal.trap(name) { Thread.new { server.stop } } }
         registration = registered(server, options)
         unless quiet?(options)
-          info("Control room: #{server.url}#{" (demo)" if options[:demo]}\n" \
-               "#{"Also on: #{(server.urls - [server.url]).join(", ")}\n" if server.listen.public?}" \
-               "Redis: #{Live.mask(url)} as #{node.label} (#{keys.node}), repository #{keys.repo}")
+          highlight("#{listening_on(server, options)}\n" \
+                    "#{"Also on: #{(server.urls - [server.url]).join(", ")}\n" if server.listen.public?}" \
+                    "Redis: #{Live.mask(url)} as #{node.label} (#{keys.node}), repository #{keys.repo}")
         end
         exposed(server, credentials)
         Log.logger.info("listening", url: server.url, urls: server.urls, demo: options[:demo], repo: keys.repo)
         OpenLanes::Web.open(server.url) if options[:open]
         registration ? registration.hold { server.wait } : server.wait
+      end
+
+      # The address, and the port asked for when it was taken: the server
+      # moved up, and the address is the one fact a person starting it reads.
+      #
+      # @return [String]
+      # The default port moves up to the next free one, so a second
+      # checkout's control room starts beside the first. A port asked for is
+      # kept as asked: `bin/web-e2e` and a demo peer rely on it, and one that
+      # quietly moved breaks them in confusing ways, so a taken one fails.
+      #
+      # @param asked [String, Integer]
+      # @return [String, Integer]
+      def listen_port(asked)
+        return asked unless asked.to_i == OpenLanes::Web::DEFAULT_PORT
+
+        OpenLanes::Web::Ports.first_free(asked) || asked
+      end
+
+      def listening_on(server, options)
+        moved = " (#{options[:port]} was taken)" unless server.port.to_s == options[:port].to_s
+        "Control room: #{server.url}#{" (demo)" if options[:demo]}#{moved}"
       end
 
       # Its PID file and title (S2, S5), written once it listens. A demo

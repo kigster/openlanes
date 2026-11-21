@@ -8,5 +8,7 @@
 export const MODAL = '[role="dialog"].start';
 
 /** A lane's Documents dropdown trigger (plan 070), and the document modal it opens. */
-export const LANE_DOCUMENTS = 'button[aria-label^="Documents of "]';
+export const LANE_DOCUMENTS = 'button[aria-label^="Plan Management of "]';
+/** The menu's Documents section; its Actions follow under a divider. */
+export const DOCUMENT_ITEMS = '[role="group"][aria-label="Documents"] [role="menuitem"]';
 export const DOCUMENT_MODAL = ".document-modal";

@@ -26,6 +26,9 @@ module OpenLanes
       HTML
 
       # A plan and a question number, as an interview's path names them.
+      # Why the demo answers 404 to the Plan Management actions.
+      NO_DEMO_ACTIONS = "the demo has no plan actions: its plans are the fixture's, not this checkout's"
+
       INTERVIEW = %r{\A\d{3}\.\d{2}/\d{1,3}\z}
 
       configure do
@@ -150,6 +153,18 @@ module OpenLanes
         # @return [OpenLanes::Web::PlanReview]
         def plan_review = PlanReview.new(plans_dir: context.plans_dir, diff: BranchDiff.new(root: context.root))
 
+        # @return [OpenLanes::Web::PlanActions]
+        def plan_actions = PlanActions.new(plans_dir: context.plans_dir, working: ->(ordinal) { live_car?(ordinal) })
+
+        # @return [OpenLanes::Web::Worktrees]
+        def worktrees
+          Worktrees.new(root: context.root,
+            plans_dir: context.plans_dir,
+            repo: context.keys.repo,
+            github: Vcs::GitHub.new(chdir: context.root),
+            working: ->(ordinal) { live_car?(ordinal) })
+        end
+
         # The rule the page draws cars by: this machine's board lists the
         # plan with at least one car. No snapshot means no engine, so no car.
         #
@@ -225,6 +240,26 @@ module OpenLanes
 
       error PlanReview::NotFound do
         status 404
+        json(error: env["sinatra.error"].message)
+      end
+
+      error Worktrees::NotFound do
+        status 404
+        json(error: env["sinatra.error"].message)
+      end
+
+      error PlanActions::NotFound do
+        status 404
+        json(error: env["sinatra.error"].message)
+      end
+
+      error PlanActions::Refused do
+        status 422
+        json(error: env["sinatra.error"].message)
+      end
+
+      error PlanActions::Busy do
+        status 409
         json(error: env["sinatra.error"].message)
       end
 
@@ -474,9 +509,43 @@ module OpenLanes
         json(etag: tag)
       end
 
+      # The "Plan Management" menu: which actions one plan offers, and doing
+      # one. {PlanActions} holds the rules; a plan an agent is on is a 409.
+      # The demo has none: its board is the fixture's, but the plans
+      # directory is still the real one under the working directory, so a
+      # click would discard a real plan that shares a fixture's number.
+      get "/api/plans/:ordinal/actions" do
+        halt 404, json(error: NO_DEMO_ACTIONS) if context.demo
+
+        json(plan_actions.offer(params[:ordinal]).to_h)
+      end
+
+      post "/api/plans/:ordinal/actions" do
+        halt 404, json(error: NO_DEMO_ACTIONS) if context.demo
+        halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
+
+        data = body_json
+        json(plan_actions.call(params[:ordinal], data["action"].to_s, reason: data["reason"].to_s).to_h)
+      end
+
       # The plan branch's diff and its reviewers' findings (plan 064, B3).
       get "/api/plans/:ordinal/review" do
         json(context.demo ? context.demo.board.review(params[:ordinal]) : plan_review.call(params[:ordinal]))
+      end
+
+      # The Worktrees page: every checkout but the main one, then one
+      # worktree's diff against the default branch and its pull requests
+      # with their CI, each asked for when its panel opens.
+      get "/api/worktrees" do
+        json(worktrees: worktrees.list)
+      end
+
+      get "/api/worktrees/:id/diff" do
+        json(worktrees.diff(params[:id]))
+      end
+
+      get "/api/worktrees/:id/pulls" do
+        json(pulls: worktrees.pulls(params[:id]))
       end
 
       # `.openlanes/config.yml` as the settings page draws it (plan 058, B3).

@@ -1,0 +1,9 @@
+/* The −/+ is drawn as two 3px bars rather than a glyph, whose font metrics sat it off centre. The text stays, transparent,
+   for screen readers and tests; the vertical bar shows only while folded. */
+.fold-toggle { position: relative; flex: none; width: 1.4em; height: 1.4em; padding: 0; cursor: pointer; border: 1px solid var(--hairline);
+              background: transparent; border-radius: 4px; font: inherit; color: transparent; --fold-bar: var(--ink); }
+.fold-toggle::before, .fold-toggle::after { content: ""; position: absolute; left: 50%; top: 50%; width: 55%; height: 3px;
+                                          border-radius: 1px; background: var(--fold-bar); transform: translate(-50%, -50%); }
+.fold-toggle::after { width: 3px; height: 55%; }
+.fold-toggle[aria-expanded="true"]::after { display: none; }
+.fold-toggle:hover, .fold-toggle:focus-visible { --fold-bar: #FFD400; border-color: #FFD400; }

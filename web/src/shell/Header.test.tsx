@@ -2,6 +2,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { Header, type HeaderProps } from "./Header";
+import { ThemeMenu } from "./ThemeMenu";
 import { applyPalette, PALETTE_KEY, PALETTES, restorePalette } from "./usePalette";
 import { NAV_HIDDEN_KEY } from "./useNavHidden";
 import { PHONE_QUERY } from "./usePhone";
@@ -33,7 +34,7 @@ it("is a bar of pills: the toggles carry a checkbox, the theme and help stand ap
     <Header {...props({ merged: true, narrow: false, onToggleNarrow: vi.fn(), hideInactive: false, onToggleHideInactive: vi.fn() })}
       actionMenu={<button type="button">Actions</button>} restartWeb={<button type="button">Restart Control Room</button>}
       stopAll={<button type="button">Stop Local Workers</button>}
-      help={<button type="button" aria-label="How this works">?</button>} />,
+    />,
   );
   expect(screen.getByRole("heading", { level: 1, name: "OpenLanes control room" })).toHaveClass("sr-only");
   const nav = within(screen.getByRole("navigation", { name: "Run controls" }));
@@ -103,7 +104,7 @@ it("presses All Machines", async () => {
 });
 
 it("offers the palettes in a menu, applies the one chosen, and remembers it", async () => {
-  const { unmount } = render(<Header {...props()} />);
+  const { unmount } = render(<ThemeMenu />);
   await userEvent.click(screen.getByRole("button", { name: "Theme: Ember. Change theme" }));
   expect(screen.getAllByRole("menuitemradio").map(i => i.textContent?.replace(/Light:.*|Dark:.*|✓/g, "")))
     .toEqual(["Ember", "Azure", "Midnight", "High Contrast", "Daylight", "Paper", "Earth", "Forest"]);

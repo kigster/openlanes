@@ -20,11 +20,42 @@ it("leaves a modified click to the browser", () => {
   expect(go).not.toHaveBeenCalled();
 });
 
-it("lists the three pages in order and navigates to settings", () => {
+it("lists the four pages in order and navigates to settings", () => {
   const go = vi.fn();
   render(<Nav route="/settings" onNavigate={go} />);
-  expect(screen.getAllByRole("link").map(l => l.textContent)).toEqual(["Board", "Plan dependencies", "Project settings"]);
+  expect(screen.getAllByRole("link").map(l => l.textContent)).toEqual(["Board", "Plan dependencies", "Project settings", "Worktrees"]);
   expect(screen.getByRole("link", { name: "Project settings" })).toHaveAttribute("aria-current", "page");
   fireEvent.click(screen.getByRole("link", { name: "Project settings" }));
   expect(go).toHaveBeenCalledWith("/settings");
+});
+
+it("opens a page's drop-down by hover or by its ▾ button, and closes it on Escape or a pick", () => {
+  const picked = vi.fn();
+  const menus = { "/settings": (close: () => void) => <button onClick={() => { picked(); close(); }}>General</button> } as const;
+  render(<Nav route="/" onNavigate={vi.fn()} menus={menus} />);
+  const caret = screen.getByRole("button", { name: "Project settings sections" });
+  expect(caret).toHaveAttribute("aria-expanded", "false");
+  expect(screen.queryByRole("button", { name: "General" })).not.toBeInTheDocument();
+  fireEvent.mouseEnter(caret.parentElement!);
+  expect(screen.getByRole("group", { name: "Project settings sections" })).toBeInTheDocument();
+  fireEvent.mouseLeave(caret.parentElement!);
+  expect(screen.queryByRole("group")).not.toBeInTheDocument();
+  // A click under a pointer that already opened it by hover keeps it open.
+  fireEvent.mouseEnter(caret.parentElement!);
+  fireEvent.click(caret);
+  fireEvent.mouseLeave(caret.parentElement!);
+  expect(screen.getByRole("group")).toBeInTheDocument();
+  fireEvent.blur(caret, { relatedTarget: screen.getByRole("button", { name: "General" }) });
+  expect(screen.getByRole("group")).toBeInTheDocument();
+  fireEvent.blur(caret, { relatedTarget: null });
+  expect(screen.queryByRole("group")).not.toBeInTheDocument();
+  fireEvent.click(caret);
+  fireEvent.keyDown(caret, { key: "Escape" });
+  expect(screen.queryByRole("group")).not.toBeInTheDocument();
+  fireEvent.keyDown(caret, { key: "Enter" });
+  fireEvent.click(caret);
+  fireEvent.click(screen.getByRole("button", { name: "General" }));
+  expect(picked).toHaveBeenCalled();
+  expect(screen.queryByRole("group")).not.toBeInTheDocument();
+  expect(screen.getAllByRole("link")).toHaveLength(4);
 });

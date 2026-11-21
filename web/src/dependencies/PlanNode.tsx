@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { Handle, Position, useUpdateNodeInternals, type NodeProps, type Node } from "@xyflow/react";
 import type { DependencyPlan, DependencyState } from "../api/types";
-import { LaneDocuments } from "../board/LaneDocuments";
+import { PlanManagement } from "../board/PlanManagement";
 import type { Flow } from "./layouts";
 
 export const NO_SUMMARY = "No summary has been written for this plan yet.";
@@ -55,7 +55,7 @@ export function PlanNode({ id, data: { plan, state, flow } }: NodeProps<Node<Pla
         </Tooltip.Portal>
       </Tooltip.Root>
       {/* nodrag and nopan: a press on the menu is a press on the menu, not the start of a drag or a pan. */}
-      <LaneDocuments ordinal={plan.ordinal} lazy className="dep-node-docs nodrag nopan" />
+      <PlanManagement ordinal={plan.ordinal} lazy className="dep-node-docs nodrag nopan" />
     </div>
   );
 }

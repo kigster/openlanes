@@ -8,6 +8,7 @@ it("reads the page from the path", () => {
   expect(routeOf("/dependencies/")).toBe("/dependencies");
   expect(routeOf("/settings")).toBe("/settings");
   expect(routeOf("/settings/")).toBe("/settings");
+  expect(routeOf("/worktrees")).toBe("/worktrees");
   expect(routeOf("/anything")).toBe("/");
 });
 

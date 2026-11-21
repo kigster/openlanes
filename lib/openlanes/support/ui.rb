@@ -5,6 +5,8 @@ require "etc"
 require "dry/cli/ui"
 require "pastel"
 require "stringio"
+require "strings"
+require "tty/box"
 require "tty/screen"
 require "unicode/display_width"
 
@@ -630,6 +632,25 @@ module OpenLanes
       # @return [void]
       def box(kind, message) = console.public_send(kind, message.to_s)
 
+      # An info box drawn in one colour, background and all, for the one line
+      # a person must not miss (the port `openlanes web` ended up on). The
+      # colour goes to TTY::Box as its style, never into the text: an escape
+      # code inside the text crashes Strings::Wrap (IndexError in
+      # insert_ansi). Without colour it is the ordinary info box.
+      #
+      # @param message [String] unpainted
+      # @param ink [Symbol] Pastel colour of the text and border
+      # @param ground [Symbol] Pastel colour of the background
+      # @return [void]
+      def highlight(message, ink: :white, ground: :green)
+        return box(:info, message) unless color?
+
+        room = [width, TTY::Screen.width - 2].min
+        text = message.to_s.lines.map { Strings::Wrap.wrap(it.chomp, room - 6) }.join("\n")
+        style = { fg: ink, bg: ground, border: { fg: ink, bg: ground } }
+        $stderr.print("\n", TTY::Box.frame(text, width: room, padding: [1, 2], border: :light, title: { top_left: " Info " }, style:, enable_color: true))
+      end
+
       # Labelled lines for a box, the labels padded to one width:
       #
       #   Progress:     /var/folders/…/openlanes-minesweeper.log
@@ -734,6 +755,10 @@ module OpenLanes
     # @param message [String]
     # @return [void]
     def info(message) = UI.box(:info, message)
+
+    # @param message [String]
+    # @return [void]
+    def highlight(message) = UI.highlight(message)
 
     # @param message [String]
     # @return [void]

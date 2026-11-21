@@ -6,7 +6,8 @@ import { settingsRepoTasks } from "./cypress/support/settingsRepo";
 
 export default defineConfig({
   e2e: {
-    baseUrl: "http://127.0.0.1:11000",
+    // 11100, as bin/web-e2e serves it: 11000 is the developer's own server.
+    baseUrl: "http://127.0.0.1:11100",
     specPattern: "cypress/e2e/**/*.cy.ts",
     supportFile: "cypress/support/e2e.ts",
     viewportWidth: 1440,
