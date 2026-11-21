@@ -59,6 +59,13 @@ module OpenLanes
         # @return [String]
         def lessons_for(agent) = @options.memory ? Memory.section(agent:, library: lessons) : ""
 
+        # The ids {#lessons_for} lists for +agent+, from the same snapshot,
+        # so what is counted as offered is what the prompt carried.
+        #
+        # @param agent [OpenLanes::Agents::Agent]
+        # @return [Array<String>] empty under `memory: false`
+        def offered_to(agent) = @options.memory ? Memory.offered(agent:, library: lessons) : []
+
         private
 
         # @return [OpenLanes::Memory::Library]

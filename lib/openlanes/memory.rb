@@ -63,6 +63,24 @@ module OpenLanes
       # @return [String]
       def section(agent:, library:) = Section.new(library.for(agent), agent:).to_s
 
+      # The lesson ids {section} shows +agent+: what one invocation is offered.
+      #
+      # @param agent [OpenLanes::Agents::Agent, OpenLanes::Memory::Audience]
+      # @param library [OpenLanes::Memory::Library]
+      # @return [Array<String>]
+      def offered(agent:, library:) = Section.new(library.for(agent), agent:).offered
+
+      # The offered ids an agent's report names (decision C5).
+      #
+      # @param text [String, nil] the report
+      # @param offered [Array<String>] from {offered}
+      # @return [Array<String>]
+      def cited(text, offered:) = Citations.in(text, offered:)
+
+      # @param root [String] the project root
+      # @return [Hash{String => OpenLanes::Events::LessonUsage}, nil] by lesson id; nil when the event log is off
+      def uptake(root:) = Uptake.read(root:)
+
       # The audience an agent in +phase+ is, without naming one of ours.
       #
       # @param phase [String] one of {Agents.phases}

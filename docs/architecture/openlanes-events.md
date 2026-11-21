@@ -13,6 +13,7 @@ classDiagram
   class OpenLanes__Events__Event["Event"]
   class OpenLanes__Events__Identity["Identity"]
   <<module>> OpenLanes__Events__Identity
+  class OpenLanes__Events__LessonUsage["LessonUsage"]
   class OpenLanes__Events__Location["Location"]
   <<module>> OpenLanes__Events__Location
   class OpenLanes__Events__Log["Log"]
@@ -24,6 +25,7 @@ classDiagram
   class OpenLanes__Live__Node["OpenLanes::Live::Node"]
   OpenLanes__Events ..> OpenLanes__Config : uses
   OpenLanes__Events ..> OpenLanes__Events__Event : uses
+  OpenLanes__Events ..> OpenLanes__Events__LessonUsage : uses
   OpenLanes__Events ..> OpenLanes__Events__Location : uses
   OpenLanes__Events ..> OpenLanes__Events__Log : uses
   OpenLanes__Events ..> OpenLanes__Events__NullSink : uses
