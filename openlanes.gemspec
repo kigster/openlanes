@@ -60,7 +60,7 @@ Gem::Specification.new do |spec|
     globbed = Dir.glob(["*.gemspec", "lib/**/*.rb", "agents/*.md", "agents/shared/*.md", "schemas/*.json",
                         "evals/cases/**/*", "skills/**/*",
                         "exe/*", "libexec/*", "web/dist/**/*", "web/src/api/fixtures/board.json",
-                        "Brewfile",
+                        "Brewfile", "docs/slack-app-manifest.yml",
                         "bin/ol-tee"])
     globbed.select { |f| File.file?(f) && !f.end_with?(".map") }
   end

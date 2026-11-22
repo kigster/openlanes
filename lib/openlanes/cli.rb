@@ -17,6 +17,7 @@ require_relative "cli/resync/subcommands/prs"
 require_relative "cli/linear/linear"
 require_relative "cli/linear/subcommands/projects"
 require_relative "cli/linear/subcommands/import"
+require_relative "cli/slack/subcommands/connect"
 require_relative "cli/slack/subcommands/test"
 require_relative "cli/docs/docs"
 require_relative "cli/eval/eval"
@@ -180,6 +181,7 @@ module OpenLanes
     end
 
     register "slack" do |prefix|
+      prefix.register "connect", Slack::Connect
       prefix.register "test", Slack::Test
     end
 

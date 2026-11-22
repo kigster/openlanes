@@ -143,7 +143,8 @@ lib/openlanes/
   linear/                one-way export of .plans to Linear projects and issues
   slack/                 OpenLanes::Slack — questions asked in a channel as polls: API (the seam), Poll (drawing and reading
                          one), Room (the channel, its workspace checked), Bridge (snapshot in, `answer` commands out, on its own
-                         thread), Asker (one pass over Slack), Outbox (what it learned, written by the loop)
+                         thread), Asker (one pass over Slack), Outbox (what it learned, written by the loop), Settings (config with
+                         the environment over it), Connection, EnvFile and AppManifest (`slack connect`)
   evals/                 OpenLanes::Evals — per-agent cases (evals/cases/<agent>/<id>.yml), deterministic
                          checks per depth, offline scoring of recordings, --live runs in a temp repo
   cli.rb                 the dry-cli registry, and the dry-cli-help `help` block that titles it

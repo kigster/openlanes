@@ -1976,6 +1976,56 @@
             }
           }
         },
+        "slack connect": {
+          "type": "object",
+          "description": "Ask this project's questions in a Slack channel: write the settings to .env, then post a test poll",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "app_env": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The Slack app's .env: the token is read from it, and the settings written there too"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Print what would be written, and post nothing",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "test": {
+              "type": "boolean",
+              "description": "Post a test poll and wait for an answer",
+              "default": true
+            },
+            "timeout": {
+              "type": "integer",
+              "description": "Seconds to wait for somebody to answer the test poll",
+              "default": 120
+            },
+            "workspace": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The team id the token must belong to; the token's own by default"
+            }
+          }
+        },
         "slack test": {
           "type": "object",
           "description": "Post a sample poll to the project's Slack channel and wait for an answer",
