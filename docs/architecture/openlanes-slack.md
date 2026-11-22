@@ -15,11 +15,16 @@ classDiagram
   class OpenLanes__Slack__API["API"]
   class OpenLanes__Slack__API__RateLimited["API::RateLimited"]
   class OpenLanes__Slack__API__Refused["API::Refused"]
+  class OpenLanes__Slack__AppManifest["AppManifest"]
+  <<module>> OpenLanes__Slack__AppManifest
   class OpenLanes__Slack__Asker["Asker"]
   class OpenLanes__Slack__Bridge["Bridge"]
+  class OpenLanes__Slack__Connection["Connection"]
+  class OpenLanes__Slack__EnvFile["EnvFile"]
   class OpenLanes__Slack__Outbox["Outbox"]
   class OpenLanes__Slack__Poll["Poll"]
   class OpenLanes__Slack__Room["Room"]
+  class OpenLanes__Slack__Settings["Settings"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   OpenLanes__Slack ..> OpenLanes__Config : uses
@@ -28,6 +33,7 @@ classDiagram
   OpenLanes__Slack ..> OpenLanes__Slack__Bridge : uses
   OpenLanes__Slack ..> OpenLanes__Slack__Outbox : uses
   OpenLanes__Slack ..> OpenLanes__Slack__Room : uses
+  OpenLanes__Slack ..> OpenLanes__Slack__Settings : uses
   OpenLanes__Slack ..> OpenLanes__UI : uses
   OpenLanes__Slack__API ..> OpenLanes__Error : uses
   OpenLanes__Slack__API ..> OpenLanes__Slack__API__RateLimited : uses
@@ -44,6 +50,11 @@ classDiagram
   OpenLanes__Slack__Bridge ..> OpenLanes__Slack__Asker : uses
   OpenLanes__Slack__Bridge ..> OpenLanes__Slack__Poll : uses
   OpenLanes__Slack__Bridge ..> OpenLanes__UI : uses
+  OpenLanes__Slack__Connection ..> OpenLanes__Config : uses
+  OpenLanes__Slack__Connection ..> OpenLanes__Slack : uses
+  OpenLanes__Slack__Connection ..> OpenLanes__Slack__API : uses
+  OpenLanes__Slack__Connection ..> OpenLanes__Slack__EnvFile : uses
+  OpenLanes__Slack__Connection ..> OpenLanes__Slack__Settings : uses
   OpenLanes__Slack__Outbox ..> OpenLanes__Live : uses
   OpenLanes__Slack__Outbox ..> OpenLanes__Live__Command__Invalid : uses
   OpenLanes__Slack__Outbox ..> OpenLanes__Live__Unavailable : uses
@@ -51,4 +62,5 @@ classDiagram
   OpenLanes__Slack__Room ..> OpenLanes__Error : uses
   OpenLanes__Slack__Room ..> OpenLanes__Slack__API : uses
   OpenLanes__Slack__Room ..> OpenLanes__Slack__API__Refused : uses
+  OpenLanes__Slack__Settings ..> OpenLanes__Error : uses
 ```

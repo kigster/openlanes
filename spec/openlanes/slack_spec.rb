@@ -9,14 +9,33 @@ RSpec.describe OpenLanes::Slack do
   before { allow(OpenLanes::UI).to receive(:log) }
 
   describe ".bridge" do
-    it "is nil for a project with no slack: section, and says nothing" do
-      expect(described_class.bridge(store:, keys:, config: OpenLanes::Config.new, env:)).to be_nil
+    it "is nil for a project with neither a channel nor a token, and says nothing" do
+      expect(described_class.bridge(store:, keys:, config: OpenLanes::Config.new, env: {})).to be_nil
       expect(OpenLanes::UI).not_to have_received(:log)
+    end
+
+    it "is nil with a token and no channel, and says where a channel goes" do
+      expect(described_class.bridge(store:, keys:, config: OpenLanes::Config.new, env:)).to be_nil
+      expect(OpenLanes::UI).to have_received(:log)
+        .with(%r{SLACK_BOT_TOKEN is set but no channel is: set slack\.channel in \.openlanes/config\.yml or OPENLANES_SLACK_CHANNEL}, level: :warn)
+    end
+
+    it "is nil when the operators cannot be read, rather than stopping the run" do
+      env = { "SLACK_BOT_TOKEN" => "xoxb-test", "OPENLANES_SLACK_CHANNEL" => "C0ENV", "OPENLANES_SLACK_OPERATORS" => "@kim" }
+
+      expect(described_class.bridge(store:, keys:, config: OpenLanes::Config.new, env:)).to be_nil
+      expect(OpenLanes::UI).to have_received(:log).with(/"@kim" is not a Slack user id/, level: :warn)
+    end
+
+    it "is a bridge on the environment alone" do
+      env = { "SLACK_BOT_TOKEN" => "xoxb-test", "OPENLANES_SLACK_CHANNEL" => "C0ENV", "OPENLANES_SLACK_OPERATORS" => "UKIM" }
+
+      expect(described_class.bridge(store:, keys:, config: OpenLanes::Config.new, env:)).to be_a(described_class::Bridge)
     end
 
     it "is nil without a token, and says which variable is missing" do
       expect(described_class.bridge(store:, keys:, config: configured, env: {})).to be_nil
-      expect(OpenLanes::UI).to have_received(:log).with(/names a channel but SLACK_BOT_TOKEN is not set/, level: :warn)
+      expect(OpenLanes::UI).to have_received(:log).with(/a channel is configured but SLACK_BOT_TOKEN is not set/, level: :warn)
     end
 
     it "is nil without operators, and says that anyone in the channel will not do (HM4)" do
@@ -38,6 +57,10 @@ RSpec.describe OpenLanes::Slack do
   end
 
   describe ".room" do
+    it "is the channel the environment names, over the configured one" do
+      expect(described_class.room(config: configured, env: env.merge("OPENLANES_SLACK_CHANNEL" => "C0ENV")).channel).to eq("C0ENV")
+    end
+
     it "is the configured channel" do
       expect(described_class.room(config: configured, env:).channel).to eq("#questions")
     end
