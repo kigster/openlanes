@@ -338,11 +338,23 @@ module OpenLanes
       # sets its label before it signs (agents/staff-reviewer.md), so the
       # label a signature went with does not change under it.
       #
+      # The run hands in a {Vcs::SnapshotReads}, so the labels usually come
+      # from the tick's shared snapshot. One taken before the signature may
+      # predate the label, so its "no" is answered but not cached: the next
+      # poll's snapshot is asked again.
+      #
       # @return [Boolean]
       def labelled_passed?(pull, reviewed)
         @labels.fetch([pull.url || pull.number, reviewed]) do |cache_key|
-          labels = @github.labels(number: Vcs::GitHub.number_of(pull.url || pull.number), repo: Vcs::GitHub.repo_of(pull.url))
-          @labels[cache_key] = labels.include?(Plans::ReviewLabel::PASSED.name)
+          number = Vcs::GitHub.number_of(pull.url || pull.number)
+          repo = Vcs::GitHub.repo_of(pull.url)
+          # Asked before the labels: a snapshot refreshed between the two
+          # calls leaves the labels newer than this time, never older.
+          taken = @github.taken_at(number:, repo:) if @github.respond_to?(:taken_at)
+          passed = @github.labels(number:, repo:).include?(Plans::ReviewLabel::PASSED.name)
+          next passed if !passed && taken && taken < reviewed
+
+          @labels[cache_key] = passed
         end
       rescue Error
         false

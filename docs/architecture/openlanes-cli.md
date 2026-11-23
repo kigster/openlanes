@@ -56,6 +56,8 @@ classDiagram
   class OpenLanes__CLI__Memory__Inbox["Memory::Inbox"]
   class OpenLanes__CLI__Memory__List["Memory::List"]
   class OpenLanes__CLI__Memory__Promote["Memory::Promote"]
+  class OpenLanes__CLI__Memory__Propose["Memory::Propose"]
+  class OpenLanes__CLI__Memory__Report["Memory::Report"]
   class OpenLanes__CLI__Memory__Scan["Memory::Scan"]
   class OpenLanes__CLI__Memory__Table["Memory::Table"]
   <<module>> OpenLanes__CLI__Memory__Table
@@ -74,6 +76,7 @@ classDiagram
   class OpenLanes__CLI__Run["Run"]
   class OpenLanes__CLI__Setup["Setup"]
   class OpenLanes__CLI__Skills__Install["Skills::Install"]
+  class OpenLanes__CLI__Slack__Test["Slack::Test"]
   class OpenLanes__CLI__Start["Start"]
   class OpenLanes__CLI__State__Estimate["State::Estimate"]
   class OpenLanes__CLI__State__Locating["State::Locating"]
@@ -111,6 +114,7 @@ classDiagram
   class OpenLanes__Evals__Run["OpenLanes::Evals::Run"]
   class OpenLanes__Events["OpenLanes::Events"]
   <<module>> OpenLanes__Events
+  class OpenLanes__Events__LessonUsage["OpenLanes::Events::LessonUsage"]
   class OpenLanes__Execution["OpenLanes::Execution"]
   <<module>> OpenLanes__Execution
   class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
@@ -138,7 +142,9 @@ classDiagram
   class OpenLanes__Memory["OpenLanes::Memory"]
   <<module>> OpenLanes__Memory
   class OpenLanes__Memory__Curation["OpenLanes::Memory::Curation"]
+  class OpenLanes__Memory__GlobalStore["OpenLanes::Memory::GlobalStore"]
   class OpenLanes__Memory__Promotion["OpenLanes::Memory::Promotion"]
+  class OpenLanes__Memory__Proposal["OpenLanes::Memory::Proposal"]
   class OpenLanes__Plans["OpenLanes::Plans"]
   <<module>> OpenLanes__Plans
   class OpenLanes__Plans__Estimate["OpenLanes::Plans::Estimate"]
@@ -169,6 +175,9 @@ classDiagram
   class OpenLanes__Setup__StackDocument["OpenLanes::Setup::StackDocument"]
   class OpenLanes__Skills["OpenLanes::Skills"]
   <<module>> OpenLanes__Skills
+  class OpenLanes__Slack["OpenLanes::Slack"]
+  <<module>> OpenLanes__Slack
+  class OpenLanes__Slack__Poll["OpenLanes::Slack::Poll"]
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   <<module>> OpenLanes__Supervision
   class OpenLanes__Supervision__Program["OpenLanes::Supervision::Program"]
@@ -191,6 +200,8 @@ classDiagram
   class OpenLanes__Web__Launcher["OpenLanes::Web::Launcher"]
   class OpenLanes__Web__Listen["OpenLanes::Web::Listen"]
   class OpenLanes__Web__Listen__Invalid["OpenLanes::Web::Listen::Invalid"]
+  class OpenLanes__Web__Ports["OpenLanes::Web::Ports"]
+  <<module>> OpenLanes__Web__Ports
   class OpenLanes__Web__Stores["OpenLanes::Web::Stores"]
   OpenLanes__CLI__API__Docs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__API__Docs ..> OpenLanes__Presentation : uses
@@ -326,6 +337,7 @@ classDiagram
   OpenLanes__CLI__Memory__Inbox --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Memory__Inbox ..> OpenLanes__CLI__Memory__Table : uses
   OpenLanes__CLI__Memory__Inbox ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Inbox ..> OpenLanes__Memory__GlobalStore : uses
   OpenLanes__CLI__Memory__List ..> OpenLanes__Agents : uses
   OpenLanes__CLI__Memory__List --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Memory__List ..> OpenLanes__CLI__Memory__Table : uses
@@ -333,6 +345,15 @@ classDiagram
   OpenLanes__CLI__Memory__Promote --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Memory__Promote ..> OpenLanes__Memory : uses
   OpenLanes__CLI__Memory__Promote ..> OpenLanes__Memory__Promotion : uses
+  OpenLanes__CLI__Memory__Propose --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Propose ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Propose ..> OpenLanes__Memory__Proposal : uses
+  OpenLanes__CLI__Memory__Propose ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__CLI__Memory__Report --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Report ..> OpenLanes__CLI__Memory__Table : uses
+  OpenLanes__CLI__Memory__Report ..> OpenLanes__Events__LessonUsage : uses
+  OpenLanes__CLI__Memory__Report ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Report ..> OpenLanes__Project : uses
   OpenLanes__CLI__Memory__Scan --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Memory__Scan ..> OpenLanes__Memory : uses
   OpenLanes__CLI__Preview__Registry ..> OpenLanes__Apps : uses
@@ -383,12 +404,18 @@ classDiagram
   OpenLanes__CLI__Run ..> OpenLanes__Engine__RunWorkflow : uses
   OpenLanes__CLI__Run ..> OpenLanes__Live : uses
   OpenLanes__CLI__Run ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Run ..> OpenLanes__Memory__Promotion : uses
   OpenLanes__CLI__Run ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Setup --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Setup ..> OpenLanes__Live : uses
   OpenLanes__CLI__Setup ..> OpenLanes__Setup : uses
   OpenLanes__CLI__Skills__Install --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Skills__Install ..> OpenLanes__Skills : uses
+  OpenLanes__CLI__Slack__Test --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Slack__Test ..> OpenLanes__Error : uses
+  OpenLanes__CLI__Slack__Test ..> OpenLanes__Slack : uses
+  OpenLanes__CLI__Slack__Test ..> OpenLanes__Slack__Poll : uses
+  OpenLanes__CLI__Slack__Test ..> OpenLanes__UI : uses
   OpenLanes__CLI__Start ..> OpenLanes__CLI__Argv : uses
   OpenLanes__CLI__Start --|> OpenLanes__CLI__EngineCommand : inherits
   OpenLanes__CLI__Start ..> OpenLanes__CLI__Programs : uses
@@ -468,6 +495,7 @@ classDiagram
   OpenLanes__CLI__Web ..> OpenLanes__Web__Demo : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Demo__Interview : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Launcher : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Web__Ports : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Stores : uses
   OpenLanes__CLI__Worktree --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Worktree ..> OpenLanes__Plans__Ordinal : uses

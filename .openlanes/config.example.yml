@@ -83,6 +83,15 @@ coverage:
   report_command: jq '.total.lines.percent' coverage/coverage.json
   minimum: 95
 
+# Questions for a person, asked in a Slack channel as polls. The bot token is
+# a secret and is read from SLACK_BOT_TOKEN, never from this file. See
+# docs/slack.md.
+slack:
+  channel: "#openlanes-questions"    # an id (C0123ABC) or a public channel's #name
+  workspace: T0123ABCD               # the team id the token must belong to; a name or subdomain works but can be renamed
+  operators: [U0123ABCD]             # Slack user ids allowed to answer; without them there is no bridge
+  poll_seconds: 2                    # seconds between reads of Slack
+
 # The application openlanes is working on. `openlanes init` writes this
 # section with the name filled in and the rest empty.
 application:

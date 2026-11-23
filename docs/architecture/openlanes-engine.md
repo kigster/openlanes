@@ -42,6 +42,7 @@ classDiagram
   class OpenLanes__Engine__Arbitration__Retries["Arbitration::Retries"]
   class OpenLanes__Engine__Board["Board"]
   class OpenLanes__Engine__Budget["Budget"]
+  class OpenLanes__Engine__Budget__Guard["Budget::Guard"]
   class OpenLanes__Engine__CliPause["CliPause"]
   class OpenLanes__Engine__Conversions["Conversions"]
   class OpenLanes__Engine__CoverageGate["CoverageGate"]
@@ -205,6 +206,7 @@ classDiagram
   class OpenLanes__Execution__Executor__Handle["OpenLanes::Execution::Executor::Handle"]
   class OpenLanes__Execution__ProcessStart["OpenLanes::Execution::ProcessStart"]
   <<module>> OpenLanes__Execution__ProcessStart
+  class OpenLanes__Execution__Throttle__AdapterPause["OpenLanes::Execution::Throttle::AdapterPause"]
   class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
   <<module>> OpenLanes__Frontmatter
   class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
@@ -376,6 +378,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Assign__IdleReason ..> OpenLanes__Engine__Dispatcher__Assign__Stalls : uses
   OpenLanes__Engine__Dispatcher__Assign__IdleReason --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Assign__IdleReason ..> OpenLanes__Engine__QualityQuestion : uses
+  OpenLanes__Engine__Dispatcher__Assign__IdleReason ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Engine__Dispatcher__Assign__QualityGate ..> OpenLanes__Config : uses
   OpenLanes__Engine__Dispatcher__Assign__QualityGate --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Assign__QualityGate ..> OpenLanes__Engine__QualityQuestion : uses
@@ -415,6 +418,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Rebase : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Recovery__Records : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Execution__Throttle__AdapterPause : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__LockClock : uses
   OpenLanes__Engine__Dispatcher__Desk__Budgeting ..> OpenLanes__UI : uses
   OpenLanes__Engine__Dispatcher__Desk__FailedStarts ..> OpenLanes__Execution__Executor : uses
@@ -713,6 +717,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Config : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Arbitration : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Budget__Guard : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Curating : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__EventJournal : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Merging : uses
@@ -729,8 +734,10 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Error : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Events : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Events__NullSink : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Events__PlanSpend : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Execution : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Execution__Throttle__AdapterPause : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__Holder : uses
@@ -759,6 +766,7 @@ classDiagram
   OpenLanes__Engine__Runner ..> OpenLanes__Engine__Reviews : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Error : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Events__NullSink : uses
+  OpenLanes__Engine__Runner ..> OpenLanes__Execution__Throttle__AdapterPause : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Lifecycle : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Lifecycle__Lanes : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Lifecycle__Resync__Dirs : uses

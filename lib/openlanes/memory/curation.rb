@@ -22,7 +22,7 @@ module OpenLanes
       #   @return [Array<OpenLanes::Memory::Inbox::Outcome>]
       Report = Data.define(:ordinal, :ok, :note, :outcomes)
 
-      # @param executor [#call] receives (agent, subject, root:, handle:)
+      # @param executor [#call] receives (agent, subject, root:, handle:, brief:)
       # @param agent [OpenLanes::Agents::Agent]
       # @param root [String] the project root, where the inbox is
       # @param answer [#call] reads an agent's final answer from its trace
@@ -37,7 +37,9 @@ module OpenLanes
       # @return [OpenLanes::Memory::Curation::Report]
       def call(subject)
         handle = Execution::Executor::Handle.new
-        result = @executor.call(@agent, subject, root: @root, handle:)
+        # Read when this plan's turn comes, so a lesson the previous plan of
+        # one `memory curate` filed is offered to the next.
+        result = @executor.call(@agent, subject, root: @root, handle:, brief: Memory.known(root: @root))
         ordinal = subject.feature.ordinal.to_s
         # A dry run is ok and leaves no trace: nothing was said, so nothing is filed.
         said = result.ok && handle.trace ? @answer.call(handle.trace) : ""

@@ -6,7 +6,7 @@
     "slug": "split-dispatcher"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:02:06-08:00",
+  "updated_at": "2026-11-18T21:43:12-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -988,7 +988,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "7be81f58-424f-4a1c-87cd-4f2bda285e94",
+        "session": "1152dda8-d264-4b2a-bb0c-0cc6d77682d2",
         "through": 0
       }
     }

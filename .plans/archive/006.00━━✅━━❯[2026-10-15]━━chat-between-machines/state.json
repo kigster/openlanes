@@ -6,7 +6,7 @@
     "slug": "chat-between-machines"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:01:36-08:00",
+  "updated_at": "2026-11-18T21:42:29-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -283,7 +283,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "b2e769ae-7a34-47d4-91be-82b6f152155a",
+        "session": "06bc79e1-4d9b-4f23-80f1-0a51517391df",
         "through": 0
       }
     }

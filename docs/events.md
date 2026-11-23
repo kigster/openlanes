@@ -14,7 +14,7 @@ events:
   dir: /var/lib/openlanes/events   # optional, absolute
 ```
 
-- `enabled`: `true` or `false`. Anything else is an error. Absent means off.
+- `enabled`: `true` or `false`. Anything else is an error. Absent means off. `budget.plan_usd` is counted from this log, so a run with a cap and the log off refuses to start.
 - `dir`: an absolute path (a leading `~` is expanded). A relative path is an error, because it would land wherever the command was typed.
 
 Without `dir`, the log lives outside the repository, so `git status` and the autonomy boundary never see it:
@@ -52,6 +52,10 @@ Each line of a `<node>.jsonl` file is one event: `event_id`, `kind`, `at`, `proj
 | `pr_merged`      | `number`                                                                                           |
 | `pr_closed`      | `number`                                                                                           |
 | `failure`        | `round`, `invocation_start`, `error_class`                                                         |
+| `lesson_offered` | `round`, `invocation_start`, `lesson`                                                              |
+| `lesson_cited`   | `round`, `invocation_start`, `lesson`                                                              |
+
+`lesson_offered` is one event per lesson id the prompt's lessons section showed, per invocation; a lesson cut by the section's budget was not offered. `lesson_cited` is one per offered id the agent's final report named as a whole token; an id it was not shown never counts. Both are written when the attempt settles. `openlanes memory report` counts them per lesson, in distinct plans, and the memory pull request proposes retiring a lesson offered on 15 plans (`Memory::Retirement::THRESHOLD`) and cited on none. With the log off, `memory report` says the counts are unavailable and nothing is proposed.
 
 ## What is never stored
 

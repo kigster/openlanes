@@ -27,10 +27,14 @@ module OpenLanes
       # @return [Boolean]
       def satisfied_by?(subject) = violation(subject).nil?
 
+      # @param subject [#file?]
+      # @return [Array<String>] the files in {#requires} the folder lacks
+      def missing(subject) = requires.reject { |f| subject.file?(f) }
+
       # @param subject [#file?, #read, #pull_requests]
       # @return [String, nil] why this state is not justified, nil when it is
       def violation(subject)
-        missing = requires.reject { |f| subject.file?(f) }
+        missing = missing(subject)
         return "#{label} requires #{missing.map { |f| "`#{f}`" }.join(" and ")}" unless missing.empty?
 
         invariant&.call(subject)

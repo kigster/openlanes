@@ -35,6 +35,7 @@ classDiagram
   class OpenLanes__Execution__Deadline["OpenLanes::Execution::Deadline"]
   <<module>> OpenLanes__Execution__Deadline
   class OpenLanes__Execution__Executor["OpenLanes::Execution::Executor"]
+  class OpenLanes__Execution__Throttle__AdapterPause["OpenLanes::Execution::Throttle::AdapterPause"]
   class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
   <<module>> OpenLanes__Lifecycle
   class OpenLanes__Lifecycle__Aging["OpenLanes::Lifecycle::Aging"]
@@ -135,6 +136,8 @@ classDiagram
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__Verdict["OpenLanes::Plans::Verdict"]
+  class OpenLanes__Slack["OpenLanes::Slack"]
+  <<module>> OpenLanes__Slack
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   <<module>> OpenLanes__Supervision
   class OpenLanes__UI["OpenLanes::UI"]
@@ -322,6 +325,7 @@ classDiagram
   OpenLanes__Live__Session ..> OpenLanes__Adapters__Probes : uses
   OpenLanes__Live__Session ..> OpenLanes__Config : uses
   OpenLanes__Live__Session ..> OpenLanes__Engine__CliPause : uses
+  OpenLanes__Live__Session ..> OpenLanes__Execution__Throttle__AdapterPause : uses
   OpenLanes__Live__Session ..> OpenLanes__Live : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Claims : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Commands : uses
@@ -336,6 +340,7 @@ classDiagram
   OpenLanes__Live__Session ..> OpenLanes__Live__RunState : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Store : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Live__Session ..> OpenLanes__Slack : uses
   OpenLanes__Live__Session ..> OpenLanes__UI : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Adapters : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Adapters__Availability : uses

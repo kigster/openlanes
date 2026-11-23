@@ -6,7 +6,7 @@
     "slug": "review-verdict-labels"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:01:55-08:00",
+  "updated_at": "2026-11-18T21:42:57-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -437,7 +437,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "19b4fdf6-4ec2-4b73-a399-70709ba74f1f",
+        "session": "dc8fe293-cc22-4aee-81ad-ad740455a9ef",
         "through": 0
       }
     }

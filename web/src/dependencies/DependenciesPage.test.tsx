@@ -65,19 +65,19 @@ it("re-arranges the same boxes and arrows when a layout is picked, and remembers
   const { unmount } = draw();
   const at = () => Object.fromEntries(Array.from(document.querySelectorAll<HTMLElement>(".react-flow__node")).map(n => [n.dataset.id, n.style.transform]));
   await waitFor(() => expect(boxes()).toHaveLength(4));
-  expect(screen.getByRole("radio", { name: "Adaptive" })).toBeChecked();
+  expect(screen.getByRole("radio", { name: "Circular" })).toBeChecked();
   const before = at();
-  for (const name of ["Top to bottom", "Circular", "Grid", "Left to right"]) {
+  for (const name of ["Top to bottom", "Adaptive", "Grid", "Left to right"]) {
     await userEvent.click(screen.getByRole("radio", { name }));
     await waitFor(() => expect(at()).not.toEqual(before));
     expect(boxes()).toEqual(["001.00", "002.00", "003.00", "004.00"]);
     expect(document.querySelectorAll("path.dep-edge[data-from]")).toHaveLength(2);
   }
-  await userEvent.click(screen.getByRole("radio", { name: "Circular" }));
-  expect(screen.getByTestId("dep-canvas")).toHaveAttribute("data-layout", "circular");
+  await userEvent.click(screen.getByRole("radio", { name: "Adaptive" }));
+  expect(screen.getByTestId("dep-canvas")).toHaveAttribute("data-layout", "adaptive");
   unmount();
   draw();
-  expect(await screen.findByRole("radio", { name: "Circular" })).toBeChecked();
+  expect(await screen.findByRole("radio", { name: "Adaptive" })).toBeChecked();
 });
 
 it("says so when nothing is checked", async () => {

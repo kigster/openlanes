@@ -38,6 +38,12 @@ module OpenLanes
         default: true,
         desc:    "Tell each agent the lessons in #{OpenLanes::Memory::PROJECT_DIR} meant for it; " \
                  "--no-memory leaves them out, the baseline that shows whether they help"
+      option :memory_pr,
+        type:    :boolean,
+        default: true,
+        desc:    "Once the run ends, open the memory pull request for every lesson candidate seen on " \
+                 "#{OpenLanes::Memory::Promotion::THRESHOLD} plans, as `openlanes memory promote` does. " \
+                 "A person merges it. --no-memory-pr leaves them waiting in the inbox"
       option :user_config,
         type:    :boolean,
         default: false,

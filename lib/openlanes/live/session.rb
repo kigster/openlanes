@@ -23,9 +23,12 @@ module OpenLanes
       #   Redis is gone; a spec hands in one on its own clock
       # @param runner [OpenLanes::Adapters::ProbeRunner] what the adapter
       #   probes run their commands through; a spec hands in a fake
+      # @param slack [#call, nil] builds the bridge that asks this run's
+      #   questions in Slack, from the store and keys; it answers nil for a
+      #   project that has not asked for one
       def initialize(store:, root:, tree:, agents:, project: nil, node: Node.current(root:), repo: Repo.for(root),
         clock: -> { Time.now }, outage: Outage.new(store:, limit: Config.current.outage_limit, **Config.current.redis_backoff),
-        runner: Adapters.probe_runner)
+        runner: Adapters.probe_runner, slack: OpenLanes::Slack.method(:bridge))
         @store = store
         @node = node
         @keys = Keys.new(repo:, node: node.name)
@@ -35,6 +38,7 @@ module OpenLanes
         @outage = outage
         @claims = Claims.new(store:, keys: @keys)
         @cli_pause = Engine::CliPause.new
+        @adapter_pause = Execution::Throttle::AdapterPause.new(clock:)
         @publisher = Publisher.new(store:,
           keys: @keys,
           node:,
@@ -45,7 +49,7 @@ module OpenLanes
           project: project || File.basename(root),
           clock:,
           availability: @probes.method(:current),
-          paused_clis: @cli_pause.method(:entries))
+          paused_clis: method(:paused_clis))
         @commands = Commands.new(store:,
           keys: @keys,
           node:,
@@ -53,11 +57,17 @@ module OpenLanes
           record: @record,
           claims: @claims,
           clock:)
+        @slack = slack&.call(store:, keys: @keys)
       end
 
       # @return [OpenLanes::Engine::CliPause] the CLIs the engine holds, shared
       #   with the runner so the page shows what the dispatcher paused
       attr_reader :cli_pause
+
+      # @return [OpenLanes::Execution::Throttle::AdapterPause] the adapters
+      #   an agent is waiting out a rate limit on (C13), shared with the
+      #   runner and its executor so the page shows them beside {#cli_pause}
+      attr_reader :adapter_pause
 
       # @return [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       attr_reader :store
@@ -89,8 +99,15 @@ module OpenLanes
       # @return [OpenLanes::Adapters::Probes]
       attr_reader :probes
 
+      # Each tick's board goes to the page, and what was published of it to
+      # Slack, which asks the questions the page shows.
+      #
       # @return [Proc] the runner's `on_board:`
-      def on_board = @publisher.to_proc
+      def on_board
+        return @publisher.to_proc unless @slack
+
+        ->(board) { @publisher.call(board).tap { @slack.offer(it) } }
+      end
 
       # Wire the run in: the run state a previous engine left is taken back
       # on the first tick, commands are applied at the top of each tick, mail
@@ -108,7 +125,11 @@ module OpenLanes
         # on it asks Redis for something (W32).
         dispatcher.before_tick(&@outage)
         dispatcher.before_tick(&@record)
+        # Before the commands, so an answer given in Slack is applied on the
+        # tick that hears of it.
+        dispatcher.before_tick(&@slack) if @slack
         dispatcher.before_tick(&@commands)
+        @slack&.start
         dispatcher.mail = Mail.new(store: @store, keys: @keys)
         @outage.on_resume { recover(it) }
       end
@@ -135,6 +156,7 @@ module OpenLanes
       #
       # @return [void]
       def close
+        @slack&.stop
         @probes.stop
         @probe_store.close unless @probe_store.equal?(@store)
         @record.close
@@ -156,6 +178,10 @@ module OpenLanes
       def described = ["#{Live.mask(@store.url)} as #{@node.label}", "(#{@node.name})"]
 
       private
+
+      # @return [Array<OpenLanes::Engine::CliPause::Entry, OpenLanes::Execution::Throttle::AdapterPause::Entry>]
+      #   every CLI no new agent starts on, for a login or for a rate limit
+      def paused_clis = @cli_pause.entries + @adapter_pause.entries
 
       # RedisClient is not thread-safe. On the session's own connection the
       # probe thread's replies reached the engine's HGETALL as strings, so a

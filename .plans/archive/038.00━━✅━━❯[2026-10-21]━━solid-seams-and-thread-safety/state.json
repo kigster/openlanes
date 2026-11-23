@@ -6,7 +6,7 @@
     "slug": "solid-seams-and-thread-safety"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:02:00-08:00",
+  "updated_at": "2026-11-18T21:43:03-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -675,7 +675,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "c4c4634d-fa2d-4f26-8b2d-4503c9201024",
+        "session": "325cf52c-9b4c-4e49-87e2-dac1fa83c392",
         "through": 0
       }
     }

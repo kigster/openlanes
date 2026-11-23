@@ -298,7 +298,7 @@ describe("lane documents", () => {
     const board = sampleBoard();
     const { container, rerender } = render(<Board board={board} merged retiring={noRetire} gone={none} />);
     const ours = container.querySelector<HTMLElement>('[data-plan="001.00"]')!;
-    expect(within(ours).getByRole("button", { name: "Documents of 001.00" })).toBeInTheDocument();
+    expect(within(ours).getByRole("button", { name: "Plan Management of 001.00" })).toBeInTheDocument();
     for (const row of container.querySelectorAll<HTMLElement>(".plan.is-theirs")) {
       expect(within(row).queryByRole("button", { name: /^Documents of/ })).toBeNull();
     }

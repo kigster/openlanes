@@ -35,6 +35,7 @@ module OpenLanes
       # @param availability [#call] each adapter's latest probe, read once per
       #   snapshot ({Adapters::Probes#current})
       # @param paused_clis [#call] the CLIs the engine holds, {Engine::CliPause#entries}
+      #   and {Execution::Throttle::AdapterPause#entries}
       def initialize(store:, keys:, node:, tree:, agents:, project:, claims: nil, run_state: RunState.new,
         description: nil, clock: -> { Time.now }, availability: -> { [] }, budget: Engine.budget,
         paused_clis: -> { [] })

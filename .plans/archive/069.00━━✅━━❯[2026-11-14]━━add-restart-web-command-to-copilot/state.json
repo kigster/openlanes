@@ -6,7 +6,7 @@
     "slug": "add-restart-web-command-to-copilot"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:02:24-08:00",
+  "updated_at": "2026-11-18T21:43:41-08:00",
   "stages": [
     {
       "agent": "spec-writer",
@@ -818,7 +818,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "b8702626-ee82-4199-9518-2f4729ed332a",
+        "session": "c4cbd63a-44e8-48b4-a33d-57c263a09262",
         "through": 0
       }
     }

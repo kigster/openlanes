@@ -28,6 +28,7 @@ classDiagram
   class OpenLanes__Release["OpenLanes::Release"]
   class OpenLanes__Setup["OpenLanes::Setup"]
   class OpenLanes__Skills["OpenLanes::Skills"]
+  class OpenLanes__Slack["OpenLanes::Slack"]
   class OpenLanes__Spawner["OpenLanes::Spawner"]
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   class OpenLanes__UI["OpenLanes::UI"]
@@ -62,7 +63,7 @@ classDiagram
   OpenLanes__Arbitration ..> OpenLanes__Agents : 3
   OpenLanes__Arbitration ..> OpenLanes__Plans : 12
   OpenLanes__Arbitration ..> OpenLanes__Vcs : 2
-  OpenLanes__CLI ..> OpenLanes : 28
+  OpenLanes__CLI ..> OpenLanes : 30
   OpenLanes__CLI ..> OpenLanes__Adapters : 3
   OpenLanes__CLI ..> OpenLanes__Agents : 13
   OpenLanes__CLI ..> OpenLanes__Apps : 5
@@ -71,22 +72,23 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Coverage : 3
   OpenLanes__CLI ..> OpenLanes__Engine : 7
   OpenLanes__CLI ..> OpenLanes__Evals : 4
-  OpenLanes__CLI ..> OpenLanes__Events : 1
+  OpenLanes__CLI ..> OpenLanes__Events : 2
   OpenLanes__CLI ..> OpenLanes__Execution : 1
   OpenLanes__CLI ..> OpenLanes__Lifecycle : 7
   OpenLanes__CLI ..> OpenLanes__Linear : 5
   OpenLanes__CLI ..> OpenLanes__Live : 15
   OpenLanes__CLI ..> OpenLanes__Log : 7
-  OpenLanes__CLI ..> OpenLanes__Memory : 9
-  OpenLanes__CLI ..> OpenLanes__Plans : 28
+  OpenLanes__CLI ..> OpenLanes__Memory : 14
+  OpenLanes__CLI ..> OpenLanes__Plans : 29
   OpenLanes__CLI ..> OpenLanes__Presentation : 8
   OpenLanes__CLI ..> OpenLanes__Setup : 9
   OpenLanes__CLI ..> OpenLanes__Skills : 1
+  OpenLanes__CLI ..> OpenLanes__Slack : 2
   OpenLanes__CLI ..> OpenLanes__Supervision : 10
-  OpenLanes__CLI ..> OpenLanes__UI : 21
+  OpenLanes__CLI ..> OpenLanes__UI : 22
   OpenLanes__CLI ..> OpenLanes__Uml : 2
   OpenLanes__CLI ..> OpenLanes__Vcs : 7
-  OpenLanes__CLI ..> OpenLanes__Web : 15
+  OpenLanes__CLI ..> OpenLanes__Web : 16
   OpenLanes__Config ..> OpenLanes : 4
   OpenLanes__Config ..> OpenLanes__Adapters : 1
   OpenLanes__Config ..> OpenLanes__Agents : 2
@@ -108,13 +110,13 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Config : 9
   OpenLanes__Engine ..> OpenLanes__Container : 10
   OpenLanes__Engine ..> OpenLanes__Coverage : 4
-  OpenLanes__Engine ..> OpenLanes__Events : 7
-  OpenLanes__Engine ..> OpenLanes__Execution : 27
+  OpenLanes__Engine ..> OpenLanes__Events : 8
+  OpenLanes__Engine ..> OpenLanes__Execution : 30
   OpenLanes__Engine ..> OpenLanes__Lifecycle : 11
   OpenLanes__Engine ..> OpenLanes__Live : 11
   OpenLanes__Engine ..> OpenLanes__Log : 3
   OpenLanes__Engine ..> OpenLanes__Memory : 1
-  OpenLanes__Engine ..> OpenLanes__Plans : 122
+  OpenLanes__Engine ..> OpenLanes__Plans : 123
   OpenLanes__Engine ..> OpenLanes__Supervision : 2
   OpenLanes__Engine ..> OpenLanes__UI : 51
   OpenLanes__Engine ..> OpenLanes__Vcs : 14
@@ -134,7 +136,7 @@ classDiagram
   OpenLanes__Execution ..> OpenLanes__Config : 1
   OpenLanes__Execution ..> OpenLanes__Container : 2
   OpenLanes__Execution ..> OpenLanes__Lifecycle : 1
-  OpenLanes__Execution ..> OpenLanes__Memory : 1
+  OpenLanes__Execution ..> OpenLanes__Memory : 2
   OpenLanes__Execution ..> OpenLanes__Plans : 7
   OpenLanes__Execution ..> OpenLanes__Supervision : 1
   OpenLanes__Execution ..> OpenLanes__UI : 11
@@ -157,22 +159,25 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Config : 6
   OpenLanes__Live ..> OpenLanes__Engine : 11
   OpenLanes__Live ..> OpenLanes__Events : 1
-  OpenLanes__Live ..> OpenLanes__Execution : 7
+  OpenLanes__Live ..> OpenLanes__Execution : 8
   OpenLanes__Live ..> OpenLanes__Lifecycle : 7
   OpenLanes__Live ..> OpenLanes__Plans : 29
+  OpenLanes__Live ..> OpenLanes__Slack : 1
   OpenLanes__Live ..> OpenLanes__Supervision : 1
   OpenLanes__Live ..> OpenLanes__UI : 7
-  OpenLanes__Memory ..> OpenLanes : 3
+  OpenLanes__Memory ..> OpenLanes : 4
   OpenLanes__Memory ..> OpenLanes__Agents : 1
+  OpenLanes__Memory ..> OpenLanes__Config : 1
+  OpenLanes__Memory ..> OpenLanes__Events : 1
   OpenLanes__Memory ..> OpenLanes__Execution : 3
   OpenLanes__Memory ..> OpenLanes__Vcs : 2
   OpenLanes__Plans ..> OpenLanes : 29
   OpenLanes__Plans ..> OpenLanes__Adapters : 1
   OpenLanes__Plans ..> OpenLanes__Agents : 3
-  OpenLanes__Plans ..> OpenLanes__UI : 2
-  OpenLanes__Presentation ..> OpenLanes : 4
+  OpenLanes__Plans ..> OpenLanes__UI : 3
+  OpenLanes__Presentation ..> OpenLanes : 5
   OpenLanes__Presentation ..> OpenLanes__Agents : 3
-  OpenLanes__Presentation ..> OpenLanes__Engine : 1
+  OpenLanes__Presentation ..> OpenLanes__Engine : 2
   OpenLanes__Presentation ..> OpenLanes__Lifecycle : 2
   OpenLanes__Presentation ..> OpenLanes__Plans : 13
   OpenLanes__Presentation ..> OpenLanes__UI : 3
@@ -182,6 +187,10 @@ classDiagram
   OpenLanes__Setup ..> OpenLanes__Live : 2
   OpenLanes__Setup ..> OpenLanes__UI : 2
   OpenLanes__Skills ..> OpenLanes : 1
+  OpenLanes__Slack ..> OpenLanes : 5
+  OpenLanes__Slack ..> OpenLanes__Config : 1
+  OpenLanes__Slack ..> OpenLanes__Live : 3
+  OpenLanes__Slack ..> OpenLanes__UI : 4
   OpenLanes__Supervision ..> OpenLanes : 4
   OpenLanes__Supervision ..> OpenLanes__Config : 1
   OpenLanes__Supervision ..> OpenLanes__Container : 2
@@ -196,7 +205,7 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Lifecycle : 1
   OpenLanes__Vcs ..> OpenLanes__Plans : 7
   OpenLanes__Vcs ..> OpenLanes__UI : 6
-  OpenLanes__Web ..> OpenLanes : 18
+  OpenLanes__Web ..> OpenLanes : 24
   OpenLanes__Web ..> OpenLanes__Adapters : 1
   OpenLanes__Web ..> OpenLanes__Agents : 2
   OpenLanes__Web ..> OpenLanes__Apps : 3
@@ -204,11 +213,12 @@ classDiagram
   OpenLanes__Web ..> OpenLanes__Container : 2
   OpenLanes__Web ..> OpenLanes__Engine : 1
   OpenLanes__Web ..> OpenLanes__Execution : 1
+  OpenLanes__Web ..> OpenLanes__Lifecycle : 1
   OpenLanes__Web ..> OpenLanes__Live : 34
   OpenLanes__Web ..> OpenLanes__Log : 1
-  OpenLanes__Web ..> OpenLanes__Plans : 11
+  OpenLanes__Web ..> OpenLanes__Plans : 17
   OpenLanes__Web ..> OpenLanes__UI : 2
-  OpenLanes__Web ..> OpenLanes__Vcs : 1
+  OpenLanes__Web ..> OpenLanes__Vcs : 2
 ```
 
 - [OpenLanes](openlanes.md)
@@ -235,6 +245,7 @@ classDiagram
 - [OpenLanes::Release](openlanes-release.md)
 - [OpenLanes::Setup](openlanes-setup.md)
 - [OpenLanes::Skills](openlanes-skills.md)
+- [OpenLanes::Slack](openlanes-slack.md)
 - [OpenLanes::Spawner](openlanes-spawner.md)
 - [OpenLanes::Supervision](openlanes-supervision.md)
 - [OpenLanes::UI](openlanes-ui.md)

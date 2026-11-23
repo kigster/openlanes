@@ -577,6 +577,68 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
   end
 
+  describe "/api/plans/:ordinal/actions" do
+    before do
+      plans { |t| t.plan("004.00", :planned, "web-control-room", files: { "spec.md" => "# Web\n\nThe room.\n", "plan.md" => "# Plan\n" }) }
+    end
+
+    def act(payload, token: context.csrf)
+      header "X-CSRF-Token", token if token
+      post "/api/plans/004.00/actions", JSON.generate(payload), "CONTENT_TYPE" => "application/json"
+    end
+
+    it "says which actions a plan offers" do
+      get "/api/plans/004/actions"
+      expect([last_response.status, body["status"], body["actions"]]).to eq([200, "planned", %w[discard defer]])
+    end
+
+    it "defers a plan, and answers it as it stands afterwards" do
+      act({ action: "defer", reason: "until the API settles" })
+      expect([last_response.status, body["status"]]).to eq([200, "deferred"])
+    end
+
+    it "answers 422 for an action without its reason" do
+      act({ action: "discard" })
+      expect([last_response.status, body["error"]]).to eq([422, "say why it is discarded"])
+    end
+
+    it "answers 409 while an agent works the plan" do
+      allow(OpenLanes::Live).to receive(:board).and_return({ me: { "plans" => [{ "ordinal" => "004.00", "cars" => [{}] }] } })
+      act({ action: "defer", reason: "until later" })
+      expect(last_response.status).to eq(409)
+    end
+
+    it "answers 403 without the CSRF token" do
+      act({ action: "defer", reason: "until later" }, token: nil)
+      expect(last_response.status).to eq(403)
+    end
+
+    it "answers 404 for a plan that is not there" do
+      get "/api/plans/009/actions"
+      expect(last_response.status).to eq(404)
+    end
+
+    context "with a demo" do
+      let(:context) do
+        OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store),
+          keys:,
+          plans_dir: plans_root,
+          url: "memory://",
+          demo: instance_double(OpenLanes::Web::Demo))
+      end
+
+      it "offers nothing, since the plans on disk are not the ones the board shows" do
+        get "/api/plans/004/actions"
+        expect([last_response.status, body["error"]]).to eq([404, OpenLanes::Web::App::NO_DEMO_ACTIONS])
+      end
+
+      it "moves nothing on disk" do
+        act({ action: "discard", reason: "gone" })
+        expect([last_response.status, Dir.children(plans_root).grep(/\A004\.00/).first]).to match([404, include("⭐")])
+      end
+    end
+  end
+
   describe "GET /api/plans/:ordinal/review" do
     before do
       plans do |t|

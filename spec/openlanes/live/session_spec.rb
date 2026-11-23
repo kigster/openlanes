@@ -66,6 +66,17 @@ RSpec.describe OpenLanes::Live::Session, :tree do
     expect(session.close).to be_nil
   end
 
+  # C13: the run's executor and dispatcher share this one, so the page
+  # shows the same pause the dispatcher holds starts for.
+  it "publishes an adapter paused for a rate limit beside the CLIs paused for a login" do
+    session.adapter_pause.hold("claude", 120)
+    session.cli_pause.pause("codex", "not signed in")
+    session.publisher.call(dispatcher.board)
+
+    paused = OpenLanes::Live.board(store:, keys: session.keys)[:me]["paused_clis"]
+    expect(paused.map { it.values_at("adapter", "reason") }).to eq([["codex", "not signed in"], ["claude", "paused for rate limit"]])
+  end
+
   it "describes itself for the start-up line" do
     expect(session.describe).to eq("memory:// as dana@studio-mini (#{node.name})")
   end

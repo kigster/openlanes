@@ -144,16 +144,7 @@ module OpenLanes
       private
 
       # @return [Integer, nil]
-      def free_port = (@port...(@port + PORTS_TRIED)).find { free?(it) }
-
-      # @param port [Integer]
-      # @return [Boolean] whether nothing listens there
-      def free?(port)
-        TCPServer.new(HOST, port).close
-        true
-      rescue SystemCallError
-        false
-      end
+      def free_port = Ports.first_free(@port, host: HOST, tried: PORTS_TRIED)
 
       # Every port tried is taken: said in the log {#start}'s caller points at.
       #

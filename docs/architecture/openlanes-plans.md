@@ -34,6 +34,7 @@ classDiagram
   class OpenLanes__Plans__Findings__NotFound["Findings::NotFound"]
   class OpenLanes__Plans__Findings__UnknownVerdict["Findings::UnknownVerdict"]
   class OpenLanes__Plans__GlobalLock["GlobalLock"]
+  class OpenLanes__Plans__Husk["Husk"]
   class OpenLanes__Plans__Index["Index"]
   class OpenLanes__Plans__Journal["Journal"]
   <<module>> OpenLanes__Plans__Journal
@@ -129,6 +130,9 @@ classDiagram
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__Execution : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Plans__Husk ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Plans__Husk ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Plans__Husk ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Plans__Index ..> OpenLanes__Plans : uses
   OpenLanes__Plans__Journal ..> OpenLanes__Plans__Journal__Entry : uses
   OpenLanes__Plans__Journal ..> OpenLanes__Plans__Journal__Rejection : uses
@@ -169,6 +173,8 @@ classDiagram
   OpenLanes__Plans__PlanState__Conversions --|> OpenLanes__Plans__PlanState__Section : inherits
   OpenLanes__Plans__PlanState__Document ..> OpenLanes__Error : uses
   OpenLanes__Plans__PlanState__Document ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Plans__PlanState__Document ..> OpenLanes__Plans__Husk : uses
+  OpenLanes__Plans__PlanState__Document ..> OpenLanes__UI : uses
   OpenLanes__Plans__PlanState__Extensions --|> OpenLanes__Plans__PlanState__Section : inherits
   OpenLanes__Plans__PlanState__Finish ..> OpenLanes__Error : uses
   OpenLanes__Plans__PlanState__Finish ..> OpenLanes__Plans__PlanState : uses
@@ -226,6 +232,7 @@ classDiagram
   OpenLanes__Plans__Tree ..> OpenLanes : uses
   OpenLanes__Plans__Tree ..> OpenLanes__Plans__Dependencies : uses
   OpenLanes__Plans__Tree ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Plans__Tree ..> OpenLanes__Plans__Husk : uses
   OpenLanes__Plans__Tree ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Plans__Tree ..> OpenLanes__Plans__Subject : uses
   OpenLanes__Plans__Verdict ..> OpenLanes__Agents__Names : uses

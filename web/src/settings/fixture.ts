@@ -1,6 +1,6 @@
 import type { SettingsDocument } from "../api/types";
 
-/** A small schema in the shape GET /api/settings serves: scalars, a section, and `commands` with two sub-sections. */
+/** A small schema in the shape GET /api/settings serves: scalars, a section, and the `commands` the page leaves out. */
 export const doc: SettingsDocument = {
   schema: {
     type: "object",

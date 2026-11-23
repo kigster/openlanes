@@ -16,10 +16,21 @@ RSpec.describe OpenLanes::Engine::Dispatcher::Assign::IdleReason, :tree do
     expect(reason.call([plan])).to eq("idle: nothing to do")
   end
 
+  it "names an adapter paused for a rate limit, and until when" do
+    pause = desk.adapter_pause.hold("claude", 120)
+    expect(reason.call([plan])).to eq("idle: claude paused for rate limit until #{pause.ends_at.strftime("%H:%M")}")
+  end
+
   it "names the plans waiting for answers" do
     allow(desk).to receive(:waiting).and_return(["002.00"])
     desk.unblocking = drainer
     expect(reason.call([plan])).to eq("idle: waiting for answers on 002.00")
+  end
+
+  it "names a plan held back because its state lacks a required file" do
+    plans { |t| t.plan "002.00", :new, "no-spec" }
+    held = tree.reload.subjects.find { it.feature.ordinal.to_s == "002.00" }
+    expect(reason.call([plan, held])).to include("missing files: 002.00 (New needs spec.md)")
   end
 
   it "names a failed unblock with its reason" do

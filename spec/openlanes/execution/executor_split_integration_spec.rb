@@ -90,7 +90,9 @@ RSpec.describe "the executor after its split, against the runs recorded before i
         .gsub(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?[^\s"']*/, "<time>")
   end
 
-  def result_fields(result) = result.to_h.except(:seconds, :pid).transform_keys(&:to_s).transform_values { scrub_value(it) }
+  # `offered` and `cited` (decision C5) came after the split and are covered
+  # by executor_memory_spec; left out so the recorded fixture stays the record.
+  def result_fields(result) = result.to_h.except(:seconds, :pid, :offered, :cited).transform_keys(&:to_s).transform_values { scrub_value(it) }
 
   def scrub_value(value) = value.is_a?(String) ? scrub(value) : value
 

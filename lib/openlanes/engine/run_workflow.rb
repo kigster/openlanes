@@ -48,6 +48,7 @@ module OpenLanes
         yield stopping
         yield assignable(agents, plans) if @options[:agent]
         yield isolatable
+        yield countable
         yield logging
         migrated = yield labels_migrated
 
@@ -62,6 +63,8 @@ module OpenLanes
         ended    = Curating.snapshot(Plans::Tree.new(dir: @tree.dir, all: true).subjects)
         attempts = run(runner, live, web)
         curate(ended)
+        promote_memory
+        mirror_memory
         Success(finish(runner, attempts, seconds: UI.monotonic - started))
       end
 
@@ -235,6 +238,18 @@ module OpenLanes
         refusal("#{@root} is not a git repository, so plans cannot be isolated.\n\n" \
                 "Run with --isolation shared to work in one tree, serially.",
           66)
+      end
+
+      # A dollar cap with the event log off is refused (C11): spend is read
+      # back from that log, so the cap would never hold a plan. A dry run
+      # spends nothing, and its sink is null on purpose, so it passes.
+      #
+      # @return [Dry::Monads::Result]
+      def countable
+        return Success(nil) if @dry_run
+
+        why = Budget::Guard.new(cap: Events::PlanSpend.cap_for(Config.current), events:).refusal
+        why ? refusal(why, 78) : Success(nil)
       end
 
       # Opens the log every event of the run is written to, the one the
@@ -427,36 +442,40 @@ module OpenLanes
       # @param web [OpenLanes::Web::Launcher, nil]
       # @return [OpenLanes::Engine::Runner]
       def runner_for(agents, plans, live, web)
+        # One for the run, before the executor is built: its throttle waits
+        # set it and the dispatcher reads it (C13).
+        @adapter_pause = live&.adapter_pause || Execution::Throttle::AdapterPause.new
         worktree = (OpenLanes::Vcs.worktree(root: @root) if isolation == :worktree)
         publisher = publisher_for(@root, isolation)
         Engine.runner(
-          tree:         @tree,
+          tree:          @tree,
           agents:,
           isolation:,
-          jobs:         (@options[:jobs] || UI.default_jobs).to_i,
+          jobs:          (@options[:jobs] || UI.default_jobs).to_i,
           plans:,
-          state:        Engine.state_file(@tree),
+          state:         Engine.state_file(@tree),
           worktree:,
-          rounds:       @options[:rounds]&.to_i,
-          executor:     executor(usable: usable_for(live)),
-          dry_run:      @dry_run,
+          rounds:        @options[:rounds]&.to_i,
+          executor:      executor(usable: usable_for(live)),
+          dry_run:       @dry_run,
           publisher:,
-          verification: verification_for(publisher, worktree),
-          merging:      merging_for(publisher, worktree),
-          arbitration:  arbitration_for(publisher, worktree),
-          upkeep:       upkeep_for(publisher, worktree),
-          reviews:      reviews_for(agents, publisher, worktree),
-          on_board:     on_board_for(live),
-          claims:       live&.claims,
-          cli_pause:    live&.cli_pause,
-          ignore_bombs: @options.fetch(:ignore_bombs, false),
-          aging_since:  Config.current.aging_since,
-          events:       events,
-          journal:      (journal_for(live) unless @dry_run),
-          quality_gate: (-> { Config.current.quality_unset? } unless @dry_run),
-          lock_ttl:     -> { Config.current.refactor_lock_seconds },
+          verification:  verification_for(publisher, worktree),
+          merging:       merging_for(publisher, worktree),
+          arbitration:   arbitration_for(publisher, worktree),
+          upkeep:        upkeep_for(publisher, worktree),
+          reviews:       reviews_for(agents, publisher, worktree),
+          on_board:      on_board_for(live),
+          claims:        live&.claims,
+          cli_pause:     live&.cli_pause,
+          adapter_pause: @adapter_pause,
+          ignore_bombs:  @options.fetch(:ignore_bombs, false),
+          aging_since:   Config.current.aging_since,
+          events:        events,
+          journal:       (journal_for(live) unless @dry_run),
+          quality_gate:  (-> { Config.current.quality_unset? } unless @dry_run),
+          lock_ttl:      -> { Config.current.refactor_lock_seconds },
           stop_at:,
-          memory:       @options.fetch(:memory, true),
+          memory:        @options.fetch(:memory, true),
           **staying(web, live)
         )
       end
@@ -501,7 +520,8 @@ module OpenLanes
           # pull request whose diff could be fetched.
           packets:      (Execution.review_packets(root: @root) if publishing? && !@dry_run),
           lean:         !@options[:user_config],
-          memory:       @options.fetch(:memory, true))
+          memory:       @options.fetch(:memory, true),
+          **{ pauses: @adapter_pause }.compact)
       end
 
       # What the live board's probes said of each adapter (plan 031, D12): one
@@ -616,7 +636,7 @@ module OpenLanes
 
         Arbitration.new(tree_dir: @tree.dir,
           agents: Agents::Registry.new,
-          github: Vcs.github,
+          github: snapshot_github,
           root: @root,
           executor: ->(brief) { executor(instructions: brief) })
       end
@@ -685,7 +705,7 @@ module OpenLanes
       # @return [Steps::Snapshot]
       def pull_snapshot = @pull_snapshot ||= Steps::Snapshot.new(github: Vcs.github)
 
-      # @return [Vcs::SnapshotReads] GitHub, with labels and checks read from {#pull_snapshot}
+      # @return [Vcs::SnapshotReads] GitHub, with pull requests, labels and checks read from {#pull_snapshot}
       def snapshot_github = Vcs::SnapshotReads.new(Vcs.github, snapshot: pull_snapshot)
 
       # @return [OpenLanes::Engine::PrWatch, nil]
@@ -779,6 +799,48 @@ module OpenLanes
         end
       rescue OpenLanes::Error => e
         UI.log("plans not curated this time: #{e.message.lines.first.to_s.strip}", level: :warn)
+      end
+
+      # The memory pull request, once the curator has filed this run's
+      # candidates (C1): what `openlanes memory promote` opens, opened
+      # without anybody typing it. Only a run that publishes its own pull
+      # requests opens one, so `--no-git-push` and `--isolation shared` push
+      # nothing here either.
+      #
+      # Every failure is logged and swallowed, not only {OpenLanes::Error}:
+      # a refused push surfaces as `TTY::Command::ExitError`, and memory is
+      # a by-product of the run, so it must never cost the run its exit status.
+      #
+      # @return [void]
+      def promote_memory
+        return if @dry_run || !@options.fetch(:memory, true) || @options[:memory_pr] == false || !publishing?
+
+        outcome = Memory.autopromotion(root: @root).call
+        return UI.log("no memory pull request: #{outcome.why}") unless outcome.status == :published
+
+        UI.log("memory pull request: #{outcome.url} (#{outcome.lessons} lesson#{"s" unless outcome.lessons == 1})")
+      rescue StandardError => e
+        UI.log("memory pull request not opened: #{e.message.lines.first.to_s.strip}", level: :warn)
+      end
+
+      # The project's merged lessons, mirrored into the operator's global
+      # store (C3). At the end of every run rather than when the memory pull
+      # request opens: only a merged lesson is promoted, and the sync is
+      # idempotent, so a lesson merged since the last run is carried by
+      # this one. It pushes nothing, so `--no-git-push` and shared
+      # isolation mirror too; only a dry run and `--no-memory` do not.
+      #
+      # Logged and swallowed like {#promote_memory}: the global store is a
+      # by-product, and an unwritable `~/.config` must not fail the run.
+      #
+      # @return [void]
+      def mirror_memory
+        return if @dry_run || !@options.fetch(:memory, true)
+
+        written = Memory.mirror(root: @root).reject { it.kind == :known }
+        written.each { UI.log("global memory: #{it.kind} #{it.id || it.slug}#{": #{it.why}" if it.why}", level: it.kind == :refuse ? :warn : :info) }
+      rescue StandardError => e
+        UI.log("lessons not mirrored to global memory: #{e.message.lines.first.to_s.strip}", level: :warn)
       end
 
       # @param runner [OpenLanes::Engine::Runner]

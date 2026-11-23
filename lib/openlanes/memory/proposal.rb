@@ -57,14 +57,48 @@ module OpenLanes
         # @param line [String]
         # @return [OpenLanes::Memory::Proposal, OpenLanes::Memory::Proposal::Rejection]
         def read(line)
-          value = JSON.parse(line.gsub(/\A`+|`+\z/, ""))[self::KEY]
-          problem = problem_with(value)
-          problem ? self::Rejection.new(line:, reason: problem) : from(value)
+          build(JSON.parse(line.gsub(/\A`+|`+\z/, ""))[self::KEY], line:)
         rescue JSON::ParserError => e
           self::Rejection.new(line:, reason: "not JSON: #{e.message.lines.first.to_s.strip}")
         end
 
+        # The fields of one proposal, however they arrived: a curator's JSON
+        # line, or `openlanes memory propose` flags. Held to the same
+        # required fields and the same trimming either way.
+        #
+        # @param value [Object] a Hash of the fields, keyed by string
+        # @param line [String] what to quote in a rejection
+        # @return [OpenLanes::Memory::Proposal, OpenLanes::Memory::Proposal::Rejection]
+        def build(value, line: "")
+          problem = problem_with(value)
+          problem ? self::Rejection.new(line:, reason: problem) : from(value)
+        end
+
+        # One proposal written as a lesson file: the fields in frontmatter,
+        # the body below it, as `.openlanes/memory/inbox/` holds them. `slug:`
+        # may be spelt `id:`, and `finding:` may come from the first
+        # `source:` entry, so a candidate file read back is a proposal again.
+        #
+        # @param text [String]
+        # @return [OpenLanes::Memory::Proposal, OpenLanes::Memory::Proposal::Rejection]
+        def markdown(text)
+          meta, body = Frontmatter.split(text.to_s)
+          return self::Rejection.new(line: "", reason: "no frontmatter") if meta.empty?
+
+          build(meta.transform_keys(&:to_s).merge(filed(meta), "body" => body.to_s))
+        rescue Psych::Exception => e
+          self::Rejection.new(line: "", reason: "frontmatter is not valid YAML (#{e.message.lines.first.strip})")
+        end
+
         private
+
+        # The fields a lesson file spells its own way: its id, its evidence.
+        #
+        # @return [Hash{String => String}]
+        def filed(meta)
+          first = Array(meta["source"]).grep(Hash).first || {}
+          { "slug" => (meta["slug"] || meta["id"]).to_s, "finding" => (meta["finding"] || first["finding"]).to_s }
+        end
 
         # @param value [Object]
         # @return [String, nil] why it is not a proposal

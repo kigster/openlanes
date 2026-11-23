@@ -278,7 +278,8 @@ module OpenLanes
 
       # Report and stop, in the shape every refusal here takes. The statuses
       # follow sysexits where one fits: 64 usage, 65 bad data, 66 no input,
-      # 69 a service (GitHub, Linear) refused us.
+      # 69 a service (GitHub, Linear) refused us, 78 a configuration that
+      # cannot work as written.
       #
       # @param message [String]
       # @param status [Integer]

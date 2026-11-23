@@ -353,3 +353,10 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 @media (max-width: 1200px) { .document-modal { left: 15%; right: 15%; width: auto; transform: none; } }
 @media (max-width: 600px) { .document-modal { top: 5%; bottom: 5%; left: 5%; right: 5%; width: 90vw; max-height: 90vh; } }
 @media (max-width: 450px) { .document-modal { top: 1px; bottom: 1px; left: 1px; right: 1px; width: calc(100vw - 2px); max-height: calc(100vh - 2px); } }
+
+/* Plan Management: the section headers and the divider between Documents and Actions, and the action dialog's field. */
+.menu-label { padding: 6px 12px 2px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.menu-separator { height: 1px; margin: 6px 4px; background: var(--hairline); }
+.plan-action-reason { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; font-weight: 600; }
+.plan-action-reason textarea { font: inherit; font-weight: 400; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--hairline); background: var(--plate); color: inherit; resize: vertical; }
+.plan-action-error { color: var(--alarm); }

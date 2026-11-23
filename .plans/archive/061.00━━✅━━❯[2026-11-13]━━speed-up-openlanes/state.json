@@ -6,7 +6,7 @@
     "slug": "speed-up-openlanes"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:02:16-08:00",
+  "updated_at": "2026-11-18T21:43:28-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -1674,7 +1674,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "07338ab0-6191-495e-941f-cd03918ca003",
+        "session": "3ac4a31d-d1ce-4e0e-8636-ebc63a3f7e64",
         "through": 0
       }
     }

@@ -18,6 +18,13 @@ module OpenLanes
       # @return [String] `openlanes:<repo>`
       def base = "#{Keys::NAMESPACE}:#{repo}"
 
+      # Hash: a question's {Slack::Poll#key} to where its poll sits in Slack.
+      # Kept for the repository, not the node, so a restarted engine finds
+      # the polls the last one left open whatever it is called now.
+      #
+      # @return [String]
+      def slack = "#{base}:slack"
+
       # Hash: node name to its `Node` JSON, refreshed every heartbeat.
       #
       # @return [String]

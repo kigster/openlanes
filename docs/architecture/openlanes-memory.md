@@ -6,7 +6,10 @@
 classDiagram
   class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
   <<module>> OpenLanes__Agents__Names
+  class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Events["OpenLanes::Events"]
+  <<module>> OpenLanes__Events
   class OpenLanes__Execution["OpenLanes::Execution"]
   <<module>> OpenLanes__Execution
   class OpenLanes__Execution__Executor__Handle["OpenLanes::Execution::Executor::Handle"]
@@ -14,55 +17,93 @@ classDiagram
   <<module>> OpenLanes__Frontmatter
   class OpenLanes__Memory["OpenLanes::Memory"]
   <<module>> OpenLanes__Memory
+  class OpenLanes__Memory__Audience["Audience"]
+  class OpenLanes__Memory__Autopromotion["Autopromotion"]
   class OpenLanes__Memory__Candidate["Candidate"]
+  class OpenLanes__Memory__Citations["Citations"]
+  <<module>> OpenLanes__Memory__Citations
   class OpenLanes__Memory__Committed["Committed"]
   class OpenLanes__Memory__Curation["Curation"]
   class OpenLanes__Memory__Entry["Entry"]
   class OpenLanes__Memory__Folder["Folder"]
+  class OpenLanes__Memory__GlobalStore["GlobalStore"]
   class OpenLanes__Memory__Inbox["Inbox"]
+  class OpenLanes__Memory__Known["Known"]
   class OpenLanes__Memory__Lesson["Lesson"]
   class OpenLanes__Memory__Library["Library"]
+  class OpenLanes__Memory__Mirror["Mirror"]
+  class OpenLanes__Memory__ProjectKey["ProjectKey"]
+  <<module>> OpenLanes__Memory__ProjectKey
   class OpenLanes__Memory__Promotion["Promotion"]
   class OpenLanes__Memory__Proposal["Proposal"]
   class OpenLanes__Memory__Publication["Publication"]
+  class OpenLanes__Memory__Retirement["Retirement"]
   class OpenLanes__Memory__Secrets["Secrets"]
   <<module>> OpenLanes__Memory__Secrets
   class OpenLanes__Memory__Secrets__Finding["Secrets::Finding"]
   class OpenLanes__Memory__Section["Section"]
+  class OpenLanes__Memory__Uptake["Uptake"]
+  <<module>> OpenLanes__Memory__Uptake
   class OpenLanes__Vcs["OpenLanes::Vcs"]
   <<module>> OpenLanes__Vcs
   class OpenLanes__Vcs__Worktree["OpenLanes::Vcs::Worktree"]
   OpenLanes__Memory ..> OpenLanes__Execution : uses
   OpenLanes__Memory ..> OpenLanes__Frontmatter : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__Audience : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__Autopromotion : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__Citations : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Committed : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Curation : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Entry : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Folder : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__GlobalStore : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Inbox : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__Known : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Lesson : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Library : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__Mirror : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__ProjectKey : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Promotion : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Proposal : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Publication : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Secrets : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Section : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__Uptake : uses
   OpenLanes__Memory ..> OpenLanes__Vcs : uses
+  OpenLanes__Memory__Autopromotion ..> OpenLanes__Memory__Publication : uses
   OpenLanes__Memory__Curation ..> OpenLanes__Agents__Names : uses
   OpenLanes__Memory__Curation ..> OpenLanes__Execution : uses
   OpenLanes__Memory__Curation ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Memory__Curation ..> OpenLanes__Memory : uses
+  OpenLanes__Memory__GlobalStore ..> OpenLanes__Memory__Entry : uses
+  OpenLanes__Memory__GlobalStore ..> OpenLanes__Memory__Inbox : uses
+  OpenLanes__Memory__GlobalStore ..> OpenLanes__Memory__Lesson : uses
+  OpenLanes__Memory__GlobalStore ..> OpenLanes__Memory__Secrets : uses
   OpenLanes__Memory__Inbox ..> OpenLanes__Frontmatter : uses
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Candidate : uses
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Entry : uses
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Folder : uses
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Lesson : uses
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Secrets : uses
+  OpenLanes__Memory__Known ..> OpenLanes__Memory__Folder : uses
+  OpenLanes__Memory__Known ..> OpenLanes__Memory__Library : uses
+  OpenLanes__Memory__Mirror ..> OpenLanes__Frontmatter : uses
+  OpenLanes__Memory__Mirror ..> OpenLanes__Memory__Candidate : uses
+  OpenLanes__Memory__Mirror ..> OpenLanes__Memory__Entry : uses
+  OpenLanes__Memory__Mirror ..> OpenLanes__Memory__GlobalStore : uses
+  OpenLanes__Memory__Mirror ..> OpenLanes__Memory__Lesson : uses
   OpenLanes__Memory__Promotion ..> OpenLanes__Memory__Inbox : uses
   OpenLanes__Memory__Promotion ..> OpenLanes__Memory__Secrets : uses
   OpenLanes__Memory__Publication ..> OpenLanes__Error : uses
   OpenLanes__Memory__Publication ..> OpenLanes__Memory : uses
+  OpenLanes__Memory__Publication ..> OpenLanes__Memory__Folder : uses
+  OpenLanes__Memory__Publication ..> OpenLanes__Memory__Library : uses
   OpenLanes__Memory__Publication ..> OpenLanes__Memory__Promotion : uses
+  OpenLanes__Memory__Publication ..> OpenLanes__Memory__Retirement : uses
   OpenLanes__Memory__Publication ..> OpenLanes__Memory__Secrets : uses
+  OpenLanes__Memory__Publication ..> OpenLanes__Memory__Uptake : uses
   OpenLanes__Memory__Publication ..> OpenLanes__Vcs__Worktree : uses
   OpenLanes__Memory__Secrets ..> OpenLanes__Memory__Secrets__Finding : uses
+  OpenLanes__Memory__Uptake ..> OpenLanes__Config : uses
+  OpenLanes__Memory__Uptake ..> OpenLanes__Events : uses
 ```

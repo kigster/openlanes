@@ -50,11 +50,23 @@ module OpenLanes
           def pick(subject)
             working = working_on(subject)
             state = working.empty? ? runner.effective_status(subject) : subject.status
-            return nil if out_of_play?(subject, state) || @refusals.refused?(subject)
+            return nil if out_of_play?(subject, state) || unfounded?(subject) || @refusals.refused?(subject)
 
             agent = offered(subject, state, working).find { may_take?(it, subject) }
             agent && [agent, subject]
           end
+
+          # A folder lacking the files its own name's state requires is one no
+          # agent can honestly work: researcher was once sent into a ⚪ New
+          # folder with no `spec.md`, a husk {Plans::Tree#husks} had not
+          # caught, and the round's bookkeeping made the husk look more like a
+          # plan. The tree is the first line; this is the one behind it.
+          # {IdleReason} names the plans it holds back.
+          #
+          # The claimed state, not the effective one: a quick lane's target
+          # (🟡 from ⚪) lacks the plan.md the lane writes on the way there,
+          # and a dry run, which writes nothing, must still preview its agent.
+          def unfounded?(subject) = !subject.status.missing(subject).empty?
 
           def working_on(subject) = running.select { plan_of(it) == ordinal_of(subject) }.map { it.task.agent }
 

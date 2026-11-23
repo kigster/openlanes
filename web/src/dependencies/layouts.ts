@@ -10,7 +10,7 @@ export const NODE_HEIGHT = 72;
 const GAP_X = 40;
 const GAP_Y = 28;
 
-/** The arrangements, in the order the picker offers them. The first is the one a new browser starts on. */
+/** The arrangements, in the order the picker offers them. */
 export const LAYOUTS = [
   { key: "adaptive", name: "Adaptive", hint: "Chains run left to right and fold onto a new row when they get long; plans with no dependencies are packed in rows below" },
   { key: "right", name: "Left to right", hint: "Every plan in one layered graph, each dependency to the left of what needs it" },
@@ -20,6 +20,9 @@ export const LAYOUTS = [
 ] as const;
 
 export type LayoutKey = (typeof LAYOUTS)[number]["key"];
+
+/** The arrangement a new browser starts on, or one whose kept pick is unreadable or unknown. */
+export const DEFAULT_LAYOUT: LayoutKey = "circular";
 
 /** Where arrows meet a box: its left and right edges, its top and bottom, or wherever the straight line crosses. */
 export type Flow = "right" | "down" | "free";

@@ -14,6 +14,13 @@ module OpenLanes
     # @return [OpenLanes::Agents::Agent, nil]
     def find(name, dir: Registry::DEFAULT_DIR) = registry(dir:).find(name)
 
+    # The phases the definitions name, the vocabulary a lesson's
+    # `applies_to:` and `checked_by:` address besides agent names.
+    #
+    # @param dir [String] where the definitions live
+    # @return [Array<String>] sorted, each once
+    def phases(dir: Registry::DEFAULT_DIR) = registry(dir:).all.filter_map(&:phase).uniq.sort
+
     # @return [OpenLanes::Agents::Roster]
     def roster(**) = Roster.new(**)
   end

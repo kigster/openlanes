@@ -29,11 +29,16 @@ module OpenLanes
       # The changes that put something in a pull request.
       LANDED = %i[promote confirm].freeze
 
+      # Every memory branch starts with it; {Autopromotion} reads it back to
+      # find a memory pull request still open.
+      BRANCH_PREFIX = "memory/"
+
       # @param root [String] the project root, whose inbox is promoted
       # @param publisher [#publish_memory]
       # @param base [String] the default branch the memory branch is cut from
       # @param options [Hash] `dry_run:` (true writes and opens nothing), `today:` (returns the current `Date`),
-      #   `promotion:` (builds the {Promotion} from `inbox:`, `lessons_dir:` and `today:`)
+      #   `promotion:` (builds the {Promotion} from `inbox:`, `lessons_dir:` and `today:`),
+      #   `retiring:` (given the checkout's lessons, returns the {Retirement::Proposal}s the body lists)
       def initialize(root:, publisher:, base:, **options)
         @root = File.expand_path(root)
         @publisher = publisher
@@ -41,6 +46,7 @@ module OpenLanes
         @dry_run = options.fetch(:dry_run, false)
         @today = options.fetch(:today, -> { Date.today })
         @promotion = options.fetch(:promotion, Promotion.method(:new))
+        @retiring = options.fetch(:retiring) { ->(lessons) { Retirement.new(Uptake.read(root: @root)).call(lessons) } }
       end
 
       # @return [OpenLanes::Memory::Publication::Result]
@@ -107,7 +113,7 @@ module OpenLanes
         landed = changes.select { LANDED.include?(it.kind) }
         return nil if landed.empty?
 
-        branch = "memory/#{@today.call.iso8601}-#{landed.first.slug}"
+        branch = "#{BRANCH_PREFIX}#{@today.call.iso8601}-#{landed.first.slug}"
         git(dir, "checkout", "-q", "-b", branch) or raise OpenLanes::Error, "could not create #{branch}"
         branch
       end
@@ -119,16 +125,24 @@ module OpenLanes
         held_back = held.values.flatten
         return Result.new(branch: nil, url: nil, changes:, held_back:) if landed.empty?
 
-        url = open_pull_request(dir, branch, landed, held_back)
+        url = open_pull_request(dir, branch, landed.size, body(landed, held_back, retiring(dir)))
         settle_root(landed)
         Result.new(branch:, url:, changes:, held_back:)
       end
 
       # @return [String, nil] the pull request's url
-      def open_pull_request(dir, branch, landed, held_back)
+      def open_pull_request(dir, branch, count, body)
         checkout = Vcs::Worktree::Checkout.new(ordinal: nil, branch:, path: dir, created: true)
-        title = "Memory: #{landed.size} lesson#{"s" unless landed.size == 1}"
-        @publisher.publish_memory(checkout:, title:, body: body(landed, held_back)).url
+        @publisher.publish_memory(checkout:, title: "Memory: #{count} lesson#{"s" unless count == 1}", body:).url
+      end
+
+      # The lessons the default branch holds, as the checkout has them, put
+      # to {Retirement}. Read from the checkout rather than the root so a
+      # lesson already retired on the default branch is never proposed again.
+      #
+      # @return [Array<OpenLanes::Memory::Retirement::Proposal>]
+      def retiring(dir)
+        @retiring.call(Library.load([Folder.new(name: :project, dir: File.join(dir, PROJECT_DIR))]).lessons)
       end
 
       # The pull request is open, so the candidates it promoted leave the
@@ -166,13 +180,14 @@ module OpenLanes
       end
 
       # @return [String] the pull request body: each lesson with its evidence
-      def body(landed, held_back)
+      def body(landed, held_back, retiring = [])
         lines = landed.map { "- #{it.id} (#{it.kind}) #{it.slug}: #{it.why}" }
         held = held_back.map { "- held back, a secret was found: #{it}" }
         <<~MARKDOWN
-          Lessons promoted from the inbox by `openlanes memory promote`. A person merges this; no agent can.
+          Lessons promoted from the inbox by `openlanes memory promote`, or by the engine at the end of a run. A person merges this; no agent can.
 
           #{(lines + held).join("\n")}
+          #{Retirement.section(retiring)}
         MARKDOWN
       end
 

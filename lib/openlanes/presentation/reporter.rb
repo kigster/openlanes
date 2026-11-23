@@ -9,7 +9,7 @@ module OpenLanes
     # where it goes, which keeps the table pipeable.
     class Reporter
       # Columns, so the header and the rows cannot drift apart.
-      HEADINGS = ["Plan", "⬇", "Status", "Feature", "Pull Requests"].freeze
+      HEADINGS = ["Plan", "⬇", "Status", "Feature", "Spend", "Pull Requests"].freeze
 
       # Cells given to the plan number: "018.01" with room to grow.
       ORDINAL_WIDTH = 7
@@ -26,9 +26,12 @@ module OpenLanes
       # @param tree [OpenLanes::Plans::Tree]
       # @param waiting_on [Hash{String => Array<Integer>}] plan number to the
       #   pull requests open and awaiting a human, from the board snapshot
-      def initialize(tree:, waiting_on: {})
+      # @param budget [OpenLanes::Engine::Budget] what each plan has spent
+      #   against `budget.plan_usd`, read the way the web board reads it
+      def initialize(tree:, waiting_on: {}, budget: Engine.no_budget)
         @tree = tree
         @waiting_on = waiting_on.transform_keys(&:to_s)
+        @spend = Spend.new(budget)
       end
 
       # @return [OpenLanes::Plans::Tree]
@@ -59,6 +62,11 @@ module OpenLanes
       # @return [Integer] widest feature name
       def title_width = @title_width ||= tree.subjects.map { |s| UI.display_width(title_for(s)) }.max.to_i + 2
 
+      # @return [Integer] widest spend cell, never narrower than its heading
+      def spend_width
+        @spend_width ||= [HEADINGS[4], *tree.subjects.map { @spend.text(it.feature.ordinal) }].map { UI.display_width(it) }.max
+      end
+
       # The one place the table's shape is written down. The heading, the plan
       # rows, the continuation lines and the violations all come through here, so
       # a column cannot widen in one of them and stay put in the others.
@@ -69,8 +77,8 @@ module OpenLanes
       # are invisible, and the column collapses by exactly that much.
       #
       # @return [String]
-      def row(flag, ordinal, emoji, label, title, tail)
-        format("%s %s  %s  %s  %s %s", flag, ordinal, emoji, label, title, tail)
+      def row(flag, ordinal, emoji, label, title, spend, tail)
+        format("%s %s  %s  %s  %s %s  %s", flag, ordinal, emoji, label, title, spend, tail)
       end
 
       # Cell at which the pull requests start, so a plan's second and third pull
@@ -85,11 +93,12 @@ module OpenLanes
           " " * EMOJI_WIDTH,
           " " * label_width,
           " " * title_width,
+          " " * spend_width,
           "").length
       end
 
       # @return [Integer] cell at which the feature name starts
-      def title_column = pr_column - title_width - 1
+      def title_column = pr_column - spend_width - 2 - title_width - 1
 
       # @return [String]
       def header
@@ -98,7 +107,8 @@ module OpenLanes
           UI.fit(HEADINGS[1], EMOJI_WIDTH),
           UI.fit(HEADINGS[2], label_width),
           UI.fit(HEADINGS[3], title_width),
-          HEADINGS[4])
+          UI.fit(HEADINGS[4], spend_width),
+          HEADINGS[5])
 
         rule = "  " + ("─" * (UI.display_width(text) - 2))
 
@@ -139,6 +149,7 @@ module OpenLanes
           UI.fit(feature.status.emoji, EMOJI_WIDTH),
           UI.paint(UI.fit(feature.status.label, label_width), :yellow),
           UI.paint(UI.fit(title_for(subject), title_width), :blue, :bold),
+          UI.paint(UI.fit(@spend.text(feature.ordinal), spend_width), @spend.colour(feature.ordinal)),
           [prs.empty? ? UI.paint("[none yet]", :bright_red) : link(prs.first), *blocks_note(feature.ordinal)].join("  ")
         )
 
@@ -232,6 +243,8 @@ module OpenLanes
           lines << "  #{UI.paint("#{ordinal} is claimed by #{dirnames.size} folders — a number is an identity:", :red)}"
           dirnames.each { |d| lines << "    #{UI.paint(d, :bright_black)}" }
         end
+
+        tree.husks.each { lines << "  #{UI.paint(it.to_s, :yellow)}" }
 
         lines.join("\n")
       end

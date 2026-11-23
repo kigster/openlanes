@@ -297,15 +297,31 @@ button, textarea { font: inherit; color: inherit; }
 .swatch > span { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgb(0 0 0 / 18%); }
 
 /* Page nav: fixed to the top of the page, above the control room's own bar. */
-.page-nav { position: sticky; top: 0; z-index: 30; background: var(--nav-bg); border-bottom: 1px solid var(--hairline); }
-.page-nav ul { list-style: none; margin: 0; padding: 0 24px; display: flex; gap: 20px; }
+.page-nav { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; background: var(--nav-bg); border-bottom: 1px solid var(--hairline); }
+.page-nav > ul { flex: 1 1 auto; min-width: 0; }
+.page-tools { flex: none; display: flex; align-items: center; gap: 6px; padding: 0 24px 0 12px; }
+.page-nav > ul { list-style: none; margin: 0; padding: 0 24px; display: flex; gap: 20px; }
 .page-nav a { display: block; padding: 10px 2px; font-weight: 600; color: var(--ink-soft); text-decoration: none; border-bottom: 2px solid transparent; }
 .page-nav a:hover { color: var(--ink); }
 .page-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
+/* A page's drop-down (the settings sections): the link, a ▾ that opens it by touch or keyboard, and the list. */
+.page-dropdown { position: relative; display: flex; align-items: center; gap: 2px; }
+.page-caret { padding: 2px 4px; border: 0; background: transparent; color: var(--ink-soft); cursor: pointer; font-size: 14px; }
+.page-caret:hover, .page-caret[aria-expanded="true"] { color: var(--ink); }
+.page-menu { position: absolute; top: 100%; left: 0; z-index: 40; min-width: 220px; padding: 6px 0; background: var(--plate);
+             border: 1px solid var(--hairline); border-radius: 8px; box-shadow: 0 12px 32px rgb(0 0 0 / 22%); }
+.page-menu ul { list-style: none; margin: 0; padding: 0; }
+.page-menu button { display: block; width: 100%; padding: 7px 14px; border: 0; background: transparent; color: var(--ink);
+                    font: inherit; font-weight: 600; text-align: left; cursor: pointer; white-space: nowrap; }
+.page-menu button:hover, .page-menu button:focus-visible { background: var(--groove); }
+.page-menu-note { margin: 0; padding: 7px 14px; color: var(--ink-soft); }
 /* A phone pins the control room's bar instead (above), and two pinned bars would take a quarter of the screen: the
    page links scroll away with the page, on one line that scrolls sideways sooner than it wraps. */
 @media (max-width: 600px) {
   .page-nav { position: static; }
-  .page-nav ul { padding: 0 12px; gap: 14px; white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .page-nav > ul { padding: 0 12px; gap: 14px; white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
   .page-nav a { padding: 6px 2px; font-size: 14px; }
+  .page-tools { padding: 0 8px; }
+  /* The link row scrolls sideways, which would clip an absolute menu: pin it to the viewport below the row instead. */
+  .page-menu { position: fixed; top: auto; left: 12px; right: 12px; }
 }

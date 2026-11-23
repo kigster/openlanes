@@ -87,6 +87,31 @@ RSpec.describe OpenLanes::Engine::Upkeep::Sweep, :tree do
     expect(github).to have_received(:pull_request).once
   end
 
+  # C9: the run hands Upkeep a Vcs::SnapshotReads, so the sweep's merge
+  # state comes from the tick's shared snapshot when it holds the pull request.
+  context "when read through the tick's shared snapshot" do
+    subject(:sweep) { described_class.new(github: reads, owed:, actions: OpenLanes::Engine::Upkeep::Actions.new(github: reads, clock: -> { now })) }
+
+    let(:pulls) { [live.merge(url:, files: [], checks: [], merge_state: "BEHIND")] }
+    let(:reads) { OpenLanes::Vcs::SnapshotReads.new(github, snapshot: double(call: OpenLanes::Vcs::PullSnapshot.new(pulls:, taken_at: now), refresh!: nil)) }
+
+    it "asks GitHub nothing per pull request the snapshot holds" do
+      aggregate_failures do
+        expect(sweep.call(subjects).notes).to eq(["PR #1 was behind main; rebased on GitHub"])
+        expect(github).not_to have_received(:pull_request)
+      end
+    end
+
+    context "when the pull request has left it, merged or closed since the poll" do
+      let(:pulls) { [] }
+
+      it "reads that one live" do
+        sweep.call(subjects)
+        expect(github).to have_received(:pull_request).with(url).once
+      end
+    end
+  end
+
   it "says which pull request it could not ask, and keeps going" do
     allow(github).to receive(:pull_request).and_raise(OpenLanes::Error, "HTTP 502")
 

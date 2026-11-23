@@ -339,7 +339,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
       it { is_expected.to include(name: "claude", available: nil, reason: nil, checked_at: nil) }
       it { expect(claude[:models].map { it[:id] }).to eq(OpenLanes::Adapters::Claude::Pricing::BUNDLED.map(&:id)) }
-      it("puts Fable first: there is no ceiling") { expect(claude[:models].first[:id]).to eq("claude-fable-5-1") }
+      it("puts Fable first: there is no ceiling") { expect(claude[:models].first[:id]).to eq("claude-fable-5-2") }
       it { expect(claude[:capabilities]).to eq(compacts: true, resumes: true, enforces_tool_denial: true) }
     end
 
@@ -413,6 +413,16 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       cli.pause("claude", "OAuth session expired")
 
       expect(paused(cli.entries)).to eq([{ adapter: "claude", reason: "OAuth session expired", since: "2026-10-13T09:00:00Z" }])
+    end
+
+    it "names an adapter paused for a rate limit, and until when (C13)" do
+      limited = OpenLanes::Execution::Throttle::AdapterPause.new(clock: -> { at })
+      limited.hold("claude", 120)
+
+      expect(paused(limited.entries)).to eq([{ adapter: "claude",
+                                               reason:  "paused for rate limit",
+                                               since:   "2026-10-13T09:00:00Z",
+                                               until:   "2026-10-13T09:02:00Z" }])
     end
   end
 

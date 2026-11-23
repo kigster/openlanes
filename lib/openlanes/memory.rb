@@ -47,7 +47,7 @@ module OpenLanes
       # @return [OpenLanes::Memory::Library]
       def library(root:, env: ENV)
         project = reviewed(root:)
-        library = Library.load([project, global(env:)].compact)
+        library = own_copies_dropped(Library.load([project, global(env:)].compact), root:, env:)
         return library if project
 
         library.with(problems: ["project lessons skipped: no #{ref(root)} to read reviewed ones from", *library.problems])
@@ -55,14 +55,48 @@ module OpenLanes
 
       # The prompt section +agent+ is given, empty when no lesson is for it.
       #
-      # @param agent [OpenLanes::Agents::Agent]
+      # The engine calls this for every agent it runs; `memory list` calls
+      # it too, so what the command prints is what a prompt carries.
+      #
+      # @param agent [OpenLanes::Agents::Agent, OpenLanes::Memory::Audience]
       # @param library [OpenLanes::Memory::Library] as {library} read it
       # @return [String]
       def section(agent:, library:) = Section.new(library.for(agent), agent:).to_s
 
+      # The lesson ids {section} shows +agent+: what one invocation is offered.
+      #
+      # @param agent [OpenLanes::Agents::Agent, OpenLanes::Memory::Audience]
+      # @param library [OpenLanes::Memory::Library]
+      # @return [Array<String>]
+      def offered(agent:, library:) = Section.new(library.for(agent), agent:).offered
+
+      # The offered ids an agent's report names (decision C5).
+      #
+      # @param text [String, nil] the report
+      # @param offered [Array<String>] from {offered}
+      # @return [Array<String>]
+      def cited(text, offered:) = Citations.in(text, offered:)
+
+      # @param root [String] the project root
+      # @return [Hash{String => OpenLanes::Events::LessonUsage}, nil] by lesson id; nil when the event log is off
+      def uptake(root:) = Uptake.read(root:)
+
+      # The audience an agent in +phase+ is, without naming one of ours.
+      #
+      # @param phase [String] one of {Agents.phases}
+      # @return [OpenLanes::Memory::Audience]
+      def audience(phase:) = Audience.new(phase: phase.to_s)
+
       # @param root [String] the project root
       # @return [OpenLanes::Memory::Inbox] the candidates waiting in this checkout
       def inbox(root:) = Inbox.new(dir: File.join(File.expand_path(root), INBOX_DIR))
+
+      # The section a curator's prompt carries: the ids and slugs it may
+      # reuse, so a lesson met again counts as a second sighting (C2).
+      #
+      # @param root [String] the project root
+      # @return [String]
+      def known(root:) = Known.new(inbox: inbox(root:), lessons_dir: File.join(File.expand_path(root), PROJECT_DIR)).to_s
 
       # @param root [String] the project root
       # @return [OpenLanes::Memory::Promotion]
@@ -80,6 +114,19 @@ module OpenLanes
         Publication.new(root:, publisher:, base:, dry_run:)
       end
 
+      # What the engine runs once a run ends: {publication}, when a candidate
+      # is eligible and no memory pull request is open already.
+      #
+      # @param root [String] the project root
+      # @param github [#pulls] defaults to {Vcs.github}
+      # @param publication [#call, nil] defaults to {publication} on +root+
+      # @return [OpenLanes::Memory::Autopromotion]
+      def autopromotion(root:, github: Vcs.github, publication: nil)
+        Autopromotion.new(preview: -> { promotion(root:).call(commit: false) },
+          publication: publication || -> { publication(root:).call },
+          github:)
+      end
+
       # @param root [String] the project root
       # @param agent [OpenLanes::Agents::Agent]
       # @param dry_run [Boolean] true invokes no agent
@@ -94,12 +141,23 @@ module OpenLanes
       # @param plan [String] the ordinal it was looking at
       # @param root [String] the project root
       # @return [Array<OpenLanes::Memory::Inbox::Outcome>] one per proposal line, malformed ones dropped with a reason
-      def propose(text, plan:, root:)
-        box = inbox(root:)
-        Proposal.scan(text).map do |read|
-          next box.add(read, plan:) if read.is_a?(Proposal)
+      def propose(text, plan:, root:) = file(Proposal.scan(text), plan:, root:)
 
-          Inbox::Outcome.new(slug: nil, status: :dropped, reason: read.reason)
+      # File proposals however they were read: from the curator's answer, or
+      # from `openlanes memory propose`. One path into the inbox, so a
+      # proposal typed at the command line passes exactly the curator's checks.
+      #
+      # @param reads [Array<OpenLanes::Memory::Proposal, OpenLanes::Memory::Proposal::Rejection>]
+      # @param plan [String, nil] the ordinal it was learnt on, nil when none
+      # @param root [String] the project root
+      # @param dry_run [Boolean] true checks and renders, and writes nothing
+      # @return [Array<OpenLanes::Memory::Inbox::Outcome>]
+      def file(reads, plan:, root:, dry_run: false)
+        box = inbox(root:)
+        reads.map do |read|
+          next box.add(read, plan:, dry_run:) if read.is_a?(Proposal)
+
+          Inbox::Outcome.new(slug: nil, status: :dropped, reason: read.reason, check: :format)
         end
       end
 
@@ -128,9 +186,50 @@ module OpenLanes
         Committed.at(name: :project, root: File.expand_path(root), ref: ref(root), dir: PROJECT_DIR)
       end
 
+      # A global lesson this project mirrored from its own: the project's
+      # copy is already in the library, and the prompt would say it twice.
+      #
+      # @param library [OpenLanes::Memory::Library]
+      # @return [OpenLanes::Memory::Library]
+      def own_copies_dropped(library, root:, env:)
+        return library unless library.lessons.any? { it.scope == :global }
+
+        own = global_store(env:).held_by(ProjectKey.for(File.expand_path(root)))
+        library.with(lessons: library.lessons.reject { it.scope == :global && own.include?(it.id) })
+      end
+      private :own_copies_dropped
+
       # @param root [String]
       # @return [String] e.g. `origin/main`
       def ref(root) = "origin/#{Vcs.default_branch(File.expand_path(root))}"
+
+      # Mirror the project's merged lessons into the operator's global store
+      # (C3), and turn active there every lesson a second project holds.
+      # Nothing to mirror when the default branch is unknown: an unmerged
+      # lesson is never mirrored.
+      #
+      # @param root [String] the project root
+      # @param env [Hash{String => String}]
+      # @return [Array<OpenLanes::Memory::Mirror::Change>]
+      def mirror(root:, env: ENV)
+        source = reviewed(root:) or return []
+        Mirror.new(project: ProjectKey.for(File.expand_path(root)), source:, store: global_store(env:)).call
+      end
+
+      # Where global candidates wait: `inbox/` inside {global_dir}, not beside
+      # it. `$OPENLANES_MEMORY_HOME` names the lessons directory itself, so a
+      # sibling would land in whatever directory holds it (for the suite, the
+      # system temp directory every run shares). {Folder} reads only the
+      # `.md` files directly in {global_dir}, so nothing in `inbox/` reaches
+      # a prompt.
+      #
+      # @param env [Hash{String => String}]
+      # @return [String]
+      def global_inbox_dir(env: ENV) = File.join(global_dir(env:), "inbox")
+
+      # @param env [Hash{String => String}]
+      # @return [OpenLanes::Memory::GlobalStore] what {mirror} writes, and `memory inbox --global` reads
+      def global_store(env: ENV) = GlobalStore.new(lessons_dir: global_dir(env:), inbox_dir: global_inbox_dir(env:))
 
       # @param env [Hash{String => String}]
       # @return [OpenLanes::Memory::Folder]

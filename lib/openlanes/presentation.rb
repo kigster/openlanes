@@ -14,8 +14,9 @@ module OpenLanes
     def diagram = Diagram.new.render
 
     # @param tree [OpenLanes::Plans::Tree]
-    # @return [OpenLanes::Presentation::Reporter]
-    def reporter(tree:) = Reporter.new(tree:, waiting_on: waiting_on(tree))
+    # @return [OpenLanes::Presentation::Reporter] spend read from the project's event log
+    #   beside the tree, enabled or not: an earlier run's log still says what was spent
+    def reporter(tree:) = Reporter.new(tree:, waiting_on: waiting_on(tree), budget: Engine.budget(root: File.dirname(tree.dir)))
 
     # What the engine's watch last saw a person owe, read only while that
     # engine is up: once it stops, nobody is watching, and a pull request

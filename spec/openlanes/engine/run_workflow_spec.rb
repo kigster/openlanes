@@ -61,6 +61,110 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     end
   end
 
+  # C13: the executor's throttle waits set the pause the dispatcher reads.
+  it "hands the runner and its executor the one adapter pause" do
+    given = {}
+    allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
+      given[:runner] = keywords[:adapter_pause]
+      original.call(**keywords, sleeper: ->(_) {}, quality_gate: nil)
+    end
+    allow(OpenLanes::Execution).to receive(:executor).and_wrap_original do |original, **keywords|
+      given[:executor] ||= keywords[:pauses]
+      original.call(**keywords)
+    end
+    call
+
+    expect(given[:executor]).to be(given[:runner]).and be_a(OpenLanes::Execution::Throttle::AdapterPause)
+  end
+
+  # C1: the memory pull request the engine opens once a run ends.
+  describe "the memory pull request at the end of a run" do
+    let(:autopromotion) { instance_double(OpenLanes::Memory::Autopromotion) }
+    let(:published) { OpenLanes::Memory::Autopromotion::Outcome.new(status: :published, url: "https://example.com/pr/7", lessons: 2, why: nil) }
+
+    before do
+      allow(OpenLanes::Memory).to receive(:autopromotion).and_return(autopromotion)
+      allow(OpenLanes::UI).to receive(:log)
+    end
+
+    def promote(**) = workflow(isolation: "worktree", dry_run: false, **).send(:promote_memory)
+
+    it "publishes and logs the pull request" do
+      allow(autopromotion).to receive(:call).and_return(published)
+
+      promote
+
+      expect(OpenLanes::UI).to have_received(:log).with("memory pull request: https://example.com/pr/7 (2 lessons)")
+      expect(OpenLanes::Memory).to have_received(:autopromotion).with(root: File.dirname(plans_root))
+    end
+
+    it "logs why nothing was opened" do
+      allow(autopromotion).to receive(:call)
+        .and_return(OpenLanes::Memory::Autopromotion::Outcome.new(status: :skipped, url: nil, lessons: 0, why: "no candidate in the inbox is eligible"))
+
+      promote
+
+      expect(OpenLanes::UI).to have_received(:log).with("no memory pull request: no candidate in the inbox is eligible")
+    end
+
+    it "costs the run nothing when publishing fails: it is logged, never raised" do
+      allow(autopromotion).to receive(:call).and_raise(RuntimeError, "git push: rejected") # not an OpenLanes::Error, as a refused push is not
+
+      expect { promote }.not_to raise_error
+      expect(OpenLanes::UI).to have_received(:log).with(/memory pull request not opened/, level: :warn)
+    end
+
+    {
+      "a dry run"          => { dry_run: true },
+      "--no-memory"        => { memory: false },
+      "--no-memory-pr"     => { memory_pr: false },
+      "--no-git-push"      => { git_push: false },
+      "--isolation shared" => { isolation: "shared" }
+    }.each do |name, options|
+      it "does nothing under #{name}" do
+        promote(**options)
+
+        expect(OpenLanes::Memory).not_to have_received(:autopromotion)
+      end
+    end
+  end
+
+  # C3: the project's merged lessons, mirrored into the global store.
+  describe "mirroring lessons at the end of a run" do
+    before { allow(OpenLanes::UI).to receive(:log) }
+
+    def mirror(**) = workflow(isolation: "shared", dry_run: false, **).send(:mirror_memory)
+
+    def change(kind, why: nil) = OpenLanes::Memory::Mirror::Change.new(kind:, slug: "real-trees", id: "G-0001", why:)
+
+    it "logs what it wrote, warns on a refusal, and says nothing of what was known" do
+      allow(OpenLanes::Memory).to receive(:mirror).and_return([change(:activate), change(:known), change(:refuse, why: "looks like it holds a GitHub token")])
+
+      mirror
+
+      expect(OpenLanes::Memory).to have_received(:mirror).with(root: File.dirname(plans_root))
+      expect(OpenLanes::UI).to have_received(:log).with("global memory: activate G-0001", level: :info)
+      expect(OpenLanes::UI).to have_received(:log).with("global memory: refuse G-0001: looks like it holds a GitHub token", level: :warn)
+      expect(OpenLanes::UI).to have_received(:log).twice
+    end
+
+    it "costs the run nothing when the store cannot be written" do
+      allow(OpenLanes::Memory).to receive(:mirror).and_raise(Errno::EACCES, "~/.config/openlanes")
+
+      expect { mirror }.not_to raise_error
+      expect(OpenLanes::UI).to have_received(:log).with(/lessons not mirrored to global memory/, level: :warn)
+    end
+
+    { "a dry run" => { dry_run: true }, "--no-memory" => { memory: false } }.each do |name, options|
+      it "does nothing under #{name}" do
+        allow(OpenLanes::Memory).to receive(:mirror)
+        mirror(**options)
+
+        expect(OpenLanes::Memory).not_to have_received(:mirror)
+      end
+    end
+  end
+
   describe "refusals, before anything is set up" do
     {
       "--prompt without --agent"        => [{ prompt: "be brief" }, 64, "--prompt only works with --agent"],
@@ -76,6 +180,27 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
 
         expect([result.failure.status, result.failure.message]).to match([status, a_string_including(phrase)])
       end
+    end
+  end
+
+  # C11: spend is summed from the event log, so a cap with the log off
+  # would never hold a plan.
+  describe "a dollar cap the event log cannot count" do
+    before do
+      root = File.dirname(plans_root)
+      FileUtils.mkdir_p(File.join(root, ".openlanes"))
+      File.write(File.join(root, ".openlanes", "config.yml"), "budget:\n  plan_usd: 25\nevents:\n  enabled: false\n")
+    end
+
+    it "refuses to start, with 78, and says why" do
+      result, = call(dry_run: false)
+
+      expect([result.failure.status, result.failure.message])
+        .to match([78, a_string_including("budget.plan_usd is $25 but events.enabled is false")])
+    end
+
+    it "lets a dry run through, which spends nothing" do
+      expect(workflow.send(:countable)).to be_success
     end
   end
 

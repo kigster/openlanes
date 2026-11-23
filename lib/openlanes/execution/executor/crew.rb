@@ -37,7 +37,10 @@ module OpenLanes
         def self.supervision(options, launcher, invocations)
           drain = Drain.new(max_tokens: options.max_tokens, fresh_budget: options.fresh_budget)
           Supervision.new(drain:,
-            throttling: ThrottleWait.new(throttle: options.throttle, launcher:, invocations:, drain:),
+            throttling: ThrottleWait.new(throttle: options.throttle,
+              start_again: StartAgain.new(launcher, invocations),
+              drain:,
+              pauses: options.pauses),
             compactor:  Compactor.new(launcher:, invocations:, drain:))
         end
       end

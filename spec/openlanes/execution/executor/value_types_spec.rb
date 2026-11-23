@@ -46,7 +46,8 @@ RSpec.describe "the executor's value types" do
         successor: nil,
         partners: [],
         rebase: nil,
-        resume: nil)
+        resume: nil,
+        brief: "")
     end
   end
 

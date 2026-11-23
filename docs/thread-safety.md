@@ -59,6 +59,8 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/adapters/probes.rb` | `@memory` (the last probe, kept while Redis is gone) | `Adapters::Probes` | probe thread, snapshot builder | `@mutex` | guarded |
 | `lib/openlanes/adapters/probes.rb` | `@thread` | `Adapters::Probes` | its starter and stopper | started and stopped by the one owner (`Live::Session`, `cli/web`); `@wake` is a `Thread::Queue` | guarded |
 | `lib/openlanes/engine/cli_pause.rb` | `@entries` (the CLIs held after an authentication failure) | `Engine::CliPause` | dispatcher loop, settle threads, snapshot builder | `@mutex` | guarded |
+| `lib/openlanes/execution/throttle/adapter_pause.rb` | `@entries` (the adapters paused while an agent waits out a rate limit, C13) | `Execution::Throttle::AdapterPause` | agent threads (throttle waits), dispatcher loop, snapshot builder | `@mutex` | guarded |
+| `lib/openlanes/memory/global_store.rb` | the global memory store (`OPENLANES_MEMORY_HOME`, its `inbox/`) | `Memory::GlobalStore`, written by `Memory::Mirror` | the end of a run, once per process; runs in other projects at the same time | exclusive `flock` on `inbox/.lock` from the first read to the last write; every file written to a temporary name and renamed into place (C3) | guarded |
 | `lib/openlanes/live/event_bus/base.rb` | a bus | its caller | any | frozen; all state lives in the store behind it | frozen |
 | `lib/openlanes/live/store.rb` | the one Redis connection | `Live::Store` | engine tick, outage watcher, publisher, web requests | `@lock` (`Monitor`, re-entrant) | guarded |
 | `lib/openlanes/live/chat.rb` | `@pages`, `@unavailable`, the subscriber | `Live::Chat` | web requests, chat thread | `@lock` (`Monitor`, re-entrant) | guarded |
@@ -72,6 +74,9 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/live/publisher.rb` | `@log` | `Live::Publisher` | tick, agent jobs | `@log_mutex` | guarded |
 | `lib/openlanes/live/run_state.rb` | concurrency, run fields | `Live::RunState` | tick, web commands | `@mutex` | guarded |
 | `lib/openlanes/live/store.rb` | the `RedisClient` connection, `@failed_at` | `Live::Store` | tick (outage ping), agent jobs, publisher | `@lock` (`Monitor`, re-entrant); a blocking `xread` holds it for the wait; `@failed_at` is read and written only inside it | guarded |
+| `lib/openlanes/slack/bridge.rb` | `@polls`, the questions last offered | `Slack::Bridge` | tick, Slack worker | `@lock` | guarded |
+| `lib/openlanes/slack/bridge.rb` | `@stop` | `Slack::Bridge` | tick, Slack worker | `Thread::Queue`, closed to stop the worker | guarded |
+| `lib/openlanes/slack/outbox.rb` | `@queue`, what the worker wants written to the store | `Slack::Outbox` | Slack worker, tick | `Thread::Queue`; only the tick touches the store | guarded |
 | `lib/openlanes/support/clock.rb` | `Clock::Fake` time | the spec | stress threads | `@mutex` | guarded |
 | `lib/openlanes/support/spawner.rb` | `Spawner::Fake` calls and pids | the spec | stress threads | `@mutex` | guarded |
 | `lib/openlanes/support/ui.rb` | `@parts` of a line | `UI::Line` | ticker, worker | `@lock` | guarded |

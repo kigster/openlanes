@@ -1,6 +1,7 @@
 // A coding CLI the engine stopped starting agents on (plan 065): after an authentication failure it waits for the CLI's
 // probe to pass, and no agent on that CLI spends a round meanwhile. Agents on every other CLI carry on, so the band names
-// the CLI and its own words for why, instead of leaving a quiet board to look like a hang.
+// the CLI and its own words for why, instead of leaving a quiet board to look like a hang. A rate-limit pause (C13) lifts
+// at a known time, so it says until when instead of since when.
 import { useId } from "react";
 import type { PausedCli } from "../api/types";
 
@@ -23,15 +24,20 @@ export function PausedCliBanner({ paused }: PausedCliBannerProps) {
       </h2>
       <ul>
         {paused.map((p) => (
-          <li key={p.adapter} className="paused-cli" data-adapter={p.adapter}>
+          <li key={`${p.adapter}-${p.until ?? "auth"}`} className="paused-cli" data-adapter={p.adapter}>
             <strong>{p.adapter}</strong>
             <span>{p.reason}</span>
-            <time className="paused-cli-since" dateTime={p.since}>since {when(p.since)}</time>
+            {p.until ? (
+              <time className="paused-cli-since" dateTime={p.until}>until {when(p.until)}</time>
+            ) : (
+              <time className="paused-cli-since" dateTime={p.since}>since {when(p.since)}</time>
+            )}
           </li>
         ))}
       </ul>
       <p className="paused-clis-note">
-        No agent starts on a paused CLI, and no round is spent, until its probe passes. Agents on other CLIs keep running.
+        No new agent starts on a paused CLI, and no round is spent, until its probe passes or its rate-limit wait ends.
+        Agents already running, and agents on other CLIs, keep going.
       </p>
     </section>
   );

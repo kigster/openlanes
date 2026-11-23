@@ -131,6 +131,38 @@ RSpec.describe OpenLanes::Config do
       end
     end
 
+    describe "slack:" do
+      it "reads where questions are asked and who may answer them" do
+        openlanes_yml("slack:\n  channel: \"#questions\"\n  workspace: acme\n  operators: [U012ABC]\n  poll_seconds: 5\n")
+        expect(config.slack).to eq(channel: "#questions", workspace: "acme", operators: ["U012ABC"], poll_seconds: 5)
+      end
+
+      it "is empty when the file names none, and when every key is left unset" do
+        openlanes_yml("project: demo\n")
+        expect(config.slack).to eq({})
+      end
+
+      it "writes back what it read" do
+        openlanes_yml("slack:\n  channel: C0123ABCD\n")
+        expect(config.to_settings["slack"]).to eq("channel" => "C0123ABCD")
+      end
+
+      it "refuses a key it does not know, naming the ones it does" do
+        openlanes_yml("slack:\n  colour: red\n")
+        expect { config }.to raise_error(OpenLanes::Error, /slack\.colour: unknown key; known: channel, workspace, operators, poll_seconds/)
+      end
+
+      it "refuses anything but a mapping" do
+        openlanes_yml("slack: \"#questions\"\n")
+        expect { config }.to raise_error(OpenLanes::Error, /slack: must be a mapping/)
+      end
+
+      it "leaves each value's shape to the schema" do
+        openlanes_yml("slack:\n  channel: \"#q\"\n  operators: [dana]\n")
+        expect { config }.to raise_error(OpenLanes::Error, /slack/)
+      end
+    end
+
     describe "questions.model" do
       it "reads the model that rewrites prose questions" do
         openlanes_yml("questions:\n  model: google/gemini-3.5-flash\n")

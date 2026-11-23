@@ -6,7 +6,7 @@
     "slug": "abandon-discard-trash-plans"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:02:15-08:00",
+  "updated_at": "2026-11-18T21:43:27-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -2037,7 +2037,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "eb5e6a0a-9588-4f4d-8d8e-830c1885312f",
+        "session": "5f61c826-39fa-456b-925f-ad658cb18cde",
         "through": 0
       }
     }

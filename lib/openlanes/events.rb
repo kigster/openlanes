@@ -41,5 +41,10 @@ module OpenLanes
     # @param skipped_lines [Integer]
     # @return [OpenLanes::Events::Report::Result]
     def report(events, skipped_lines: 0) = Report.new(events, skipped_lines:).call
+
+    # @param events [Array<OpenLanes::Events::Event>]
+    # @param project [String, nil] only this project's; nil counts all
+    # @return [Hash{String => OpenLanes::Events::LessonUsage}] by lesson id
+    def lesson_usage(events, project: nil) = LessonUsage.tally(events, project:)
   end
 end

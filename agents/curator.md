@@ -45,7 +45,7 @@ Most plans teach one or two lessons, and many teach none. Propose nothing rather
 
 ## The same lesson again
 
-Before you name a lesson, look for it in `lessons/` and `inbox/`. If it is there, reuse it: give the lesson's `id` (such as `L-0004`) or the candidate's slug as your `slug`. That is how a lesson is known to have been met on a second plan, and it is the only way one becomes active without a person's say. A new slug for an old lesson throws that evidence away.
+Your prompt lists, under "Lessons you may meet again", every active lesson by its id and every candidate in the inbox by its slug, with its title. Before you name a lesson, compare it with that list, and open the file in `lessons/` or `inbox/` when a title is close. When an entry says the same thing as yours, even in other words, reuse it: give the lesson's `id` (such as `L-0004`) or the candidate's slug as your `slug`. That is how a lesson is known to have been met on a second plan, and it is the only way one becomes active without a person's say. A new slug for an old lesson throws that evidence away. When the list says some were left out, look in the directory it names before you call a lesson new.
 
 ## Answer
 

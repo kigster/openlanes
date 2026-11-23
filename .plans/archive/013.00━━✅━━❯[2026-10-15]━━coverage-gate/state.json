@@ -6,7 +6,7 @@
     "slug": "coverage-gate"
   },
   "state": "rejected",
-  "updated_at": "2026-11-17T03:01:42-08:00",
+  "updated_at": "2026-11-18T21:42:38-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -231,7 +231,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "f0d3ae2e-494d-4592-9d1b-b6e3297e336a",
+        "session": "60431aed-f2af-480e-b982-23cfcbc8eb15",
         "through": 0
       }
     }

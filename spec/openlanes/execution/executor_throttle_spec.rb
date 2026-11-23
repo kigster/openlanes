@@ -7,7 +7,9 @@
 RSpec.describe OpenLanes::Execution::Executor, :tree do
   subject(:result) { executor.call(agent, plan, handle:, resume:) { |progress| shown << progress.activity } }
 
-  let(:executor) { described_class.new(root:, spawn:, trace_dir: traces, throttle:) }
+  let(:executor) { described_class.new(root:, spawn:, trace_dir: traces, throttle:, pauses:) }
+  let(:now) { Time.utc(2026, 11, 20, 9, 40) }
+  let(:pauses) { OpenLanes::Execution::Throttle::AdapterPause.new(clock: -> { now }) }
   let(:throttle) do
     OpenLanes::Execution::Throttle::Backoff.new(random: instance_double(Random, rand: 0.0), sleep:, **limits)
   end
@@ -81,6 +83,13 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
 
     it "is one attempt, and it succeeded" do
       expect([result.ok, result.throttled, result.up]).to eq([true, false, 100])
+    end
+
+    # C13: the dispatcher reads this and starts nobody new on claude until
+    # the wait ends; the agent that waited is started again regardless.
+    it "pauses the agent's adapter for as long as it waits, and starts again itself" do
+      expect([pauses["claude"].to_h.slice(:adapter, :until), spawned.size])
+        .to eq([{ adapter: "claude", until: (now + 20).iso8601 }, 2])
     end
 
     it "says in the log that it is waiting, and for what" do

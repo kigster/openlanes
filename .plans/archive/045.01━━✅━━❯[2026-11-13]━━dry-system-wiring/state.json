@@ -6,7 +6,7 @@
     "slug": "dry-system-wiring"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:02:05-08:00",
+  "updated_at": "2026-11-18T21:43:11-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -376,7 +376,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "50ce6f38-c10a-4b52-a4ec-d4b41073b193",
+        "session": "8f9f8f96-d2e5-4060-9207-643af10c6d93",
         "through": 0
       }
     }

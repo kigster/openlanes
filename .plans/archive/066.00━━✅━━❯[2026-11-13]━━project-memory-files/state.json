@@ -6,7 +6,7 @@
     "slug": "project-memory-files"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:02:21-08:00",
+  "updated_at": "2026-11-18T21:43:36-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -400,7 +400,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "677dbd56-957d-4850-a97e-5049d3b00a98",
+        "session": "deed1841-cacd-4db5-af92-59200d5c351a",
         "through": 0
       }
     }

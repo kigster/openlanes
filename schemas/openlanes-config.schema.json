@@ -522,6 +522,11 @@
               "description": "Tell each agent the lessons in .openlanes/memory/lessons meant for it; --no-memory leaves them out, the baseline that shows whether they help",
               "default": true
             },
+            "memory_pr": {
+              "type": "boolean",
+              "description": "Once the run ends, open the memory pull request for every lesson candidate seen on 2 plans, as `openlanes memory promote` does. A person merges it. --no-memory-pr leaves them waiting in the inbox",
+              "default": true
+            },
             "model": {
               "type": [
                 "string",
@@ -1193,6 +1198,11 @@
               "description": "The .plans directory",
               "default": ".plans"
             },
+            "global": {
+              "type": "boolean",
+              "description": "List the global candidates, mirrored from your projects' merged lessons, and the projects each came from",
+              "default": false
+            },
             "quiet": {
               "type": "boolean",
               "description": "Suppress progress output on STDERR",
@@ -1202,7 +1212,7 @@
         },
         "memory list": {
           "type": "object",
-          "description": "List the lessons in .openlanes/memory/lessons and your global memory, or with --agent, the section that agent's prompt carries",
+          "description": "List the lessons in .openlanes/memory/lessons and your global memory, or with --agent or --phase, the section that prompt carries",
           "default": {},
           "additionalProperties": false,
           "properties": {
@@ -1220,6 +1230,13 @@
               ],
               "description": "The .plans directory",
               "default": ".plans"
+            },
+            "phase": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Print the section any agent in this phase would carry, e.g. --phase build"
             },
             "quiet": {
               "type": "boolean",
@@ -1256,6 +1273,122 @@
               "type": "boolean",
               "description": "--no-memory (or `memory: false` in .openlanes/config.yml) refuses to promote",
               "default": true
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "memory propose": {
+          "type": "object",
+          "description": "File a lesson into .openlanes/memory/inbox through the checks the curator's proposals pass",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "applies_to": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              },
+              "description": "Agent names or phases that should follow it, comma-separated, or `all`"
+            },
+            "body": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Two to five sentences: why, and what to do instead"
+            },
+            "checked_by": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              },
+              "description": "Reviewers or phases that should cite it when it is broken"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Check it and print the file that would be written; write nothing",
+              "default": false
+            },
+            "finding": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "One line of evidence: what happened, and where"
+            },
+            "from": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Read the proposal from FILE (`-` for STDIN): a lesson file, or the curator's JSON lines"
+            },
+            "kind": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "practice, pitfall, decision or struck"
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The plan it was learnt on, NNN or NNN.MM; left out, the sighting counts toward no promotion"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "severity": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "high, medium or low"
+            },
+            "title": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "One line, under 200 characters, an instruction a stranger could follow"
+            }
+          }
+        },
+        "memory report": {
+          "type": "object",
+          "description": "Show, per lesson, how many plans it was offered on and cited on, from the event log",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
             },
             "quiet": {
               "type": "boolean",
@@ -1698,6 +1831,11 @@
               "description": "Tell each agent the lessons in .openlanes/memory/lessons meant for it; --no-memory leaves them out, the baseline that shows whether they help",
               "default": true
             },
+            "memory_pr": {
+              "type": "boolean",
+              "description": "Once the run ends, open the memory pull request for every lesson candidate seen on 2 plans, as `openlanes memory promote` does. A person merges it. --no-memory-pr leaves them waiting in the inbox",
+              "default": true
+            },
             "model": {
               "type": [
                 "string",
@@ -1838,6 +1976,32 @@
             }
           }
         },
+        "slack test": {
+          "type": "object",
+          "description": "Post a sample poll to the project's Slack channel and wait for an answer",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "timeout": {
+              "type": "integer",
+              "description": "Seconds to wait for somebody to answer",
+              "default": 120
+            }
+          }
+        },
         "start": {
           "type": "object",
           "description": "The factory: the engine and its control room, kept up until `openlanes stop`, Stop All Local or Ctrl-C",
@@ -1960,6 +2124,11 @@
             "memory": {
               "type": "boolean",
               "description": "Tell each agent the lessons in .openlanes/memory/lessons meant for it; --no-memory leaves them out, the baseline that shows whether they help",
+              "default": true
+            },
+            "memory_pr": {
+              "type": "boolean",
+              "description": "Once the run ends, open the memory pull request for every lesson candidate seen on 2 plans, as `openlanes memory promote` does. A person merges it. --no-memory-pr leaves them waiting in the inbox",
               "default": true
             },
             "model": {
@@ -3136,6 +3305,56 @@
             "default": null,
             "minimum": 1
           }
+        }
+      }
+    },
+    "slack": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Where questions for a person are asked as Slack polls; the bot token is read from SLACK_BOT_TOKEN",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "channel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The channel's id (C0123ABCD), or a public channel's #name",
+          "default": null,
+          "minLength": 1
+        },
+        "workspace": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The team id (T…) the token must belong to; a name or subdomain is accepted but can be renamed. null takes whichever it does",
+          "default": null,
+          "minLength": 1
+        },
+        "operators": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "Slack user ids allowed to answer; required, since an answer steers an agent: without them there is no Slack bridge",
+          "default": null,
+          "items": {
+            "type": "string",
+            "pattern": "^[UW][A-Z0-9]+$"
+          }
+        },
+        "poll_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Seconds between two calls to Slack; null is 2",
+          "default": null,
+          "minimum": 1
         }
       }
     }

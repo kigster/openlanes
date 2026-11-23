@@ -9,6 +9,8 @@ RSpec.describe "Engine events", :tree do
   let(:events) { OpenLanes::Events::Log.new(dir: log_dir).events }
   let(:status) { "Completed" }
   let(:ok) { true }
+  let(:offered) { [] }
+  let(:cited) { [] }
   let(:executor) do
     lambda do |agent, subject, **|
       OpenLanes::Plans::PlanState.for(subject.feature.path).sign!(agent: agent.name, round: 1, status:)
@@ -21,7 +23,9 @@ RSpec.describe "Engine events", :tree do
         down: 100,
         subagents: 0,
         delegated: 0,
-        seconds: 1.0)
+        seconds: 1.0,
+        offered:,
+        cited:)
     end
   end
 
@@ -80,5 +84,30 @@ RSpec.describe "Engine events", :tree do
     run(OpenLanes::Events::NullSink.new)
 
     expect(Dir.children(log_dir)).to be_empty
+  end
+
+  context "when the prompt offered lessons" do
+    let(:offered) { %w[L-0007 L-0012] }
+    let(:cited) { %w[L-0012] }
+
+    it "records each lesson offered and each one cited, keyed by plan, carrying only the id" do
+      run
+
+      offers = events.select { it.kind == "lesson_offered" }
+      citations = events.select { it.kind == "lesson_cited" }
+      by_invocation = ->(list) { list.group_by { [it.agent, it.payload["round"], it.payload["invocation_start"]] }.values }
+      expect(by_invocation.call(offers)).to all(contain_exactly(have_attributes(payload: include("lesson" => "L-0007")),
+        have_attributes(payload: include("lesson" => "L-0012"))))
+      expect(citations.map { it.payload["lesson"] }.uniq).to eq(%w[L-0012])
+      expect(by_invocation.call(citations).size).to eq(by_invocation.call(offers).size)
+      expect(offers + citations).to all(have_attributes(plan: "000.00", agent: "researcher"))
+      expect(citations.first.payload.keys).to contain_exactly("round", "invocation_start", "lesson")
+    end
+  end
+
+  it "records no lesson event when nothing was offered" do
+    run
+
+    expect(events.map(&:kind)).not_to include("lesson_offered", "lesson_cited")
   end
 end

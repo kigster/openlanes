@@ -43,9 +43,18 @@ module OpenLanes
           raise Error, "#{path} is not valid JSON: #{e.message.lines.first.strip}"
         end
 
+        # The first write into a {Husk} is refused: that write is what turned a
+        # folder holding only a `.DS_Store` into one that looked like a plan.
+        # Refused with a warning rather than an error, because the callers that
+        # reach it (a stage the curator pends, a round recovery records) run
+        # inside a round, and a raise there takes the whole run down over a
+        # folder that should simply be left alone. The block is not run.
+        #
         # @yieldparam data [Hash] mutate in place, under the lock
-        # @return [Hash] what was written
+        # @return [Hash] what was written, or what is there when the write was refused
         def update
+          return refuse_husk if !exist? && Husk.husk?(dir)
+
           locked do
             data = read
             yield data
@@ -68,6 +77,14 @@ module OpenLanes
         def skeleton
           { "$schema" => SCHEMA_ID, "version" => VERSION, "plan" => identity, "state" => nil,
             "updated_at" => nil, "stages" => [], "signatures" => [], "messages" => [] }
+        end
+
+        # @return [Hash] the skeleton, unwritten
+        def refuse_husk
+          UI.log("#{path} not written: #{File.basename(dir)} is a husk, not a plan",
+            level: :warn,
+            plan:  identity["ordinal"])
+          read
         end
 
         # @param data [Hash]

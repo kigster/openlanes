@@ -61,13 +61,15 @@ require "tmpdir"
 ENV["NO_COLOR"] = "1"
 # No example reaches Anthropic for the model list, whatever the shell exports.
 ENV["OPENLANES_MODELS_OFFLINE"] = "1"
-# Nor reads the model list a developer's own run cached under ~/.cache, which
-# would put whatever Anthropic lists today ahead of the shipped models.
-ENV["XDG_CACHE_HOME"] = Dir.mktmpdir("openlanes-cache")
-at_exit { FileUtils.rm_rf(ENV.fetch("XDG_CACHE_HOME")) }
 # A developer's shell (direnv) may export the control room's login; the
 # examples that need one set it themselves.
 ENV.delete("OPENLANES_ADMIN_CREDENTIALS")
+# A git hook exports GIT_DIR and GIT_INDEX_FILE, and in a linked worktree they
+# outrank `git -C <tmp>`: the pre-commit hook's rspec then ran an example's
+# `git init`, `config` and `commit` against the developer's repository, set
+# `core.bare` on it and committed its fixture to the branch being committed.
+# Git names every variable that binds it to a repository; none may reach a child.
+`git rev-parse --local-env-vars`.split.each { ENV.delete(it) }
 ENV["GIT_CONFIG_COUNT"] = "1"
 ENV["GIT_CONFIG_KEY_0"] = "commit.gpgsign"
 ENV["GIT_CONFIG_VALUE_0"] = "false"
@@ -76,6 +78,13 @@ ENV["GIT_CONFIG_VALUE_0"] = "false"
 # at a per-run temp directory so no example writes into the developer's home.
 ENV["XDG_STATE_HOME"] = Dir.mktmpdir("openlanes-state")
 at_exit { FileUtils.rm_rf(ENV.fetch("XDG_STATE_HOME")) }
+
+# The model catalogue caches Anthropic's list under the XDG cache directory.
+# A developer whose factory has run has one, and it adds models the bundled
+# table lacks, so examples comparing against the bundled table failed on that
+# machine alone.
+ENV["XDG_CACHE_HOME"] = Dir.mktmpdir("openlanes-cache")
+at_exit { FileUtils.rm_rf(ENV.fetch("XDG_CACHE_HOME")) }
 
 # PID files too (S3): a command run in an example writes its own, and a
 # checkout's `tmp/pids` is the developer's running factory.
