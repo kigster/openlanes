@@ -82,6 +82,14 @@ RSpec.describe OpenLanes::CLI::Slack::Connect do
     expect(File.read(dotenv)).to include("OPENLANES_SLACK_CHANNEL=C0OLDONE\n")
   end
 
+  it "asks in the channel .openlanes/config.yml names when none is named or set, since .env would win over it" do
+    FileUtils.mkdir_p(File.join(dir, ".openlanes"))
+    File.write(File.join(dir, ".openlanes", "config.yml"), "slack:\n  channel: \"#from-config\"\n")
+    run(channel: nil)
+
+    expect(File.read(dotenv)).to include("OPENLANES_SLACK_CHANNEL='#from-config'")
+  end
+
   it "asks in #openlanes-questions when none is named or configured" do
     run(channel: nil)
 

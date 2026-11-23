@@ -37,14 +37,21 @@ module OpenLanes
       # @return [String, nil] nil when unset or blank everywhere
       def [](name) = [app&.[](name), env[name], project[name]].find { !it.to_s.strip.empty? }
 
+      # With no channel named, the one a run would ask in today: the
+      # environment's, then `slack.channel` in `.openlanes/config.yml`. The
+      # file has to be asked too, because what is written here goes to `.env`,
+      # which wins over it: defaulting past it would move a configured
+      # project's questions to {DEFAULT_CHANNEL} without a word.
+      #
       # @param token [String]
       # @param operators [String] ids, separated by commas or spaces
       # @param channel [String, nil] an id, or a public channel's name
       # @param workspace [String, nil]
       # @return [Hash{String => String}] the variables a run needs
+      # @raise [OpenLanes::Error] when `.openlanes/config.yml` cannot be read
       def values(token:, operators:, channel: nil, workspace: nil)
         { API::TOKEN_VARIABLE => token,
-          Settings::CHANNEL   => named(channel || self[Settings::CHANNEL] || DEFAULT_CHANNEL),
+          Settings::CHANNEL   => named(channel || self[Settings::CHANNEL] || configured_channel || DEFAULT_CHANNEL),
           Settings::OPERATORS => operators.split(/[\s,]+/).reject(&:empty?).join(","),
           Settings::WORKSPACE => workspace }.compact
       end
@@ -92,6 +99,12 @@ module OpenLanes
 
       # @return [Boolean]
       def git?(*) = Open3.capture2e("git", "-C", root, *).last.success?
+
+      # @return [String, nil] `slack.channel` in the project's config file
+      def configured_channel
+        channel = Config.load(root).slack[:channel].to_s.strip
+        channel unless channel.empty?
+      end
     end
   end
 end
