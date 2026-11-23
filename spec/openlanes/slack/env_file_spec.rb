@@ -16,6 +16,19 @@ RSpec.describe OpenLanes::Slack::EnvFile do
     expect([file["ONE"], file["TWO"], file["THREE"], file["EMPTY"], file["FOUR"]]).to eq(["1", "two words", "3", nil, nil])
   end
 
+  it "reads a value up to the comment after it, as a shell does, and a # inside quotes or with no space before it as the value" do
+    File.write(path, "A=1 # one\nB='x # y' # z\nC=#questions\n")
+
+    expect([file["A"], file["B"], file["C"]]).to eq(["1", "x # y", "#questions"])
+  end
+
+  it "keeps a line's comment when it changes the value" do
+    File.write(path, "CHANNEL=old # where questions go\n")
+    file.write("CHANNEL" => "C1")
+
+    expect(File.read(path)).to eq("CHANNEL=C1 # where questions go\n")
+  end
+
   it "is empty when there is no file" do
     expect(file["ONE"]).to be_nil
   end
@@ -52,6 +65,19 @@ RSpec.describe OpenLanes::Slack::EnvFile do
     File.write(path, "A=1\nB=2\n")
 
     expect(file.changes("A" => "1", "B" => "3", "C" => "4")).to eq("B" => "3", "C" => "4")
+  end
+
+  context "when it is a link to a file not made yet" do
+    let(:shared) { File.join(dir, "shared.env") }
+
+    before do
+      File.symlink("shared.env", path)
+      file.write("ONE" => "1")
+    end
+
+    it "makes the file the link points at, and leaves the link" do
+      expect([File.symlink?(path), File.read(shared)]).to eq([true, "ONE=1\n"])
+    end
   end
 
   context "when it is a link" do

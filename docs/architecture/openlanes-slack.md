@@ -55,6 +55,7 @@ classDiagram
   OpenLanes__Slack__Connection ..> OpenLanes__Slack__API : uses
   OpenLanes__Slack__Connection ..> OpenLanes__Slack__EnvFile : uses
   OpenLanes__Slack__Connection ..> OpenLanes__Slack__Settings : uses
+  OpenLanes__Slack__EnvFile ..> OpenLanes__Error : uses
   OpenLanes__Slack__Outbox ..> OpenLanes__Live : uses
   OpenLanes__Slack__Outbox ..> OpenLanes__Live__Command__Invalid : uses
   OpenLanes__Slack__Outbox ..> OpenLanes__Live__Unavailable : uses
