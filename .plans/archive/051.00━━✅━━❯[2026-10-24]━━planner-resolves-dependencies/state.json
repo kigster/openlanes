@@ -6,7 +6,7 @@
     "slug": "planner-resolves-dependencies"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:02:09-08:00",
+  "updated_at": "2026-11-18T21:43:19-08:00",
   "stages": [
     {
       "agent": "curator",
@@ -22,7 +22,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "251af776-30b5-465c-880e-159a28f0c09f",
+        "session": "0210905d-ae58-4900-9b15-c7c44faceaed",
         "through": 0
       }
     }

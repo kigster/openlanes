@@ -95,6 +95,10 @@ The base class of all 15 sections carries `rounds_for` and `entries_in`, which o
 ### F205 [minor] lib/openlanes/plans/plan_state/stages.rb:8
 `Stages` holds three jobs: the stage log (`stages`, `stage!`), the folder's last state and move count (`state`, `state!`, `moves`), and the "resume anyway" window on a halt (`resume_until`, `resumed?`, `resume_anyway!`). They change for different reasons (the harness's dispatch records, the state machine, the halt policy). Scenario: changing how a halt is lifted edits the same class and spec as the stage record. The plan's U2 prescribed this grouping, so this is a note for a later pass, not a blocker.
 
+
+### F206 [minor] lib/openlanes/plans/plan_state.rb:46
+The facade is the public contract, and the split deleted its YARD (house style: `@param`/`@return` on public methods). `rule!(**)`, `sign!(**)`, `message!(**)` and `conversion!(**)` now show no keyword list anywhere a caller reads: the keywords live on the `Data` values, which the facade's docs do not link to. Scenario: a caller opens `PlanState#rule!` to learn that `review:` exists and is optional, finds `(**)` and no comment, and must grep `ruling.rb`. Suggest one `@param`/`@see Ruling` line per forwarding method, or a class-level pointer table. Not blocking.
+
 ## Round 4 (backend-coder): staff-reviewer's findings
 
 ### Done

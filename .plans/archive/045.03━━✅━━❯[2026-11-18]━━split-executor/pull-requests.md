@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 267 | [\[045.03\](A) Split Executor](https://github.com/kigster/openlanes/pull/267) | Open 🟡 |
+| 267 | [\[045.03\](A) Split Executor](https://github.com/kigster/openlanes/pull/267) | Merged 🟣 |
 
 ## backend-coder, round 1
 

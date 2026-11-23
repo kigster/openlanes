@@ -6,7 +6,7 @@
     "slug": "progress-journal"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:02:01-08:00",
+  "updated_at": "2026-11-18T21:43:05-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -324,7 +324,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "91406798-bc97-4e63-b6e3-bf167b16b148",
+        "session": "c2b4b0d3-9e2e-4b08-923b-386b75888639",
         "through": 0
       }
     }

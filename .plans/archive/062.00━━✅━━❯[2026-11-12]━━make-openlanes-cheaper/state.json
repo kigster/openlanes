@@ -6,7 +6,7 @@
     "slug": "make-openlanes-cheaper"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:02:17-08:00",
+  "updated_at": "2026-11-18T21:43:30-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -686,7 +686,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "3f1054d3-0ad1-4e34-b1bd-0f4dfc210617",
+        "session": "cfbfc030-77df-42db-b408-8995612e7e05",
         "through": 0
       }
     }

@@ -6,7 +6,7 @@
     "slug": "solid-sweep"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:02:04-08:00",
+  "updated_at": "2026-11-18T21:43:09-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -1013,7 +1013,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "bd08cbb4-6c1f-4f40-803d-dab8375c2d8b",
+        "session": "c2dbf2b7-7ea2-4507-86b5-3e9d926d53d8",
         "through": 0
       }
     }

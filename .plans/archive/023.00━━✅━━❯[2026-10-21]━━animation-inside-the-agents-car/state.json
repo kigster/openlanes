@@ -6,7 +6,7 @@
     "slug": "animation-inside-the-agents-car"
   },
   "state": "approved",
-  "updated_at": "2026-11-17T03:01:51-08:00",
+  "updated_at": "2026-11-18T21:42:51-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -1354,7 +1354,7 @@
     "curator": {
       "rounds": {},
       "held": {
-        "session": "631a72c5-eb62-4886-a728-ece77b75c2c6",
+        "session": "0a1f7141-9cfd-43df-a4f0-88a84cc20525",
         "through": 0
       }
     }

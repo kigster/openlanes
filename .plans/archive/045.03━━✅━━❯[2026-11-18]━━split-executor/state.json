@@ -5,8 +5,8 @@
     "ordinal": "045.03",
     "slug": "split-executor"
   },
-  "state": "in_review",
-  "updated_at": "2026-11-17T00:53:13-08:00",
+  "state": "approved",
+  "updated_at": "2026-11-18T21:43:14-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -484,6 +484,12 @@
       "note": "failed start: claude exited 1: Credit balance is too low - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261117-005258-045.03-staff-reviewer-68117-babb.ndjson",
       "session": "fcb0e4fa-33a2-4bb8-ad0c-9742d80b0b3d",
       "moves": 16
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -769,7 +775,7 @@
       "read": "no"
     }
   ],
-  "moves": 16,
+  "moves": 17,
   "memory": {
     "planner": {
       "rounds": {},
@@ -1005,6 +1011,13 @@
       "rounds": {},
       "held": {
         "session": "dcc44ce7-2984-45d4-99a7-ae20b8e084f4",
+        "through": 0
+      }
+    },
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "382b8f44-fe06-4b5b-bbd4-8d149fb3e1a2",
         "through": 0
       }
     }
@@ -1298,5 +1311,9 @@
       "reason": "accept by root",
       "trigger": "person"
     }
-  ]
+  ],
+  "finished": {
+    "kind": "merged",
+    "at": "2026-11-19T05:38:14Z"
+  }
 }
