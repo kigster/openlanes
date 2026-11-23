@@ -37,7 +37,7 @@ The environment wins over the file. The control room's Settings page edits the f
 
 ### No questions in the channel?
 
-The engine logs a warning that starts with `slack:` when only part of this is set, naming the part that is missing. With no token and no channel it says nothing, because the project has not asked for Slack. A gem that has no `openlanes slack connect` is older than this feature: upgrade it.
+The engine logs a warning that starts with `slack:` when only part of this is set, naming the part that is missing. With no token and no channel it says nothing, because the project has not asked for Slack, and neither does a token on its own: one exported for another tool is not a request for Slack. A gem that has no `openlanes slack connect` is older than this feature: upgrade it.
 
 ## Commands from Slack
 

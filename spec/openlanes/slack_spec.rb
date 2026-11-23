@@ -14,7 +14,14 @@ RSpec.describe OpenLanes::Slack do
       expect(OpenLanes::UI).not_to have_received(:log)
     end
 
-    it "is nil with a token and no channel, and says where a channel goes" do
+    it "is nil with only a token, and says nothing, since one may be exported for another tool" do
+      expect(described_class.bridge(store:, keys:, config: OpenLanes::Config.new, env:)).to be_nil
+      expect(OpenLanes::UI).not_to have_received(:log)
+    end
+
+    it "is nil with a token and operators but no channel, and says where a channel goes" do
+      env = { "SLACK_BOT_TOKEN" => "xoxb-test", "OPENLANES_SLACK_OPERATORS" => "UKIM" }
+
       expect(described_class.bridge(store:, keys:, config: OpenLanes::Config.new, env:)).to be_nil
       expect(OpenLanes::UI).to have_received(:log)
         .with(%r{SLACK_BOT_TOKEN is set but no channel is: set slack\.channel in \.openlanes/config\.yml or OPENLANES_SLACK_CHANNEL}, level: :warn)

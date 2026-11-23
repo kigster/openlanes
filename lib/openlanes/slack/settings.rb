@@ -21,6 +21,14 @@ module OpenLanes
 
       # @return [Boolean]
       def operators? = operators.any?
+
+      # Whether the project asked for Slack: a channel, a workspace or an
+      # operator is named. The token does not count, because a token
+      # exported for another tool would then make every project on the
+      # machine warn on every run.
+      #
+      # @return [Boolean]
+      def asked_for? = !channel.nil? || !workspace.nil? || operators?
     end
 
     class Settings

@@ -49,11 +49,12 @@ module OpenLanes
     end
 
     # The bridge a live run asks its questions through, or nil when the
-    # project has not asked for one. A half of the configuration without the
-    # other is said out loud, once: a token with no channel, or a channel
-    # with no token, would otherwise be found out only when a question went
-    # unanswered. So is one that cannot be read, which costs the polls and
-    # not the run.
+    # project has not asked for one ({Settings#asked_for?}). A half of the
+    # configuration without the other is said out loud, once: a channel with
+    # no token, or a token and operators with no channel, would otherwise be
+    # found out only when a question went unanswered. So is one that cannot
+    # be read, which costs the polls and not the run. A token alone says
+    # nothing: it may be exported for another tool.
     #
     # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
     # @param keys [OpenLanes::Live::Keys]
@@ -63,7 +64,7 @@ module OpenLanes
     def bridge(store:, keys:, config: Config.current, env: ENV)
       settings = Settings.from(config:, env:)
       token = API.token_from(env)
-      return nil unless settings.channel || token
+      return nil unless settings.asked_for? && (settings.channel || token)
 
       if (missing = missing_for_bridge(settings, token))
         return unbridged(missing)
