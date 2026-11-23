@@ -20,11 +20,17 @@ RSpec.describe OpenLanes::Slack::EnvFile do
     expect(file["ONE"]).to be_nil
   end
 
-  it "changes the lines it is given, adds the ones that are missing, and keeps every other" do
+  it "changes the lines it is given, export kept, adds the ones that are missing, and keeps every other" do
     File.write(path, "# keep me\nSLACK_BOT_TOKEN=xoxb\nexport CHANNEL=old")
     file.write("CHANNEL" => "C1", "OPERATORS" => "U1,U2")
 
-    expect(File.read(path)).to eq("# keep me\nSLACK_BOT_TOKEN=xoxb\nCHANNEL=C1\nOPERATORS=U1,U2\n")
+    expect(File.read(path)).to eq("# keep me\nSLACK_BOT_TOKEN=xoxb\nexport CHANNEL=C1\nOPERATORS=U1,U2\n")
+  end
+
+  it "reads a value with a single quote back as it wrote it" do
+    file.write("NOTE" => "it's")
+
+    expect([File.read(path), file["NOTE"], file.changes("NOTE" => "it's")]).to eq(["NOTE='it'\\''s'\n", "it's", {}])
   end
 
   it "quotes a value the shell would take as a comment" do

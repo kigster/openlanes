@@ -6,7 +6,7 @@ module OpenLanes
     # is not asked about is kept as it was typed, comments included.
     class EnvFile
       # `NAME=value`, with the `export` a shell allows before it.
-      LINE = /\A\s*(?:export\s+)?(?<name>[A-Za-z_]\w*)=(?<value>.*)\z/
+      LINE = /\A\s*(?<export>export\s+)?(?<name>[A-Za-z_]\w*)=(?<value>.*)\z/
 
       # A value that needs no quotes in a shell.
       BARE = %r{\A[\w.,:/@%+=-]+\z}
@@ -43,11 +43,13 @@ module OpenLanes
       def write(values)
         missing = values.dup
         kept = lines.map do |line|
-          name = LINE.match(line)&.[](:name)
-          next line unless values.key?(name)
+          match = LINE.match(line)
+          next line unless match && values.key?(match[:name])
 
-          missing.delete(name)
-          "#{name}=#{quoted(values.fetch(name))}"
+          missing.delete(match[:name])
+          # A line that said `export` keeps saying it: a `.env` that a shell
+          # sources needs it, or the variable never reaches the run.
+          "#{"export " if match[:export]}#{match[:name]}=#{quoted(values.fetch(match[:name]))}"
         end
         added = missing.map { |name, value| "#{name}=#{quoted(value)}" }
         save("#{[*kept, *added].join("\n")}\n")
@@ -76,8 +78,15 @@ module OpenLanes
       # @return [String]
       def quoted(value) = value.match?(BARE) ? value : "'#{value.gsub("'", "'\\\\''")}'"
 
+      # Single quotes are undone the way {#quoted} made them, `'\''` and all,
+      # so a value written here reads back as itself.
+      #
       # @return [String]
-      def unquoted(value) = value.match(/\A(["'])(.*)\1\z/)&.[](2) || value
+      def unquoted(value)
+        return value.delete_prefix("'").delete_suffix("'").gsub("'\\''", "'") if value.match?(/\A'.*'\z/)
+
+        value.match(/\A"(.*)"\z/)&.[](1) || value
+      end
     end
   end
 end
