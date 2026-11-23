@@ -23,15 +23,6 @@ module OpenLanes
         # @return [Hash]
         def update(&) = document.update(&)
 
-        # @param data [Hash]
-        # @param agent [String]
-        # @return [Hash] the agent's journal rounds under {PlanState::MEMORY}, created when missing
-        def rounds_for(data, agent) = ((data[MEMORY] ||= {})[agent] ||= {})["rounds"] ||= {}
-
-        # @param rounds [Hash] journal rounds
-        # @return [Integer] how many entries they hold between them
-        def entries_in(rounds) = rounds.sum { |_, value| Array(value["entries"]).size }
-
         # @param text [String, nil]
         # @return [Time]
         def parse_time(text) = Document.parse_time(text)

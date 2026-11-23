@@ -61,6 +61,7 @@ classDiagram
   class OpenLanes__Plans__PlanState__Extensions["PlanState::Extensions"]
   class OpenLanes__Plans__PlanState__Finish["PlanState::Finish"]
   class OpenLanes__Plans__PlanState__Holds["PlanState::Holds"]
+  class OpenLanes__Plans__PlanState__JournalSection["PlanState::JournalSection"]
   class OpenLanes__Plans__PlanState__LastKnown["PlanState::LastKnown"]
   class OpenLanes__Plans__PlanState__LockRecord["PlanState::LockRecord"]
   class OpenLanes__Plans__PlanState__Memory["PlanState::Memory"]
@@ -157,6 +158,7 @@ classDiagram
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Extensions : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Finish : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Holds : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__JournalSection : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__LastKnown : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__LockRecord : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Memory : uses
@@ -168,8 +170,7 @@ classDiagram
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Section : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Signatures : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Stages : uses
-  OpenLanes__Plans__PlanState__Answers ..> OpenLanes__Error : uses
-  OpenLanes__Plans__PlanState__Answers --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Answers --|> OpenLanes__Plans__PlanState__JournalSection : inherits
   OpenLanes__Plans__PlanState__Conversions --|> OpenLanes__Plans__PlanState__Section : inherits
   OpenLanes__Plans__PlanState__Document ..> OpenLanes__Error : uses
   OpenLanes__Plans__PlanState__Document ..> OpenLanes__Plans__Feature : uses
@@ -180,17 +181,18 @@ classDiagram
   OpenLanes__Plans__PlanState__Finish ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans__PlanState__Finish --|> OpenLanes__Plans__PlanState__Section : inherits
   OpenLanes__Plans__PlanState__Holds ..> OpenLanes__Plans__Journal__Held : uses
-  OpenLanes__Plans__PlanState__Holds --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Holds --|> OpenLanes__Plans__PlanState__JournalSection : inherits
+  OpenLanes__Plans__PlanState__JournalSection ..> OpenLanes__Error : uses
+  OpenLanes__Plans__PlanState__JournalSection --|> OpenLanes__Plans__PlanState__Section : inherits
   OpenLanes__Plans__PlanState__LastKnown ..> OpenLanes__Error : uses
   OpenLanes__Plans__PlanState__LastKnown ..> OpenLanes__Plans__LastKnownState : uses
   OpenLanes__Plans__PlanState__LastKnown --|> OpenLanes__Plans__PlanState__Section : inherits
   OpenLanes__Plans__PlanState__LockRecord --|> OpenLanes__Plans__PlanState__Section : inherits
-  OpenLanes__Plans__PlanState__Memory ..> OpenLanes__Error : uses
   OpenLanes__Plans__PlanState__Memory ..> OpenLanes__Plans__Journal : uses
   OpenLanes__Plans__PlanState__Memory ..> OpenLanes__Plans__Journal__Entry : uses
   OpenLanes__Plans__PlanState__Memory ..> OpenLanes__Plans__Journal__Rejection : uses
   OpenLanes__Plans__PlanState__Memory ..> OpenLanes__Plans__Journal__Round : uses
-  OpenLanes__Plans__PlanState__Memory --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Memory --|> OpenLanes__Plans__PlanState__JournalSection : inherits
   OpenLanes__Plans__PlanState__MergeRisk --|> OpenLanes__Plans__PlanState__Section : inherits
   OpenLanes__Plans__PlanState__Messages ..> OpenLanes__Error : uses
   OpenLanes__Plans__PlanState__Messages --|> OpenLanes__Plans__PlanState__Section : inherits

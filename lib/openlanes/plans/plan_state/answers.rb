@@ -5,7 +5,7 @@ module OpenLanes
     class PlanState
       # A person's answers to an agent's `blocked.md` questions (M3), and who
       # asked them.
-      class Answers < Section
+      class Answers < JournalSection
         # Appended to the agent's latest round, once: the check is made under
         # the lock the write takes, so two drains at once cannot both write it.
         #
@@ -14,7 +14,7 @@ module OpenLanes
         # @return [OpenLanes::Plans::Journal::Entry, nil] nil when it was there
         # @raise [OpenLanes::Error] on an agent name that is not one token
         def answer!(agent, entry)
-          raise Error, "a journal needs an agent name" unless agent.to_s.match?(/\A[\w-]+\z/)
+          journal_agent!(agent)
 
           written = nil
           record = entry.to_json_h

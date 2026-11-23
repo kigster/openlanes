@@ -5,7 +5,7 @@ module OpenLanes
     class PlanState
       # Each agent's journal on this plan (M2): the lines it printed as it
       # worked, kept under {PlanState::MEMORY}, one record per journal round.
-      class Memory < Section
+      class Memory < JournalSection
         # The keys a journal round opens with, kept beside the code that
         # writes the round, not on the facade.
         #
@@ -20,7 +20,7 @@ module OpenLanes
         # @param agent [String]
         # @return [Array<OpenLanes::Plans::Journal::Round>]
         def journal(agent)
-          rounds = read.dig(MEMORY, agent, "rounds") || {}
+          rounds = rounds_in(read, agent)
           first = 1
           rounds.sort_by { |key, _| key.to_i }.map do |key, value|
             entries = Array(value["entries"]).map { Journal::Entry.from_h(it) }
@@ -41,7 +41,7 @@ module OpenLanes
         # @return [Array(Integer, Array<OpenLanes::Plans::Journal::Rejection>)]
         # @raise [OpenLanes::Error] on an agent name that is not one token
         def journal!(agent, entries, number, opening)
-          raise Error, "a journal needs an agent name" unless agent.to_s.match?(/\A[\w-]+\z/)
+          journal_agent!(agent)
 
           rejected = []
           update do |data|

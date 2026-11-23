@@ -5,7 +5,7 @@ module OpenLanes
     class PlanState
       # What the session of an agent's last round already holds of its
       # journal ({Journal::Held}), kept beside its rounds under {PlanState::HELD}.
-      class Holds < Section
+      class Holds < JournalSection
         # @param agent [String]
         # @return [OpenLanes::Plans::Journal::Held, nil]
         def held(agent)
@@ -23,9 +23,8 @@ module OpenLanes
         def hold!(agent, session)
           through = nil
           update do |data|
-            memory = ((data[MEMORY] ||= {})[agent] ||= {})
-            through = entries_in(memory["rounds"] ||= {})
-            memory[HELD] = { "session" => session, "through" => through }
+            through = entries_in(rounds_for(data, agent))
+            memory_of(data, agent)[HELD] = { "session" => session, "through" => through }
           end
           Journal::Held.new(session:, through:)
         end
