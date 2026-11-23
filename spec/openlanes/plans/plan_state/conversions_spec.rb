@@ -17,6 +17,7 @@ RSpec.describe OpenLanes::Plans::PlanState::Conversions, :tree do
       original: "?",
       model: "m",
       outcome: "converted",
+      note: nil,
       at:))
     expect([section.converted?("d1"), section.converted?("d2"), section.conversions.first.key?("note")]).to eq([true, false, false])
   end

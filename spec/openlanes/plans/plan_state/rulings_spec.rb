@@ -20,6 +20,7 @@ RSpec.describe OpenLanes::Plans::PlanState::Rulings, :tree do
       findings: { struck: [:F1], critical: [] },
       reason: "out of scope",
       trigger: "appeal",
+      review: nil,
       at:)
     expect(section.rule!(ruling).keys).to eq(%w[at kind pr outcome findings reason trigger])
     expect(section.rulings.first["findings"]).to eq("struck" => ["F1"], "critical" => [])

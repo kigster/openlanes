@@ -11,8 +11,8 @@ RSpec.describe OpenLanes::Plans::PlanState::Messages, :tree do
   end
   let(:at) { Time.utc(2026, 11, 17, 9, 0, 0) }
 
-  def send_message(**fields)
-    section.message!(OpenLanes::Plans::PlanState::Message.new(from: "a", to: "b", body: "hi", at:, **fields))
+  def send_message(after: 0, command: nil)
+    section.message!(OpenLanes::Plans::PlanState::Message.new(from: "a", to: "b", body: "hi", at:, after:, command:))
   end
 
   it "numbers after what mailbox.md took, and applies one command once" do

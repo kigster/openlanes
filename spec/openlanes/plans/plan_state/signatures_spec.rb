@@ -11,7 +11,14 @@ RSpec.describe OpenLanes::Plans::PlanState::Signatures, :tree do
   end
   let(:at) { Time.utc(2026, 11, 17, 9, 0, 0) }
 
-  def sign(**fields) = section.sign!(OpenLanes::Plans::PlanState::Signature.new(agent: "backend-coder", round: 1, at:, **fields))
+  def sign(status:, next_agent: nil)
+    section.sign!(OpenLanes::Plans::PlanState::Signature.new(agent: "backend-coder",
+      round: 1,
+      status:,
+      note: nil,
+      next_agent:,
+      at:))
+  end
 
   it "writes a signature and reads it back as ledger entries, two lines each" do
     sign(status: "Completed", next_agent: "staff-reviewer")

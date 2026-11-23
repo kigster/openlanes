@@ -7,13 +7,9 @@ module OpenLanes
     class PlanState
       # One message as {PlanState#message!} receives it. +after+ is the
       # numbers already taken elsewhere (mailbox.md); +command+ the id of the
-      # page's command that sent it, applied at least once (W13).
+      # page's command that sent it, applied at least once (W13). Every field
+      # is required: the defaults live on the facade.
       Message = Data.define(:from, :to, :body, :at, :after, :command) do
-        # @param at [Time]
-        # @param after [Integer]
-        # @param command [String, nil]
-        def initialize(at: Time.now, after: 0, command: nil, **) = super
-
         # The id, not the number, is what a drain dedupes on: a worktree's
         # copy of the file numbers its messages independently of the main
         # checkout's, so two different messages can both be #4.

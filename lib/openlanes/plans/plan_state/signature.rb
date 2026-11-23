@@ -3,13 +3,9 @@
 module OpenLanes
   module Plans
     class PlanState
-      # One ledger line as {PlanState#sign!} receives it, checked before it is written.
+      # One ledger line as {PlanState#sign!} receives it, checked before it is
+      # written. Every field is required: the defaults live on the facade.
       Signature = Data.define(:agent, :round, :status, :note, :next_agent, :at) do
-        # @param note [String, nil]
-        # @param next_agent [String, nil] only after Completed
-        # @param at [Time]
-        def initialize(note: nil, next_agent: nil, at: Time.now, **) = super
-
         # @return [void]
         # @raise [OpenLanes::Error] for a status outside the ledger's vocabulary,
         #   a handoff after anything but Completed, or an agent that is not one token
