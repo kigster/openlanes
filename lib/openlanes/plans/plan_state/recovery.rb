@@ -20,14 +20,39 @@ module OpenLanes
           true
         end
 
-        # The latest stage of +agent+ that names a session is the candidate:
-        # resumable only when it settled leaving the plan in +state+, nothing
-        # moved the plan since, it ran in +root+, and on the same adapter.
+        # Asked before the new round's own stage is written, so the answer is
+        # about the rounds before it.
+        #
+        # The latest stage of +agent+ that names a session is the candidate. It
+        # is resumable only when it settled leaving the plan in +state+, no
+        # stage started after it moved the plan anywhere else, and it ran in
+        # +root+: `claude` keeps its sessions per working directory, so an id
+        # recorded in a worktree is not found from the main checkout. The
+        # candidate's own `from` is not compared, because an agent that
+        # `starts_as` renames the folder on dispatch: its first round leaves
+        # from Planned and works in Building, and its second leaves from
+        # Building.
+        #
+        # A move no agent made, such as `resync dirs` or a person through
+        # the CLI, records no stage, so {Stages#state!} counts every move in
+        # `moves` and a settling stage notes the count it saw: a count that
+        # has grown since means the plan went away and came back. A folder
+        # renamed by hand, outside openlanes, is not counted.
+        #
+        # A round that ends Blocked starts the next one fresh, after the
+        # person answers: the plan went to Blocked and back. That is the case
+        # where the earlier context would help most, and it is deliberately
+        # conservative for now; the answer reaches the agent through
+        # blocked.md either way.
+        #
+        # A session belongs to the CLI that opened it, so one recorded on
+        # another adapter is not resumed: a reviewer replaced on the main
+        # coding agent (D14 in plan 031) would otherwise hand claude a codex id.
         #
         # @param agent [String]
-        # @param state [#to_s]
-        # @param root [String]
-        # @param adapter [#to_s, nil]
+        # @param state [#to_s] the state key the plan is in now
+        # @param root [String] the checkout the new round will run in
+        # @param adapter [#to_s, nil] the adapter the new round runs on
         # @return [OpenLanes::Plans::PlanState::Resumption]
         def resumption(agent, state, root, adapter)
           data = read
@@ -40,7 +65,11 @@ module OpenLanes
             reason: reason || "round #{last["round"]} left it in #{state}")
         end
 
-        # Stages a dead harness left Started, as only older releases wrote them.
+        # Stages a dead harness left Started. Nobody is working them, and nobody
+        # will finish them unless a run picks them up. Only a stage an older
+        # release wrote carries `run`; newer ones leave it to the run's
+        # {Engine::StateFile}, so they are never reported here.
+        #
         # @param alive [#call] pid → Boolean
         # @param pid [Integer] this run, which is never its own crash
         # @return [Array<Hash>]

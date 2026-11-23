@@ -10,8 +10,17 @@ module OpenLanes
         def stages = read["stages"]
 
         # Record or update one agent's round. A later call for the same agent
-        # and round updates the latest record of it; +reset+ appends a new
-        # record instead, because rounds are numbered per state and per run.
+        # and round updates the latest record of it, so a round is one record
+        # from dispatch to settlement.
+        #
+        # A new dispatch passes +reset+, which appends a record rather than
+        # finding one: rounds are numbered per state and per run, so round 1 of
+        # a later run shares its number with round 1 of an earlier one. Merging
+        # into the earlier record would carry its session, checkout and outcome
+        # into a round that has none of them yet, and replacing it would lose
+        # that round from `openlanes state show`. Appending keeps both, in
+        # dispatch order, which {Recovery#resumption} relies on when two rounds
+        # started in the same second.
         #
         # @param agent [String]
         # @param round [Integer]

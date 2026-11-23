@@ -9,8 +9,11 @@ module OpenLanes
         # @return [Array<Hash>]
         def messages = read["messages"]
 
-        # Append one message and give it the next number. A second append
-        # under the same command id, to the same reader, returns the first.
+        # Append one message and give it the next number. A command is applied
+        # at least once (W13), so a second append under the same command id, to
+        # the same reader, returns the first and adds nothing: an engine that
+        # died between the append and recording the reply does not say the
+        # same thing twice.
         #
         # @param message [OpenLanes::Plans::PlanState::Message]
         # @return [Hash]
@@ -26,12 +29,24 @@ module OpenLanes
           written
         end
 
-        # Keep a message that arrived with its number already given. Never
-        # deduped by number alone; a different message whose number is taken
-        # is kept under the next free one.
+        # Keep a message that arrived with its number already given, as one
+        # drained from Redis does (B4).
         #
-        # @param message [Hash] string keys
-        # @param reserved [Array<Integer>] numbers taken by mailbox.md
+        # A message is the same message when its id matches, or, when either
+        # side was written before ids existed, when sender, recipient, time and
+        # body all match. Never by number alone: `mail send` in a worktree
+        # numbers against the worktree's `state.json`, the main checkout
+        # numbers against its own, and both can hand out #4. Deduping on the
+        # number dropped the second #4 as a "duplicate" without a word.
+        #
+        # So the usual case, `mail send` having already written here before it
+        # published, writes nothing at all and the file's mtime stays; and a
+        # different message whose number is taken is kept under the next free
+        # one.
+        #
+        # @param message [Hash] as {#message!} writes it, string keys
+        # @param reserved [Array<Integer>] numbers taken outside this file,
+        #   i.e. by mailbox.md
         # @return [Hash, nil] the message as written, nil when it was here
         def deliver!(message, reserved)
           return nil if seen?(messages, message)
@@ -47,10 +62,12 @@ module OpenLanes
           delivered
         end
 
-        # Mark one message read. Only its recipient may ack it.
+        # Mark one message read, under the lock, so an ack and a send in the
+        # same second cannot lose each other. Only its recipient may ack it:
+        # `read` says the reader read it, not that somebody did.
         #
         # @param number [Integer]
-        # @param by [String]
+        # @param by [String] the agent acking, who must be the recipient
         # @return [Hash, nil] the message as written, nil when there is no such number
         # @raise [OpenLanes::Error] when +by+ is not the recipient
         def ack!(number, by)
