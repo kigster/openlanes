@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "time"
+
 module OpenLanes
   module Plans
     # How many rounds an agent has spent on one visit of a plan to a state,

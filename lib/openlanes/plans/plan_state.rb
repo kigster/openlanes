@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 require "forwardable"
+# What loading the class loaded before the split, where every section's code
+# lived in this one file. Code that never requires these itself came to rely
+# on it ({Rounds} parsed times with only `PlanState` having loaded `time`), so
+# the split keeps the load order it found.
+%w[digest fileutils json securerandom socket time tmpdir].each { require it }
 
 module OpenLanes
   module Plans
