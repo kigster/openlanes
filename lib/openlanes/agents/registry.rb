@@ -152,6 +152,7 @@ module OpenLanes
           toggle:        meta["toggle"]&.to_s,
           confined_to:   confined_to(meta["confined_to"], path),
           small_diff:    SmallDiff.parse(meta["small_diff"], path),
+          by_quality:    ByQuality.parse(meta["by_quality"], path),
           review_stage:  review_stage(meta["review_stage"], path),
           watches:       watches(meta, path),
           **extension(meta)

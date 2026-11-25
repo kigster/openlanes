@@ -48,9 +48,9 @@ classDiagram
   OpenLanes__Adapters ..> OpenLanes__Log : 1
   OpenLanes__Adapters ..> OpenLanes__Plans : 1
   OpenLanes__Adapters ..> OpenLanes__UI : 2
-  OpenLanes__Agents ..> OpenLanes : 6
-  OpenLanes__Agents ..> OpenLanes__Adapters : 7
-  OpenLanes__Agents ..> OpenLanes__Config : 5
+  OpenLanes__Agents ..> OpenLanes : 7
+  OpenLanes__Agents ..> OpenLanes__Adapters : 8
+  OpenLanes__Agents ..> OpenLanes__Config : 6
   OpenLanes__Agents ..> OpenLanes__Engine : 2
   OpenLanes__Agents ..> OpenLanes__Plans : 6
   OpenLanes__Agents ..> OpenLanes__UI : 1
