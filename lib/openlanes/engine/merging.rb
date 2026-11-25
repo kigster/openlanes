@@ -111,7 +111,10 @@ module OpenLanes
       # @param clock [#call]
       # @param held [#call, nil] path -> who holds an alock lock in it, or nil;
       #   a merged plan's checkout somebody holds is not retired
-      def initialize(github:, outcomes:, merge_by:, worktree: nil, publisher: nil, clock: -> { Container["clock"].now }, held: nil)
+      # @param branch [String] the branch plans merge into, whose CI gates a merge
+      def initialize(github:, outcomes:, merge_by:, worktree: nil, publisher: nil, clock: -> { Container["clock"].now }, held: nil,
+        branch: Upkeep::DEFAULT_BRANCH)
+        @branch = branch
         @github = github
         @outcomes = outcomes
         @merge_by = merge_by
@@ -392,12 +395,12 @@ module OpenLanes
       # @return [Boolean] whether GitHub is still computing it
       def unknown?(status) = status.to_s.upcase == "UNKNOWN"
 
-      # CI on `main` (R5). No checks at all reads as `:none`, which holds
+      # CI on the base branch (R5). No checks at all reads as `:none`, which holds
       # the merge like red does: nobody watches it, and no checks is no
       # evidence `main` builds.
       #
       # @return [Symbol] as {Vcs::CiGate.verdict}
-      def main_ci(repo) = Vcs::CiGate.verdict(@github.branch_checks(branch: "main", repo:))
+      def main_ci(repo) = Vcs::CiGate.verdict(@github.branch_checks(branch: @branch, repo:))
 
       # Every other plan whose checkout exists, to be rebased onto `main`
       # once no agent is running in it (R5). Never done here: a rebase moves

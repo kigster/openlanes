@@ -20,10 +20,13 @@ module OpenLanes
     # The dispatcher talks to {Keeper} alone; nothing here knows the
     # dispatcher, the runner or the publisher.
     module Upkeep
-      # The branch every plan's pull requests target.
-      MAIN = "main"
+      # The branch pull requests target when the caller names none. A run
+      # names the repository's own (`origin/HEAD`): taken as given, it sent
+      # `branch_head(main)` to a repository on `master` every tick, and
+      # GitHub answered 422 each time.
+      DEFAULT_BRANCH = "main"
 
-      # One pull request that no longer merges clean onto {MAIN}.
+      # One pull request that no longer merges clean onto its base branch.
       #
       # @!attribute [r] ordinal
       #   @return [String] its plan
@@ -53,12 +56,13 @@ module OpenLanes
       #   {OpenLanes::Error} when refused
       # @param github [Vcs::GitHub]
       # @param clock [#call]
+      # @param branch [String] the branch the pull requests target
       # @return [Keeper]
-      def keeper(push:, github: Container["github"], clock: Container["clock"].method(:now))
+      def keeper(push:, github: Container["github"], clock: Container["clock"].method(:now), branch: DEFAULT_BRANCH)
         owed = Owed.new
         Keeper.new(addressing: Addressing.new(github:),
           finishing: Finishing.new(github:),
-          sweep: Sweep.new(github:, owed:, actions: Actions.new(github:, clock:)),
+          sweep: Sweep.new(github:, owed:, actions: Actions.new(github:, clock:, branch:), branch:),
           resolution: Resolution.new(owed:, push:),
           owed:)
       end
