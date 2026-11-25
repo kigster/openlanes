@@ -181,7 +181,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
   describe "--rounds" do
     before { building_plan }
 
-    it "reaches the runner as a cap on every agent's own rounds" do
+    it "reaches the runner in place of every agent's own rounds" do
       run(rounds: 1)
 
       expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_including(rounds: 1))

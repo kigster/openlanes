@@ -195,7 +195,7 @@ openlanes run 005 --isolation shared           # one checkout, one agent at a ti
 | Rounds | `rounds:` (at most 5)         | `--rounds`     | the agent's own |
 | Tokens | none                          | `--max-tokens` | unmetered       |
 
-Flags can only tighten what an agent declares, never loosen it. Each agent is told its clock and its token budget in its prompt. As its time runs out, the agent is warned at 10, 5 and 1 minute left, then asked to stop; if it is still running 60 seconds after that, it is killed. The token meter aborts an agent once it goes over its budget.
+`--timeout` and `--max-tokens` can only tighten what an agent declares, never loosen it; `--rounds` replaces the agent's number, up to 5. Each agent is told its clock and its token budget in its prompt. As its time runs out, the agent is warned at 10, 5 and 1 minute left, then asked to stop; if it is still running 60 seconds after that, it is killed. The token meter aborts an agent once it goes over its budget.
 
 ### Following a run, and stopping it
 

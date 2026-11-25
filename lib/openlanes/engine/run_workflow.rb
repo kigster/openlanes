@@ -551,6 +551,12 @@ module OpenLanes
         File.read(path)
       end
 
+      # The branch pull requests target, merges land on and upkeep compares
+      # against: the repository's own, from `origin/HEAD`, read once per run.
+      #
+      # @return [String]
+      def default_branch = @default_branch ||= Vcs.default_branch(@root)
+
       # The one thing this harness does that leaves the machine — pushing a
       # branch and opening its pull request — so it takes one more thing to
       # turn on than everything else here: not being a dry run is not enough,
@@ -562,12 +568,6 @@ module OpenLanes
       #
       # @param root [String]
       # @param isolation [Symbol]
-      # The branch pull requests target, merges land on and upkeep compares
-      # against: the repository's own, from `origin/HEAD`, read once per run.
-      #
-      # @return [String]
-      def default_branch = @default_branch ||= Vcs.default_branch(@root)
-
       # @return [OpenLanes::Vcs::Publisher, nil]
       def publisher_for(root, isolation)
         if isolation != :worktree || @options[:git_push] == false

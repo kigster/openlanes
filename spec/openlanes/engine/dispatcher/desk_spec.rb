@@ -39,9 +39,10 @@ RSpec.describe OpenLanes::Engine::Dispatcher::Desk, :tree do
     expect([quiet, desk.quiet?]).to eq([true, false])
   end
 
-  it "lets --rounds tighten an agent's rounds, never loosen them" do
-    tight = described_class.new(runner:, state: nil, rounds: 1, clock: OpenLanes::Clock::System, stay: false, journal: nil, extensions: nil)
-    expect([tight.rounds_for(coder), desk.rounds_for(coder)]).to eq([1, coder.rounds])
+  it "lets --rounds replace an agent's rounds, up to the maximum" do
+    given = ->(n) { described_class.new(runner:, state: nil, rounds: n, clock: OpenLanes::Clock::System, stay: false, journal: nil, extensions: nil) }
+    expect([given.call(1).rounds_for(coder), given.call(9).rounds_for(coder), desk.rounds_for(coder)])
+      .to eq([1, OpenLanes::Agents::Agent::MAX_ROUNDS, coder.rounds])
   end
 
   it "finds a running job by its key, and tells it nothing when it has no control file" do

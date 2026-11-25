@@ -9,7 +9,7 @@ module OpenLanes
         #
         # @!attribute runner [OpenLanes::Engine::Runner]
         # @!attribute state [OpenLanes::Engine::StateFile, nil] nil under a dry run
-        # @!attribute rounds [Integer, nil] `--rounds`, a cap that only tightens
+        # @!attribute rounds [Integer, nil] `--rounds`, in place of each agent's own, at most 5
         # @!attribute stay [Boolean] whether the run idles past its fixed points
         # @!attribute journal [OpenLanes::Engine::EventJournal, nil]
         # @!attribute extensions [OpenLanes::Engine::Extensions, nil]
