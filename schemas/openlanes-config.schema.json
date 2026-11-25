@@ -593,7 +593,7 @@
                 "string",
                 "number"
               ],
-              "description": "Cap on rounds per agent per plan; each agent declares its own, at most 5 (default: the agent's own)"
+              "description": "Rounds per agent per plan, in place of each agent's own, at most 5 (default: the agent's own)"
             },
             "skip": {
               "type": [
@@ -1874,7 +1874,7 @@
                 "string",
                 "number"
               ],
-              "description": "Cap on rounds per agent per plan; each agent declares its own, at most 5 (default: the agent's own)"
+              "description": "Rounds per agent per plan, in place of each agent's own, at most 5 (default: the agent's own)"
             },
             "skip": {
               "type": [
@@ -2197,7 +2197,7 @@
                 "string",
                 "number"
               ],
-              "description": "Cap on rounds per agent per plan; each agent declares its own, at most 5 (default: the agent's own)"
+              "description": "Rounds per agent per plan, in place of each agent's own, at most 5 (default: the agent's own)"
             },
             "skip": {
               "type": [

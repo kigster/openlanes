@@ -58,7 +58,7 @@ module OpenLanes
         # The setup's own fields: the state file (nil under a dry run),
         # `--rounds`, and whether this run idles past its fixed points.
         def state_file = @setup.state
-        def rounds_cap = @setup.rounds
+        def rounds = @setup.rounds
         def stay? = @setup.stay
 
         # @return [OpenLanes::Engine::Rebase] stopped rebases and their failures
@@ -95,7 +95,7 @@ module OpenLanes
         end
 
         def build_collaborators
-          @profiles = Profiles.new(runner:, rounds_cap:, extensions:)
+          @profiles = Profiles.new(runner:, rounds:, extensions:)
           @budgeting = Budgeting.new(runner:, budget: @setup.budget || Engine.budget_for(runner))
           @fences = Fences.new(self)
           @rounds = Rounds.new(@registers)

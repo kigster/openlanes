@@ -9,11 +9,11 @@ module OpenLanes
         # when it cannot.
         class Profiles
           # @param runner [OpenLanes::Engine::Runner]
-          # @param rounds_cap [Integer, nil] `--rounds`
+          # @param rounds [Integer, nil] `--rounds`, in place of each agent's own
           # @param extensions [OpenLanes::Engine::Extensions]
-          def initialize(runner:, rounds_cap:, extensions:)
+          def initialize(runner:, rounds:, extensions:)
             @runner = runner
-            @rounds_cap = rounds_cap
+            @rounds = rounds
             @extensions = extensions
             @models = {}
           end
@@ -34,12 +34,16 @@ module OpenLanes
           # A preview does nothing a second round could build on, and four
           # rounds of it listed every agent four times.
           #
+          # `--rounds` replaces the agent's own number rather than capping it.
+          # As a cap it could only lower it, so `--rounds 6` on a researcher
+          # declaring one round still gave it one, and the plan stalled.
+          #
           # @param agent [OpenLanes::Agents::Agent]
-          # @return [Integer]
+          # @return [Integer] at most {Agents::Agent::MAX_ROUNDS}
           def rounds_for(agent)
             return 1 if @runner.dry_run?
 
-            [agent.rounds, @rounds_cap].compact.min
+            (@rounds || agent.rounds).clamp(1, Agents::Agent::MAX_ROUNDS)
           end
 
           # Every round the agent may run on the plan's state: its own, plus
