@@ -81,6 +81,8 @@ classDiagram
   class OpenLanes__Execution__ProcessStart["ProcessStart"]
   <<module>> OpenLanes__Execution__ProcessStart
   class OpenLanes__Execution__Prompt["Prompt"]
+  class OpenLanes__Execution__Prompt__PlanLock["Prompt::PlanLock"]
+  <<module>> OpenLanes__Execution__Prompt__PlanLock
   class OpenLanes__Execution__Rearm["Rearm"]
   class OpenLanes__Execution__ReviewPacket["ReviewPacket"]
   class OpenLanes__Execution__ReviewPacket__Shelf["ReviewPacket::Shelf"]
@@ -230,6 +232,7 @@ classDiagram
   OpenLanes__Execution__Prompt ..> OpenLanes__Error : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Execution__Checks : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Execution__JournalWindow : uses
+  OpenLanes__Execution__Prompt ..> OpenLanes__Execution__Prompt__PlanLock : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Lifecycle__Completion : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__Journal : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__PlanState : uses

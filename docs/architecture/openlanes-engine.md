@@ -11,6 +11,7 @@ classDiagram
   class OpenLanes__Adapters__Claude__Catalogue["OpenLanes::Adapters::Claude::Catalogue"]
   class OpenLanes__Agents["OpenLanes::Agents"]
   <<module>> OpenLanes__Agents
+  class OpenLanes__Agents__Agent["OpenLanes::Agents::Agent"]
   class OpenLanes__Agents__Dealing["OpenLanes::Agents::Dealing"]
   class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
   <<module>> OpenLanes__Agents__Names
@@ -431,6 +432,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Desk__Lookups ..> OpenLanes__Plans__Ledger__Reading : uses
   OpenLanes__Engine__Dispatcher__Desk__Lookups ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Dispatcher__Desk__Lookups ..> OpenLanes__Plans__Tree : uses
+  OpenLanes__Engine__Dispatcher__Desk__Profiles ..> OpenLanes__Agents__Agent : uses
   OpenLanes__Engine__Dispatcher__Desk__Profiles ..> OpenLanes__Agents__Profile : uses
   OpenLanes__Engine__Dispatcher__Desk__RoundLedger ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Dispatcher__Desk__RoundLedger ..> OpenLanes__Plans__Rounds : uses
@@ -639,6 +641,7 @@ classDiagram
   OpenLanes__Engine__Merging ..> OpenLanes__Agents__Names : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Container : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Engine__PrWatch : uses
+  OpenLanes__Engine__Merging ..> OpenLanes__Engine__Upkeep : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Engine__Verification__Outcome : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Error : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Plans__PlanState : uses
