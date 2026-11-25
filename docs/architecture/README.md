@@ -171,7 +171,7 @@ classDiagram
   OpenLanes__Memory ..> OpenLanes__Events : 1
   OpenLanes__Memory ..> OpenLanes__Execution : 3
   OpenLanes__Memory ..> OpenLanes__Vcs : 2
-  OpenLanes__Plans ..> OpenLanes : 23
+  OpenLanes__Plans ..> OpenLanes : 28
   OpenLanes__Plans ..> OpenLanes__Adapters : 1
   OpenLanes__Plans ..> OpenLanes__Agents : 3
   OpenLanes__Plans ..> OpenLanes__UI : 3

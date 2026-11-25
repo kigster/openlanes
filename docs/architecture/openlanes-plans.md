@@ -55,6 +55,24 @@ classDiagram
   class OpenLanes__Plans__Mailbox["Mailbox"]
   class OpenLanes__Plans__Ordinal["Ordinal"]
   class OpenLanes__Plans__PlanState["PlanState"]
+  class OpenLanes__Plans__PlanState__Answers["PlanState::Answers"]
+  class OpenLanes__Plans__PlanState__Conversions["PlanState::Conversions"]
+  class OpenLanes__Plans__PlanState__Document["PlanState::Document"]
+  class OpenLanes__Plans__PlanState__Extensions["PlanState::Extensions"]
+  class OpenLanes__Plans__PlanState__Finish["PlanState::Finish"]
+  class OpenLanes__Plans__PlanState__Holds["PlanState::Holds"]
+  class OpenLanes__Plans__PlanState__JournalSection["PlanState::JournalSection"]
+  class OpenLanes__Plans__PlanState__LastKnown["PlanState::LastKnown"]
+  class OpenLanes__Plans__PlanState__LockRecord["PlanState::LockRecord"]
+  class OpenLanes__Plans__PlanState__Memory["PlanState::Memory"]
+  class OpenLanes__Plans__PlanState__MergeRisk["PlanState::MergeRisk"]
+  class OpenLanes__Plans__PlanState__Messages["PlanState::Messages"]
+  class OpenLanes__Plans__PlanState__QualityAsk["PlanState::QualityAsk"]
+  class OpenLanes__Plans__PlanState__Recovery["PlanState::Recovery"]
+  class OpenLanes__Plans__PlanState__Rulings["PlanState::Rulings"]
+  class OpenLanes__Plans__PlanState__Section["PlanState::Section"]
+  class OpenLanes__Plans__PlanState__Signatures["PlanState::Signatures"]
+  class OpenLanes__Plans__PlanState__Stages["PlanState::Stages"]
   class OpenLanes__Plans__PullRequest["PullRequest"]
   class OpenLanes__Plans__PullRequestMachine["PullRequestMachine"]
   class OpenLanes__Plans__PullRequestMachine__Refused["PullRequestMachine::Refused"]
@@ -132,19 +150,62 @@ classDiagram
   OpenLanes__Plans__Mailbox ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans__Ordinal ..> OpenLanes__Error : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Error : uses
-  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Feature : uses
-  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Husk : uses
-  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Entry : uses
-  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Held : uses
-  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Rejection : uses
-  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Round : uses
-  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__LastKnownState : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Ledger : uses
-  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Ledger__Entry : uses
-  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Ledger__Handoff : uses
-  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Ledger__Reading : uses
-  OpenLanes__Plans__PlanState ..> OpenLanes__UI : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Answers : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Conversions : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Document : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Extensions : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Finish : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Holds : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__JournalSection : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__LastKnown : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__LockRecord : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Memory : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__MergeRisk : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Messages : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__QualityAsk : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Recovery : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Rulings : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Section : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Signatures : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__PlanState__Stages : uses
+  OpenLanes__Plans__PlanState__Answers --|> OpenLanes__Plans__PlanState__JournalSection : inherits
+  OpenLanes__Plans__PlanState__Conversions --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Document ..> OpenLanes__Error : uses
+  OpenLanes__Plans__PlanState__Document ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Plans__PlanState__Document ..> OpenLanes__Plans__Husk : uses
+  OpenLanes__Plans__PlanState__Document ..> OpenLanes__UI : uses
+  OpenLanes__Plans__PlanState__Extensions --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Finish ..> OpenLanes__Error : uses
+  OpenLanes__Plans__PlanState__Finish ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Plans__PlanState__Finish --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Holds ..> OpenLanes__Plans__Journal__Held : uses
+  OpenLanes__Plans__PlanState__Holds --|> OpenLanes__Plans__PlanState__JournalSection : inherits
+  OpenLanes__Plans__PlanState__JournalSection ..> OpenLanes__Error : uses
+  OpenLanes__Plans__PlanState__JournalSection --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__LastKnown ..> OpenLanes__Error : uses
+  OpenLanes__Plans__PlanState__LastKnown ..> OpenLanes__Plans__LastKnownState : uses
+  OpenLanes__Plans__PlanState__LastKnown --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__LockRecord --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Memory ..> OpenLanes__Plans__Journal : uses
+  OpenLanes__Plans__PlanState__Memory ..> OpenLanes__Plans__Journal__Entry : uses
+  OpenLanes__Plans__PlanState__Memory ..> OpenLanes__Plans__Journal__Rejection : uses
+  OpenLanes__Plans__PlanState__Memory ..> OpenLanes__Plans__Journal__Round : uses
+  OpenLanes__Plans__PlanState__Memory --|> OpenLanes__Plans__PlanState__JournalSection : inherits
+  OpenLanes__Plans__PlanState__MergeRisk --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Messages ..> OpenLanes__Error : uses
+  OpenLanes__Plans__PlanState__Messages --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__QualityAsk --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Recovery ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Plans__PlanState__Recovery --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Rulings --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Section ..> OpenLanes__Plans__PlanState__Document : uses
+  OpenLanes__Plans__PlanState__Signatures ..> OpenLanes__Plans__Ledger__Entry : uses
+  OpenLanes__Plans__PlanState__Signatures ..> OpenLanes__Plans__Ledger__Handoff : uses
+  OpenLanes__Plans__PlanState__Signatures ..> OpenLanes__Plans__Ledger__Reading : uses
+  OpenLanes__Plans__PlanState__Signatures --|> OpenLanes__Plans__PlanState__Section : inherits
+  OpenLanes__Plans__PlanState__Stages --|> OpenLanes__Plans__PlanState__Section : inherits
   OpenLanes__Plans__PullRequestMachine ..> OpenLanes__Error : uses
   OpenLanes__Plans__PullRequestMachine ..> OpenLanes__Plans__PullRequestMachine__Refused : uses
   OpenLanes__Plans__PullRequestMachine ..> OpenLanes__Plans__ReviewLabel : uses

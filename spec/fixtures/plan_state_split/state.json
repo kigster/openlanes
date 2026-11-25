@@ -1,0 +1,185 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "001.00",
+    "slug": "work"
+  },
+  "state": "building",
+  "updated_at": "normalised",
+  "stages": [
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "planned",
+      "started_at": "2026-11-17T09:00:00Z",
+      "adapter": "claude",
+      "session": "s1",
+      "cwd": "/repo",
+      "visit": 0,
+      "to": "building",
+      "finished_at": "2026-11-17T09:01:00Z",
+      "moves": 1
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-11-17T09:00:00Z",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-17T09:01:00Z",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "done",
+      "next": "staff-reviewer"
+    }
+  ],
+  "messages": [
+    {
+      "id": "uuid",
+      "number": 3,
+      "at": "2026-11-17T09:00:00Z",
+      "from": "backend-coder",
+      "to": "frontend-coder",
+      "body": "hi",
+      "read": "yes",
+      "command": "c1"
+    },
+    {
+      "id": "fixed",
+      "number": 4,
+      "at": "2026-11-17T09:00:00Z",
+      "from": "a",
+      "to": "b",
+      "body": "x",
+      "read": "no"
+    }
+  ],
+  "moves": 1,
+  "resume_until": "2026-11-18T09:00:00Z",
+  "global_lock": {
+    "taken_at": "2026-11-17T09:00:00Z"
+  },
+  "last-known-state": {
+    "backend-coder": {
+      "source": "agent",
+      "at": "2026-11-17T09:00:00Z",
+      "round": 1,
+      "status": "Interrupted",
+      "done": [
+        "A"
+      ],
+      "remaining": [
+        "B"
+      ],
+      "next_step": "B",
+      "files_touched": [
+        "a.rb"
+      ]
+    }
+  },
+  "rulings": [
+    {
+      "at": "2026-11-17T09:00:00Z",
+      "kind": "appeal",
+      "pr": 9,
+      "round": 2,
+      "outcome": "struck",
+      "findings": {
+        "struck": [
+          "F1"
+        ],
+        "critical": [],
+        "headings": {
+          "F1": "Bad"
+        }
+      },
+      "reason": "r",
+      "trigger": "t",
+      "review": 1
+    }
+  ],
+  "finished": {
+    "kind": "approved",
+    "at": "2026-11-17T09:00:00Z"
+  },
+  "memory": {
+    "backend-coder": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "n"
+            },
+            {
+              "kind": "question",
+              "text": "Q",
+              "ref": "B1",
+              "answer": "a"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "s1",
+        "through": 1
+      }
+    }
+  },
+  "conversions": [
+    {
+      "question": 1,
+      "digest": "d",
+      "original": "o",
+      "at": "2026-11-17T09:00:00Z",
+      "model": "m",
+      "outcome": "rejected",
+      "note": "why"
+    }
+  ],
+  "merge_risk": {
+    "moves": 1,
+    "at": "2026-11-17T09:00:00Z",
+    "verdicts": {
+      "9": "low"
+    },
+    "rebased": {
+      "10": "2026-11-17T09:00:00Z"
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-17T09:00:00Z",
+      "moves": 1,
+      "stage": "estimate",
+      "estimate": 600,
+      "why": "w",
+      "estimated_at": "2026-11-17T09:00:00Z",
+      "answer": "yes",
+      "by": "operator",
+      "grant": "time",
+      "seconds": 300,
+      "settled_at": "2026-11-17T09:00:00Z",
+      "spent": true
+    }
+  ],
+  "quality_ask": {
+    "asked_at": "2026-11-17T09:00:00Z",
+    "answer": "mvp",
+    "by": "operator",
+    "settled_at": "2026-11-17T09:00:00Z"
+  }
+}
