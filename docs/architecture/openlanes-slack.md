@@ -51,6 +51,7 @@ classDiagram
   OpenLanes__Slack__Bridge ..> OpenLanes__Slack__Poll : uses
   OpenLanes__Slack__Bridge ..> OpenLanes__UI : uses
   OpenLanes__Slack__Connection ..> OpenLanes__Config : uses
+  OpenLanes__Slack__Connection ..> OpenLanes__Error : uses
   OpenLanes__Slack__Connection ..> OpenLanes__Slack : uses
   OpenLanes__Slack__Connection ..> OpenLanes__Slack__API : uses
   OpenLanes__Slack__Connection ..> OpenLanes__Slack__EnvFile : uses

@@ -139,6 +139,30 @@ RSpec.describe OpenLanes::CLI::Slack::Connect do
     expect(File.exist?(dotenv)).to be(false)
   end
 
+  # Without the fallback, a re-run with another workspace's token exported
+  # checked nothing and moved the pin to that workspace.
+  it "keeps the workspace .env already pins, and refuses a token from another one" do
+    File.write(dotenv, "OPENLANES_SLACK_WORKSPACE=T0OTHER\n")
+    _, err, status = run
+
+    expect([status, err]).to match([69, include("T0OTHER")])
+    expect(File.read(dotenv)).to eq("OPENLANES_SLACK_WORKSPACE=T0OTHER\n")
+  end
+
+  it "refuses an --app-env that names no file, before writing anything" do
+    _, err, status = run(app_env: File.join(dir, "missing", ".env"))
+
+    expect([status, err, File.exist?(dotenv)]).to match([69, include("no such file"), false])
+  end
+
+  it "keeps the workspace .openlanes/config.yml pins" do
+    FileUtils.mkdir_p(File.join(dir, ".openlanes"))
+    File.write(File.join(dir, ".openlanes", "config.yml"), "slack:\n  workspace: T0OTHER\n")
+    _, _, status = run
+
+    expect([status, File.exist?(dotenv)]).to eq([69, false])
+  end
+
   it "posts the test poll to the channel it just configured" do
     _, err, status = run(test: true)
 

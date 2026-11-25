@@ -20,11 +20,14 @@ module OpenLanes
       # @param root [String] the project root
       # @param env [Hash] the environment
       # @param app_env [String, nil] the Slack app's own `.env`
+      # @raise [OpenLanes::Error] when +app_env+ names no file. A typo used to
+      #   create an empty one, or, in a missing directory, fail with a
+      #   backtrace after the project's `.env` was already written.
       def initialize(root:, env: ENV, app_env: nil)
         @root = root
         @env = env
         @project = EnvFile.new(File.join(root, ".env"))
-        @app = EnvFile.new(File.expand_path(app_env)) if app_env
+        @app = app_file(app_env) if app_env
       end
 
       # @return [OpenLanes::Slack::EnvFile] the project's `.env`
@@ -43,6 +46,11 @@ module OpenLanes
       # which wins over it: defaulting past it would move a configured
       # project's questions to {DEFAULT_CHANNEL} without a word.
       #
+      # The workspace falls back the same way, for a sharper reason: one not
+      # carried over leaves {Room#identity} nothing to check, so a re-run
+      # with another workspace's token exported moved the pin to that
+      # workspace and asked its test question there.
+      #
       # @param token [String]
       # @param operators [String] ids, separated by commas or spaces
       # @param channel [String, nil] an id, or a public channel's name
@@ -51,9 +59,9 @@ module OpenLanes
       # @raise [OpenLanes::Error] when `.openlanes/config.yml` cannot be read
       def values(token:, operators:, channel: nil, workspace: nil)
         { API::TOKEN_VARIABLE => token,
-          Settings::CHANNEL   => named(channel || self[Settings::CHANNEL] || configured_channel || DEFAULT_CHANNEL),
+          Settings::CHANNEL   => named(channel || self[Settings::CHANNEL] || configured(:channel) || DEFAULT_CHANNEL),
           Settings::OPERATORS => operators.split(/[\s,]+/).reject(&:empty?).join(","),
-          Settings::WORKSPACE => workspace }.compact
+          Settings::WORKSPACE => workspace || self[Settings::WORKSPACE] || configured(:workspace) }.compact
       end
 
       # @param values [Hash{String => String}]
@@ -97,13 +105,22 @@ module OpenLanes
       # @return [String]
       def named(channel) = channel.match?(CHANNEL_ID) || channel.start_with?("#") ? channel : "##{channel}"
 
+      # @return [OpenLanes::Slack::EnvFile]
+      def app_file(path)
+        full = File.expand_path(path)
+        raise OpenLanes::Error, "--app-env #{path}: no such file; name the Slack app's existing .env" unless File.file?(full)
+
+        EnvFile.new(full)
+      end
+
       # @return [Boolean]
       def git?(*) = Open3.capture2e("git", "-C", root, *).last.success?
 
-      # @return [String, nil] `slack.channel` in the project's config file
-      def configured_channel
-        channel = Config.load(root).slack[:channel].to_s.strip
-        channel unless channel.empty?
+      # @param key [Symbol] `:channel` or `:workspace`
+      # @return [String, nil] `slack.<key>` in the project's config file
+      def configured(key)
+        value = Config.load(root).slack[key].to_s.strip
+        value unless value.empty?
       end
     end
   end
