@@ -27,6 +27,15 @@ RSpec.describe OpenLanes::Execution::Executor::Launcher do
     expect(started).to eq([[%w[claude -p x], "/repo"]])
   end
 
+  # The engine claims the plan folder in alock first; without a parent
+  # every `acquire` the agent made inside it was refused.
+  it "names the engine as the agent's alock parent, beside the adapter's own variables" do
+    envs = []
+    recording = ->(_argv, env:, **) { (envs << env) && child }
+    described_class.new(spawn: recording).launch(%w[claude -p x], attempt)
+    expect(envs.first).to include(profile.adapter.environment).and include("AGENT_PARENT_ID" => OpenLanes::Engine::AgentLocks.holder)
+  end
+
   it "hands the handle the process and the sessions its transcript" do
     launcher.launch(%w[claude], attempt)
     expect([handle.child, sessions.current.pid]).to eq([child, 4242])

@@ -124,11 +124,9 @@ module OpenLanes
               AGENT_ID=#{agent.name} alock acquire <path> "<why>"
               AGENT_ID=#{agent.name} alock release <path>
 
-          #{PlanLock.handover(agent.name, subject.feature.path)}
-
-          Otherwise a refused `acquire` means another agent holds it: work on
-          something else, never write it anyway. Before your closing signature,
-          run `AGENT_ID=#{agent.name} alock release-all`.
+          A refused `acquire` means another agent holds it: work on something
+          else, never write it anyway. Before your closing signature, run
+          `AGENT_ID=#{agent.name} alock release-all`.
         PROMPT
       end
 
@@ -253,8 +251,6 @@ module OpenLanes
 
               AGENT_ID=#{agent.name} alock acquire <path> "<why>"
               AGENT_ID=#{agent.name} alock release-all
-
-          #{PlanLock.handover(agent.name, subject.feature.path)}
         PROMPT
       end
 

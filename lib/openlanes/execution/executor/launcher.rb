@@ -18,9 +18,21 @@ module OpenLanes
         # @param attempt [OpenLanes::Execution::Executor::Attempt]
         # @return [OpenLanes::Execution::AgentProcess]
         def launch(argv, attempt, &)
-          child = @spawn.call(argv, chdir: attempt.root, env: attempt.profile.adapter.environment, label: attempt.handle.label)
+          child = @spawn.call(argv, chdir: attempt.root, env: Launcher.environment(attempt.profile.adapter), label: attempt.handle.label)
           follow(child, attempt, argv:, &)
         end
+
+        # What the adapter adds to the child's environment, plus
+        # `AGENT_PARENT_ID`. The engine claims each plan folder in alock
+        # before the job starts; without a parent, alock reads the agent as
+        # a stranger and refuses every `acquire` inside the folder, so
+        # 004.00 in laser-cutter could not even write its `blocked.md`. As
+        # the engine's child it may claim files there, while a pair partner
+        # on the same file and anyone outside are still refused.
+        #
+        # @param adapter [OpenLanes::Adapters::Base]
+        # @return [Hash{String => String}]
+        def self.environment(adapter) = adapter.environment.merge("AGENT_PARENT_ID" => Engine.lock_holder)
 
         # Read +child+ into a new transcript under the attempt's handle. Only
         # an {AgentProcess} can be taken back by a restarted engine, so only

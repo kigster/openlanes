@@ -135,6 +135,7 @@ classDiagram
   OpenLanes__Execution ..> OpenLanes__Agents : 4
   OpenLanes__Execution ..> OpenLanes__Config : 1
   OpenLanes__Execution ..> OpenLanes__Container : 2
+  OpenLanes__Execution ..> OpenLanes__Engine : 1
   OpenLanes__Execution ..> OpenLanes__Lifecycle : 1
   OpenLanes__Execution ..> OpenLanes__Memory : 2
   OpenLanes__Execution ..> OpenLanes__Plans : 7
