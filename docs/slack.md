@@ -41,7 +41,7 @@ The engine logs a warning that starts with `slack:` when only part of this is se
 
 ## Commands from Slack
 
-Asking for status, adding a plan or restarting one from Slack is a separate app, `openlanes-slack`, a client of the control room's HTTP API. It can use the same Slack app and reads the same `OPENLANES_SLACK_OPERATORS` and `OPENLANES_SLACK_WORKSPACE`. It never asks the questions, so each is posted once. It needs Socket Mode and the `commands` scope, which the manifest here leaves out because the engine needs neither.
+Asking for status, adding a plan or restarting one from Slack is a separate app, `openlanes-slack`, a client of the control room's HTTP API. It can use the same Slack app. It is meant to read the same `OPENLANES_SLACK_OPERATORS` and `OPENLANES_SLACK_WORKSPACE`, but does not yet: today it reads only `SLACK_*`, so `--app-env` writes names nothing there reads. It never asks the questions, so each is posted once. It needs Socket Mode and the `commands` scope, which the manifest here leaves out because the engine needs neither.
 
 ## How it works
 

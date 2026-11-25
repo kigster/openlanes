@@ -7,8 +7,10 @@ module OpenLanes
     #
     # The environment is read because the token already lives there. A
     # project whose `.env` holds `SLACK_BOT_TOKEN` can name its channel
-    # beside it, and the Slack app that takes commands for the same engine
-    # reads the same names, so the two never disagree on who is an operator.
+    # beside it. The names are shared on purpose: the Slack app that is to
+    # take commands for the same engine (`openlanes-slack`, which reads only
+    # `SLACK_*` today) should read them too, so the two never disagree on
+    # who is an operator.
     Settings = Data.define(:channel, :workspace, :operators, :interval) do
       # @!attribute [r] channel
       #   @return [String, nil]
