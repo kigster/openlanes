@@ -40,6 +40,18 @@ RSpec.describe OpenLanes::Agents::Profile do
     end
   end
 
+  it "gives back a key the operator set in .openlanes/config.yml agents:" do
+    quality("high")
+    overrides = OpenLanes::Agents::Overrides.new(table: { "staff-reviewer" => { model: "sonnet" } })
+    expect(described_class.resolve(overrides.apply(reviewer), diff_lines: 1000).to_s).to eq("claude:sonnet/high")
+  end
+
+  it "holds on the agent's own CLI only" do
+    quality("high")
+    dealing = OpenLanes::Agents::Dealing.new(adapters: %w[codex], fallback: "pi")
+    expect(described_class.resolve(reviewer.with(phase: "review"), dealing:).model).not_to eq("fable")
+  end
+
   it "still yields to run --model and the plan's phases" do
     quality("high")
     plan = OpenLanes::Plans::Spec.parse("---\nphases:\n  review: { model: haiku }\n---\n")

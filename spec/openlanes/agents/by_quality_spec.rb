@@ -7,6 +7,8 @@ RSpec.describe OpenLanes::Agents::ByQuality do
       expect { described_class.parse("fable", "a.md") }.to raise_error(OpenLanes::Error, /must be a mapping/)
       expect { described_class.parse({ "high" => "fable" }, "a.md") }.to raise_error(OpenLanes::Error, /values must be mappings/)
       expect { described_class.parse({ "high" => { "effort" => "huge" } }, "a.md") }.to raise_error(OpenLanes::Error, /effort "huge"/)
+      expect { described_class.parse({ "high" => { "modle" => "fable" } }, "a.md") }.to raise_error(OpenLanes::Error, /not modle/)
+      expect { described_class.parse({ "high" => { "model" => " " } }, "a.md") }.to raise_error(OpenLanes::Error, /must be a model name/)
     end
   end
 

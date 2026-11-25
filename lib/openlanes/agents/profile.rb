@@ -15,7 +15,8 @@ module OpenLanes
     #   4. spec.md `depth`                     (effort only)
     #   5. the agent's `by_quality:` for `desired_codebase_quality:` (model, effort)
     #   6. the agent's `small_diff:`           (model, effort)
-    #   7. the agent's frontmatter
+    #   7. the agent's frontmatter, with `.openlanes/config.yml` `agents:` laid over it
+    #      by {Registry}; a `model` or `effort` there also drops that key of step 5
     #   8. `.openlanes/config.yml` `review.adapters:` (adapter only, reviewers only, plan 031)
     #   9. `.openlanes/config.yml` `adapter:`         (adapter only, plan 040)
     #  10. {Adapters::DEFAULT}                 (adapter only)
