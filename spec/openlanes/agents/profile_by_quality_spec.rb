@@ -49,7 +49,13 @@ RSpec.describe OpenLanes::Agents::Profile do
   it "holds on the agent's own CLI only" do
     quality("high")
     dealing = OpenLanes::Agents::Dealing.new(adapters: %w[codex], fallback: "pi")
-    expect(described_class.resolve(reviewer.with(phase: "review"), dealing:).model).not_to eq("fable")
+    expect(described_class.resolve(reviewer.with(phase: "review"), dealing:).to_s).to eq("codex:default/high")
+  end
+
+  it "lets the plan's depth set the effort over it" do
+    quality("high")
+    plan = OpenLanes::Plans::Spec.parse("---\ndepth: fast\n---\n")
+    expect(described_class.resolve(reviewer, spec: plan).to_s).to eq("claude:fable/low")
   end
 
   it "still yields to run --model and the plan's phases" do
