@@ -32,6 +32,22 @@ RSpec.describe OpenLanes::Engine::Upkeep::Sweep, :tree do
     end
   end
 
+  # A repository on `master` was asked for `main` every tick, and GitHub
+  # answered 422 each time, so no pull request was ever checked.
+  it "compares against the branch it is given, and says that branch on GitHub" do
+    on_master = described_class.new(github:,
+      owed:,
+      branch: "master",
+      actions: OpenLanes::Engine::Upkeep::Actions.new(github:, clock: -> { now }, branch: "master"))
+    allow(github).to receive(:pull_request).and_return(live.merge(merge_state: "DIRTY"))
+    on_master.call(subjects)
+
+    aggregate_failures do
+      expect(github).to have_received(:branch_head).with(branch: "master")
+      expect(github).to have_received(:comment).with(number: 1, body: /onto `master`/)
+    end
+  end
+
   it "does not label or comment again on a pull request already labelled conflicts" do
     allow(github).to receive(:pull_request).and_return(live.merge(labels: %w[ready-to-merge conflicts], merge_state: "DIRTY"))
 

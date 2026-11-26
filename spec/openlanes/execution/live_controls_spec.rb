@@ -25,7 +25,7 @@ RSpec.describe "The live controls on one invocation" do
 
     it "starts claude with its autocompact threshold in the environment (W28)" do
       executor.call(agent, plan)
-      expect(spawned.first.last).to eq("CLAUDE_AUTOCOMPACT_PCT_OVERRIDE" => "40")
+      expect(spawned.first.last).to include("CLAUDE_AUTOCOMPACT_PCT_OVERRIDE" => "40")
     end
 
     context "when a person chose a model for the agent on this plan" do

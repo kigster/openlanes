@@ -62,7 +62,7 @@ agents:                   # this machine's changes to an agent, by its name
 - An unknown key, a bad value, or an option the command does not take is an error naming the file (exit 65). A setting silently ignored is a timeout that stops applying with no signal.
 - `dry_run` cannot be a default.
 - `application` describes the application being worked on; it is separate from `project` (a heading) and `app` (the processes the Preview tab runs). `openlanes init` writes it with `name` set to the project's and every other key empty, and an empty key reads as unset. `start` and `stop` take one command or a list. Nothing runs these commands yet: they are recorded for agents and people to read.
-- `agents.<name>` may set `timeout`, `rounds`, `model`, `effort`, `extension_cap` and `extension_ceiling`. Each replaces the same key of `agents/<name>.md` and nothing else, and an agent left out runs as its definition says. `--timeout` and `--rounds` still only tighten. `model` and `effort` stand where the frontmatter's stood, so `run --model`, a plan's `phases:`, `sizing:` and `depth` still win. `openlanes agents list` shows the values in force and marks the overridden ones `*`. A running engine keeps the values it started with.
+- `agents.<name>` may set `timeout`, `rounds`, `model`, `effort`, `extension_cap` and `extension_ceiling`. Each replaces the same key of `agents/<name>.md` and nothing else, and an agent left out runs as its definition says. `--rounds` replaces the rounds of every agent, up to 5, and `--timeout` still only tightens. `model` and `effort` stand where the frontmatter's stood, so `run --model`, a plan's `phases:`, `sizing:` and `depth` still win. `openlanes agents list` shows the values in force and marks the overridden ones `*`. A running engine keeps the values it started with.
 - A round whose clock runs low is given `extension_cap` more seconds by the engine, then asked how much more it needs (`openlanes state estimate`). An estimate within `extension_cap` is granted; a larger one goes to `arbitrator`, which may grant up to `extension_ceiling`; only what none of them settles reaches a person as an `X<n>` question. See `docs/decisions/decisions-on-limit-extensions.md`, E2.
 - `review.adapters` deals `staff-reviewer`, `security-reviewer` and `design-reviewer` to the first, second and third coding agent, wrapping when there are fewer. A coding agent the board's probe found unusable is skipped. A reviewer's own `adapter:` or the plan's `phases.review` still wins.
 - A reviewer that crashes, times out or ends without a verdict runs its round again, once, on the main coding agent (`adapter:`, else claude), and that verdict counts as its own. Its stage in `state.json` records `replaced_by`. A reviewer a person stopped is not replaced.
@@ -174,7 +174,7 @@ openlanes run 005 --skip staff-reviewer        # everyone but the reviewer; its 
 openlanes run 005 --model opus                 # one model for every agent
 openlanes run 005 --user-config                # agents load your personal plugins and skills too
 openlanes run 005 --timeout 600                # at most ten minutes per agent
-openlanes run 005 --rounds 1                   # at most one round per agent per plan
+openlanes run 005 --rounds 1                   # one round per agent per plan, whatever each declares
 openlanes run 005 --max-tokens 200000          # token budget per agent invocation
 openlanes run 005 --isolation shared           # one checkout, one agent at a time, no git needed
 ```
@@ -195,7 +195,7 @@ openlanes run 005 --isolation shared           # one checkout, one agent at a ti
 | Rounds | `rounds:` (at most 5)         | `--rounds`     | the agent's own |
 | Tokens | none                          | `--max-tokens` | unmetered       |
 
-Flags can only tighten what an agent declares, never loosen it. Each agent is told its clock and its token budget in its prompt. As its time runs out, the agent is warned at 10, 5 and 1 minute left, then asked to stop; if it is still running 60 seconds after that, it is killed. The token meter aborts an agent once it goes over its budget.
+`--timeout` and `--max-tokens` can only tighten what an agent declares, never loosen it; `--rounds` replaces the agent's number, up to 5. Each agent is told its clock and its token budget in its prompt. As its time runs out, the agent is warned at 10, 5 and 1 minute left, then asked to stop; if it is still running 60 seconds after that, it is killed. The token meter aborts an agent once it goes over its budget.
 
 ### Following a run, and stopping it
 

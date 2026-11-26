@@ -17,7 +17,7 @@ module OpenLanes
 
       dry_run_option "Invoke no agent; print which agent would take which plan"
       option :rounds,
-        desc: "Cap on rounds per agent per plan; each agent declares its own, at most 5 " \
+        desc: "Rounds per agent per plan, in place of each agent's own, at most 5 " \
               "(default: the agent's own)"
       option :timeout,
         desc: "Seconds before one agent is abandoned; only tightens an agent's own clock " \
@@ -83,7 +83,7 @@ module OpenLanes
         "005,006,007            # run them, one worktree per plan, in parallel",
         "005,006 -j 1           # …one at a time",
         "005 --isolation shared # one tree, serial — no git required",
-        "005 --rounds 3         # …capping every agent at three rounds",
+        "005 --rounds 3         # …giving every agent three rounds",
         "050 --until planned    # stop plan 050 once it is planned",
         "005 --ignore-bombs     # keep working while a 💣 stands"
       ]

@@ -104,7 +104,7 @@ classDiagram
   OpenLanes__Coverage ..> OpenLanes__UI : 1
   OpenLanes__Engine ..> OpenLanes : 39
   OpenLanes__Engine ..> OpenLanes__Adapters : 2
-  OpenLanes__Engine ..> OpenLanes__Agents : 22
+  OpenLanes__Engine ..> OpenLanes__Agents : 23
   OpenLanes__Engine ..> OpenLanes__Apps : 4
   OpenLanes__Engine ..> OpenLanes__Arbitration : 7
   OpenLanes__Engine ..> OpenLanes__Config : 9
@@ -135,6 +135,7 @@ classDiagram
   OpenLanes__Execution ..> OpenLanes__Agents : 4
   OpenLanes__Execution ..> OpenLanes__Config : 1
   OpenLanes__Execution ..> OpenLanes__Container : 2
+  OpenLanes__Execution ..> OpenLanes__Engine : 1
   OpenLanes__Execution ..> OpenLanes__Lifecycle : 1
   OpenLanes__Execution ..> OpenLanes__Memory : 2
   OpenLanes__Execution ..> OpenLanes__Plans : 7

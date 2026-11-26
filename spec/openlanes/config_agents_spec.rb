@@ -100,15 +100,15 @@ RSpec.describe OpenLanes::Config, "#agents" do
   describe "what a run reads" do
     let(:agent) { registry(tuned).find("backend-coder") }
     let(:runner) { instance_double(OpenLanes::Engine::Runner, dry_run?: false, executor: nil) }
-    let(:profiles) { OpenLanes::Engine::Dispatcher::Desk::Profiles.new(runner:, rounds_cap: nil, extensions: nil) }
+    let(:profiles) { OpenLanes::Engine::Dispatcher::Desk::Profiles.new(runner:, rounds: nil, extensions: nil) }
 
     it "counts rounds against the machine's number" do
       expect([profiles.rounds_for(definition), profiles.rounds_for(agent)]).to eq([1, 3])
     end
 
-    it "still lets `--rounds` tighten it" do
-      capped = OpenLanes::Engine::Dispatcher::Desk::Profiles.new(runner:, rounds_cap: 2, extensions: nil)
-      expect(capped.rounds_for(agent)).to eq(2)
+    it "lets `--rounds` replace it, up or down, within the agent maximum" do
+      given = ->(n) { OpenLanes::Engine::Dispatcher::Desk::Profiles.new(runner:, rounds: n, extensions: nil).rounds_for(definition) }
+      expect([given.call(2), given.call(4), given.call(6)]).to eq([2, 4, OpenLanes::Agents::Agent::MAX_ROUNDS])
     end
 
     it "runs the clock on the machine's timeout, which `--timeout` still only tightens" do

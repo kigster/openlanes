@@ -19,17 +19,19 @@ module OpenLanes
         # @param github [Vcs::GitHub]
         # @param owed [Owed]
         # @param actions [Actions]
-        def initialize(github:, owed:, actions:)
+        # @param branch [String] the branch the pull requests target
+        def initialize(github:, owed:, actions:, branch: DEFAULT_BRANCH)
           @github = github
           @owed = owed
           @actions = actions
+          @branch = branch
         end
 
         # @param subjects [Array<Plans::Subject>] the plans in scope
         # @param busy [Array<String>] ordinals an agent is working in; asked later
         # @return [Result]
         def call(subjects, busy: [])
-          @owed.moved!(@github.branch_head(branch: MAIN), entries(subjects))
+          @owed.moved!(@github.branch_head(branch: @branch), entries(subjects))
           by_ordinal = subjects.to_h { [it.feature.ordinal.to_s, it] }
           result = Result.new(conflicts: [], notes: [])
           @owed.due(busy:).each do |entry|
@@ -38,7 +40,7 @@ module OpenLanes
 
             ask(subject, entry, result)
           rescue OpenLanes::Error => e
-            result.notes << "#{entry.ordinal}: #{entry.url} not checked against #{MAIN}: #{Upkeep.first_line(e)}"
+            result.notes << "#{entry.ordinal}: #{entry.url} not checked against #{@branch}: #{Upkeep.first_line(e)}"
           end
           result
         end

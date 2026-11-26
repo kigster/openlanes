@@ -56,7 +56,7 @@ module OpenLanes
       #   `AGENT_ID=<name>` or `<name>-<suffix>` as their prompt tells them to
       # @param command [TTY::Command]
       # @param clock [#call] monotonic seconds
-      def initialize(root:, id: "openlanes@#{Socket.gethostname}:#{Process.pid}", own: [],
+      def initialize(root:, id: AgentLocks.holder, own: [],
         command: TTY::Command.new(printer: :null), clock: -> { UI.monotonic })
         @root = File.realpath(root)
         @id = id
@@ -72,6 +72,13 @@ module OpenLanes
 
       # @return [String]
       attr_reader :id
+
+      # The agent id this engine process signs its plan-folder claims with.
+      # Agents it starts get it as `AGENT_PARENT_ID`, so alock reads their
+      # claims inside the folder as a child's, not as a stranger's.
+      #
+      # @return [String] `openlanes@<host>:<pid>`
+      def self.holder = "openlanes@#{Socket.gethostname}:#{Process.pid}"
 
       # Somebody else's live lock that overlaps the plan's folder, or any
       # lock taken inside its worktree. The engine's own agents are not

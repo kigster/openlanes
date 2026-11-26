@@ -49,7 +49,7 @@ module OpenLanes
         end
       end
 
-      # @param rounds [Integer, nil] `--rounds`, capping each agent's own
+      # @param rounds [Integer, nil] `--rounds`, in place of each agent's own
       # @param state [OpenLanes::Engine::StateFile, nil]
       # @param sleeper [Proc]
       # @param on_board [Proc, nil]

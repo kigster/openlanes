@@ -551,6 +551,12 @@ module OpenLanes
         File.read(path)
       end
 
+      # The branch pull requests target, merges land on and upkeep compares
+      # against: the repository's own, from `origin/HEAD`, read once per run.
+      #
+      # @return [String]
+      def default_branch = @default_branch ||= Vcs.default_branch(@root)
+
       # The one thing this harness does that leaves the machine — pushing a
       # branch and opening its pull request — so it takes one more thing to
       # turn on than everything else here: not being a dry run is not enough,
@@ -573,7 +579,7 @@ module OpenLanes
           return nil
         end
 
-        Vcs.publisher(root:, dry_run: @dry_run, events:, on_push: -> { pull_snapshot.refresh! })
+        Vcs.publisher(root:, base: default_branch, dry_run: @dry_run, events:, on_push: -> { pull_snapshot.refresh! })
       end
 
       # The durable run log (plan 020.01), one per run: the null sink on a
@@ -659,7 +665,8 @@ module OpenLanes
           worktree:,
           publisher:,
           # A merged plan's checkout with somebody's lock in it stays.
-          held:     ->(path) { Engine.agent_locks(@tree.dir)&.held_in(path)&.to_s })
+          held:     ->(path) { Engine.agent_locks(@tree.dir)&.held_in(path)&.to_s },
+          branch:   default_branch)
       end
 
       # Pull requests nobody is working on, kept from going stale (U1 to U4).
@@ -670,7 +677,7 @@ module OpenLanes
       def upkeep_for(publisher, worktree)
         return nil if publisher.nil? || worktree.nil? || @dry_run
 
-        Upkeep.keeper(push: ->(checkout) { publisher.pushed!(checkout, "HEAD") }, github: snapshot_github)
+        Upkeep.keeper(push: ->(checkout) { publisher.pushed!(checkout, "HEAD") }, github: snapshot_github, branch: default_branch)
       end
 
       # What the runner is told about idling past its fixed points: nothing,
