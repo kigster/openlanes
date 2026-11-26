@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
+require "tty/command"
+
 # W31: the plans an agent outside openlanes holds in alock, and the engine's
 # own locks in the same register. `alock` never runs: a command double
 # answers for it, the way it answers on the command line.
 RSpec.describe OpenLanes::Engine::AgentLocks do
-  subject(:locks) { described_class.new(root:, id: "openlanes@test", own: %w[backend-coder], command:, clock: -> { time.first }) }
+  subject(:locks) { described_class.new(root:, id: "openlanes@test", own: %w[backend-coder], adapter: OpenLanes::Locking::Shell.new(command:), clock: -> { time.first }) }
 
   let(:root) { Dir.mktmpdir("agent-locks") }
   let(:plans) { File.join(root, ".plans") }
@@ -22,7 +24,7 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
 
   before do
     FileUtils.mkdir_p(folder)
-    allow(command).to receive(:run).with("alock", "list", "--json", "--dir", File.realpath(root)) { result(0, out: JSON.generate(listed)) }
+    allow(command).to receive(:run).with("alock", "list", "--json", "--dir", File.realpath(root), timeout: 10) { result(0, out: JSON.generate(listed)) }
   end
 
   after { FileUtils.rm_rf(root) }
@@ -126,7 +128,7 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
   end
 
   describe "#acquire and #release" do
-    let(:argv) { ["--dir", plans, { env: { "AGENT_ID" => "openlanes@test" } }] }
+    let(:argv) { ["--dir", plans, { env: { "AGENT_ID" => "openlanes@test" }, timeout: 10 }] }
 
     it "claims the folder and everything in it, as the engine" do
       allow(command).to receive(:run!).and_return(result(0))

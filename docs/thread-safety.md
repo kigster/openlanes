@@ -34,7 +34,9 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | :-- | :-- | :-- | :-- | :-- | :-- |
 | `lib/openlanes/apps/runner.rb` | `@stopping` | `Apps::Runner` | runner loop, signal trap | `Concurrent::AtomicBoolean` | guarded |
 | `lib/openlanes/apps/supervisor.rb` | `@statuses`, `@tails` | `Apps::Supervisor` | reader, waiter, caller | `@mutex` on every read and write | guarded |
-| `lib/openlanes/engine/agent_locks.rb` | the held-locks snapshot | `Engine::AgentLocks` | tick, agent jobs | `@mutex` | guarded |
+| `lib/openlanes/engine/agent_locks.rb` | the held-locks snapshot, the failure last said, `@off` | `Engine::AgentLocks` | tick, agent jobs | `@mutex` on every read and write | guarded |
+| `lib/openlanes/locking.rb` | the process-wide adapter | `Locking` | any | `@mutex` around `adapter` and `adapter=` | guarded |
+| `lib/openlanes/locking/shell.rb` | the `TTY::Command` it runs `alock` with | `Locking::Shell` | tick, agent jobs, merge watch | `@mutex`: one `alock` at a time; the holder goes in each call's own `env:`, never in `ENV` | guarded |
 | `lib/openlanes/engine/dispatcher/desk/registers.rb` | `running`, `history` | `Engine::Dispatcher::Desk::Registers`, read through `Desk` and `Desk::Rounds` | tick, agent jobs, PR watch, unblock | `mutex` around every cross-thread read and write | guarded |
 | `lib/openlanes/engine/dispatcher.rb` | the tick itself | `Engine::Dispatcher` | any caller of `#tick` | `@tick_lock` (`Monitor`): two overlapping ticks each started the same plan; `dispatcher_stress_spec.rb` found it (fixed in 038.00) | guarded |
 | `lib/openlanes/engine/dispatcher/desk.rb` | `@clock` | `Engine::Dispatcher::Desk` | tick, agent jobs | `Clock::System` is stateless; `Clock::Fake` holds its own mutex | guarded |

@@ -228,6 +228,10 @@ classDiagram
   class OpenLanes__Live__Node["OpenLanes::Live::Node"]
   class OpenLanes__Live__Snapshot["OpenLanes::Live::Snapshot"]
   class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
+  class OpenLanes__Locking["OpenLanes::Locking"]
+  <<module>> OpenLanes__Locking
+  class OpenLanes__Locking__Unavailable["OpenLanes::Locking::Unavailable"]
+  class OpenLanes__Locking__Unreadable["OpenLanes::Locking::Unreadable"]
   class OpenLanes__Log["OpenLanes::Log"]
   <<module>> OpenLanes__Log
   class OpenLanes__Log__Invalid["OpenLanes::Log::Invalid"]
@@ -299,6 +303,9 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Engine__Tally : uses
   OpenLanes__Engine ..> OpenLanes__Error : uses
   OpenLanes__Engine ..> OpenLanes__Plans : uses
+  OpenLanes__Engine__AgentLocks ..> OpenLanes__Locking : uses
+  OpenLanes__Engine__AgentLocks ..> OpenLanes__Locking__Unavailable : uses
+  OpenLanes__Engine__AgentLocks ..> OpenLanes__Locking__Unreadable : uses
   OpenLanes__Engine__AgentLocks ..> OpenLanes__UI : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Agents__Names : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Arbitration : uses
