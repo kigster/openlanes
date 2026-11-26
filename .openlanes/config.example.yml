@@ -1,7 +1,10 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kigster/openlanes/main/schemas/openlanes-config.schema.json
 #
 # An example of .openlanes/config.yml with every section filled in. Copy what
-# you need into .openlanes/config.yml; openlanes never reads this file.
+# you need into .openlanes/config.yml so that openlanes can read it and use 
+# it to customize the work it's doing on your project. This folder should be 
+# checked into git, so that if more than a single developer is working on the 
+# project, they can all share the same configuration, leading to consistency.
 #
 # Every key is optional, and a key left out takes the built-in default named
 # in its comment. An unknown key or a bad value is an error naming the file
