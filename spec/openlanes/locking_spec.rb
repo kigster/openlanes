@@ -20,7 +20,12 @@ RSpec.describe OpenLanes::Locking do
   # agent-lock can replace it with no caller changing.
   it "is the only code that runs alock" do
     lib = File.expand_path("../../lib/openlanes", __dir__)
-    runners = Dir.glob("#{lib}/**/*.rb").select { |file| File.read(file).match?(/^\s*[^#\n]*["']alock["']/) }
+    # A process started on alock: run, run!, system, spawn, exec, Open3 or
+    # popen given "alock" or %w[alock ...], or %x / backticks opening on it.
+    # Prompt text and log lines that only name alock are not runs.
+    starter = /\b(run!?|system|spawn|exec|capture\w*|popen\w*)\s*\(?\s*\[?\s*(["']alock\b|%[wi][\[({]\s*alock\b)/
+    runner = Regexp.union(starter, /%x[\[({]\s*alock\b/, /[=(,]\s*`alock\b/)
+    runners = Dir.glob("#{lib}/**/*.rb").select { |file| File.read(file).match?(runner) }
 
     expect(runners.map { it.delete_prefix("#{lib}/") }).to eq(["locking/shell.rb"])
   end

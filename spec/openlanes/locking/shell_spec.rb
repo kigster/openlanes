@@ -13,7 +13,7 @@ RSpec.describe OpenLanes::Locking::Shell do
   it "reads the active locks, and only those" do
     listed = [{ "agent_id" => "claude-1", "scope" => "lib/**", "tree" => "/r", "status" => "active", "intent" => "x" },
               { "agent_id" => "gone", "scope" => "a", "tree" => "/r", "status" => "interrupted" }]
-    allow(command).to receive(:run).with("alock", "list", "--json", "--dir", "/r").and_return(result(0, out: JSON.generate(listed)))
+    allow(command).to receive(:run).with("alock", "list", "--json", "--dir", "/r", timeout: 10).and_return(result(0, out: JSON.generate(listed)))
 
     expect(shell.list("/r")).to eq([OpenLanes::Locking::Lock.new(agent: "claude-1", scope: "lib/**", tree: "/r", intent: "x")])
   end
@@ -25,10 +25,10 @@ RSpec.describe OpenLanes::Locking::Shell do
   end
 
   it "maps alock's exit codes to done, refused and failed, signing each call with its own holder" do
-    allow(command).to receive(:run!).with("alock", "acquire", "a/**", "why", "--dir", "/p", env: { "AGENT_ID" => "me" }).and_return(result(0))
-    allow(command).to receive(:run!).with("alock", "release", "b/**", "--dir", "/p", env: { "AGENT_ID" => "you" })
+    allow(command).to receive(:run!).with("alock", "acquire", "a/**", "why", "--dir", "/p", env: { "AGENT_ID" => "me" }, timeout: 10).and_return(result(0))
+    allow(command).to receive(:run!).with("alock", "release", "b/**", "--dir", "/p", env: { "AGENT_ID" => "you" }, timeout: 10)
                                     .and_return(result(1, out: "NOT LOCKED b/**\n"))
-    allow(command).to receive(:run!).with("alock", "release", "c/**", "--dir", "/p", env: { "AGENT_ID" => "me" })
+    allow(command).to receive(:run!).with("alock", "release", "c/**", "--dir", "/p", env: { "AGENT_ID" => "me" }, timeout: 10)
                                     .and_return(result(2, err: "alock: backend mismatch\n"))
 
     expect([shell.acquire("a/**", "why", dir: "/p", as: "me"),
@@ -43,6 +43,14 @@ RSpec.describe OpenLanes::Locking::Shell do
     allow(command).to receive(:run!).and_raise(Errno::ENOENT, "alock")
 
     expect { shell.acquire("a/**", "why", dir: "/p", as: "me") }.to raise_error(OpenLanes::Locking::Unavailable, /not installed/)
+  end
+
+  it "fails one call, but keeps alock on, when a fork is refused or alock hangs" do
+    allow(command).to receive(:run!).and_raise(Errno::EMFILE)
+    allow(command).to receive(:run).and_raise(TTY::Command::TimeoutExceeded, "alock list timed out")
+
+    expect([shell.acquire("a/**", "why", dir: "/p", as: "me").status, -> { shell.list("/r") }])
+      .to match([:failed, raise_error(OpenLanes::Locking::Unreadable, /timed out/)])
   end
 
   it "never runs two alock commands at once, whatever the threads" do

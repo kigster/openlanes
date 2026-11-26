@@ -37,9 +37,11 @@ module OpenLanes
       # @param id [String] the agent id the engine's own locks carry
       # @param own [Array<String>] the engine's agents, who claim with
       #   `AGENT_ID=<name>` or `<name>-<suffix>` as their prompt tells them to
-      # @param adapter [#list, #acquire, #release] see {Locking::Adapter}
+      # @param adapter [#list, #acquire, #release, nil] see {Locking::Adapter};
+      #   nil reads {Locking.adapter} on every call, so one swapped in after
+      #   the engine started still reaches it
       # @param clock [#call] monotonic seconds
-      def initialize(root:, id: Locking.holder, own: [], adapter: Locking.adapter, clock: -> { UI.monotonic })
+      def initialize(root:, id: Locking.holder, own: [], adapter: nil, clock: -> { UI.monotonic })
         @root = File.realpath(root)
         @id = id
         @own = own
@@ -107,6 +109,9 @@ module OpenLanes
       # @return [Boolean] the engine itself, one of its agents, or a sub-agent of one
       def ours?(agent) = agent == @id || @own.any? { agent == it || agent.start_with?("#{it}-") }
 
+      # @return [#list, #acquire, #release]
+      def adapter = @adapter || Locking.adapter
+
       # @return [Array<Locking::Lock>] every active lock, at most {FRESH} seconds old
       def held
         @mutex.synchronize do
@@ -123,7 +128,7 @@ module OpenLanes
       #
       # @return [Array<Locking::Lock>]
       def list
-        listed = @adapter.list(@root)
+        listed = adapter.list(@root)
         @failing = nil
         listed
       rescue Locking::Unreadable => e
@@ -139,7 +144,7 @@ module OpenLanes
       def run(action, *args, dir:)
         return true if @mutex.synchronize { @off }
 
-        outcome = @adapter.public_send(action, *args, dir:, as: @id)
+        outcome = adapter.public_send(action, *args, dir:, as: @id)
         @mutex.synchronize { @snapshot = nil }
         say_failed(action, args.first, outcome) if outcome.failed?
         outcome.done?

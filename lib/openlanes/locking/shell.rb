@@ -10,30 +10,42 @@ module OpenLanes
     # Thread safety: one mutex serialises every call. The dispatcher's tick,
     # the agents' threads and the merge watcher all reach alock through the
     # one adapter, and a TTY::Command is not documented as safe to share, so
-    # the adapter never lets two run at once. The holder goes in each call's
-    # own environment, never in the process's, which another thread reads.
+    # the adapter never lets two run at once. Each call is killed after
+    # {TIMEOUT} seconds, so one hung `alock` cannot hold every other thread
+    # behind the mutex. The holder goes in each call's own environment,
+    # never in the process's, which another thread reads.
+    #
+    # Lifetime: alock pins a lock to the process that runs it, skipping
+    # shells, which is this one, so every lock ends with openlanes.
     class Shell
       include Adapter
 
       # alock's exit code for "somebody else holds it" and "not locked".
       REFUSED = 1
 
+      # Seconds one `alock` may take. It answers in well under one; a call
+      # still running after this is stuck (a Redis backend that stopped
+      # answering), and is killed and reported as a failure.
+      TIMEOUT = 10
+
       # @param command [TTY::Command]
-      def initialize(command: TTY::Command.new(printer: :null))
+      # @param timeout [Numeric] seconds, see {TIMEOUT}
+      def initialize(command: TTY::Command.new(printer: :null), timeout: TIMEOUT)
         @command = command
+        @timeout = timeout
         @mutex = Mutex.new
       end
 
       # @param root [String]
       # @return [Array<Lock>]
       def list(root)
-        out = serially { @command.run("alock", "list", "--json", "--dir", root).out }
+        out = serially { @command.run("alock", "list", "--json", "--dir", root, timeout: @timeout).out }
         JSON.parse(out).filter_map do |lock|
           next unless lock["status"] == "active"
 
           Lock.new(agent: lock["agent_id"].to_s, scope: lock["scope"].to_s, tree: lock["tree"].to_s, intent: lock["intent"])
         end
-      rescue TTY::Command::ExitError, JSON::ParserError => e
+      rescue TTY::Command::ExitError, JSON::ParserError, TTY::Command::TimeoutExceeded, SystemCallError => e
         raise Unreadable, reason(e)
       end
 
@@ -47,16 +59,23 @@ module OpenLanes
 
       # @return [Outcome]
       def change(*, dir:, as:)
-        result = serially { @command.run!("alock", *, "--dir", dir, env: { "AGENT_ID" => as }) }
+        result = serially { @command.run!("alock", *, "--dir", dir, env: { "AGENT_ID" => as }, timeout: @timeout) }
         status = { 0 => :done, REFUSED => :refused }.fetch(result.exit_status, :failed)
         Outcome.new(status:, message: (result.err.to_s + result.out.to_s).lines.first.to_s.strip)
+      rescue TTY::Command::TimeoutExceeded, SystemCallError => e
+        Outcome.new(status: :failed, message: reason(e))
       end
 
+      # Only a missing executable means alock is not installed. Any other
+      # system error (a fork refused for want of memory or file handles) is
+      # passing, and the caller treats it as one failed call, not as alock
+      # being gone for the rest of the run.
+      #
       # @return [Object] the block's value
       # @raise [Unavailable] when there is no `alock` to run
       def serially(&)
         @mutex.synchronize(&)
-      rescue SystemCallError => e
+      rescue Errno::ENOENT => e
         raise Unavailable, "alock is not installed: #{e.message}"
       end
 

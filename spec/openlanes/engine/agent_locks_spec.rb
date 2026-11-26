@@ -24,7 +24,7 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
 
   before do
     FileUtils.mkdir_p(folder)
-    allow(command).to receive(:run).with("alock", "list", "--json", "--dir", File.realpath(root)) { result(0, out: JSON.generate(listed)) }
+    allow(command).to receive(:run).with("alock", "list", "--json", "--dir", File.realpath(root), timeout: 10) { result(0, out: JSON.generate(listed)) }
   end
 
   after { FileUtils.rm_rf(root) }
@@ -128,7 +128,7 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
   end
 
   describe "#acquire and #release" do
-    let(:argv) { ["--dir", plans, { env: { "AGENT_ID" => "openlanes@test" } }] }
+    let(:argv) { ["--dir", plans, { env: { "AGENT_ID" => "openlanes@test" }, timeout: 10 }] }
 
     it "claims the folder and everything in it, as the engine" do
       allow(command).to receive(:run!).and_return(result(0))
