@@ -67,6 +67,9 @@ module OpenLanes
     # @!attribute [r] small_diff
     #   @return [OpenLanes::Agents::SmallDiff, nil] the model it runs on for a
     #     small diff; nil when it has none
+    # @!attribute [r] by_quality
+    #   @return [OpenLanes::Agents::ByQuality, nil] the model it runs on for
+    #     each `desired_codebase_quality:`; nil when it has none
     # @!attribute [r] extension_cap
     #   @return [Integer] seconds the engine may add to one round's clock on
     #     its own, and the most it grants on the agent's own estimate (E2)
@@ -97,12 +100,13 @@ module OpenLanes
       :toggle,
       :confined_to,
       :small_diff,
+      :by_quality,
       :review_stage,
       :watches,
       :extension_cap,
       :extension_ceiling) do
       def initialize(covers: [], ledger: [], rounds: Agent::DEFAULT_ROUNDS, effort: nil, starts_as: nil, holds_at: nil, adapter: nil,
-        phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], small_diff: nil, review_stage: 1, watches: [],
+        phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], small_diff: nil, by_quality: nil, review_stage: 1, watches: [],
         extension_cap: Agent::DEFAULT_EXTENSION_CAP, extension_ceiling: Agent::DEFAULT_EXTENSION_CEILING, **rest)
         super
       end

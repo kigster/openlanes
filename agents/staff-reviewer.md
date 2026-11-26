@@ -6,6 +6,7 @@ advances_to: approved
 starts_as: in_review
 model: opus
 effort: high
+by_quality: { high: { model: fable, effort: high } }
 timeout: 900
 ledger: [pull-requests.md]
 phase: review

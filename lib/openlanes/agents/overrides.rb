@@ -27,9 +27,19 @@ module OpenLanes
       # @return [Hash{Symbol => Object}] empty for an agent the file leaves alone
       def for(name) = table.fetch(name.to_s, {})
 
+      # A `model` or `effort` set here also wins over the definition's
+      # `by_quality:`, which ranks above the frontmatter it would otherwise
+      # replace: an operator who wrote `agents.staff-reviewer.model: sonnet`
+      # got Fable anyway under `desired_codebase_quality: high`.
+      #
       # @param agent [OpenLanes::Agents::Agent] as its definition wrote it
       # @return [OpenLanes::Agents::Agent] with this machine's values laid over
-      def apply(agent) = self.for(agent.name).empty? ? agent : agent.with(**self.for(agent.name))
+      def apply(agent)
+        entry = self.for(agent.name)
+        return agent if entry.empty?
+
+        agent.with(**entry, by_quality: agent.by_quality&.without(entry.keys))
+      end
 
       # @return [Hash{String => Hash{String => Object}}] `agents:` as the file holds it
       def to_settings = table.transform_values { it.transform_keys(&:to_s) }

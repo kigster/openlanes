@@ -149,8 +149,8 @@ module OpenLanes
       # @param agent [OpenLanes::Agents::Agent]
       # @return [String] e.g. `opus/high`, `codex:gpt-5-codex/medium`
       def runs_on(agent)
-        model = Agents::Profile.resolve(agent).label
-        agent.effort ? "#{model}/#{agent.effort}" : model
+        profile = Agents::Profile.resolve(agent)
+        profile.effort ? "#{profile.label}/#{profile.effort}" : profile.label
       end
     end
   end

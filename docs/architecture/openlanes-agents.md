@@ -9,6 +9,7 @@ classDiagram
   class OpenLanes__Agents["OpenLanes::Agents"]
   <<module>> OpenLanes__Agents
   class OpenLanes__Agents__Agent["Agent"]
+  class OpenLanes__Agents__ByQuality["ByQuality"]
   class OpenLanes__Agents__Dealing["Dealing"]
   class OpenLanes__Agents__Names["Names"]
   <<module>> OpenLanes__Agents__Names
@@ -45,6 +46,9 @@ classDiagram
   OpenLanes__Agents ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Agents ..> OpenLanes__Agents__Roster : uses
   OpenLanes__Agents ..> OpenLanes__Agents__Sizing : uses
+  OpenLanes__Agents__ByQuality ..> OpenLanes__Adapters : uses
+  OpenLanes__Agents__ByQuality ..> OpenLanes__Config : uses
+  OpenLanes__Agents__ByQuality ..> OpenLanes__Error : uses
   OpenLanes__Agents__Dealing ..> OpenLanes__Adapters : uses
   OpenLanes__Agents__Dealing ..> OpenLanes__Config : uses
   OpenLanes__Agents__Dealing ..> OpenLanes__Engine__Reviews : uses
@@ -60,6 +64,7 @@ classDiagram
   OpenLanes__Agents__Profile ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Adapters : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Agents__Agent : uses
+  OpenLanes__Agents__Registry ..> OpenLanes__Agents__ByQuality : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Agents__SmallDiff : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Config : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Error : uses
