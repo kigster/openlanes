@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require "json"
-require "socket"
-require "tty/command"
-
 module OpenLanes
   module Engine
     # The plans an agent outside openlanes is working on, as `alock` (the
@@ -23,48 +19,34 @@ module OpenLanes
     # listing only keeps the engine from asking, tick after tick, for plans
     # it would be refused.
     #
-    # alock is a command, not a library: its holder is the process that runs
-    # it, skipping shells, which is the engine itself, so a lock ends with
-    # the engine that took it. A machine without alock has no agent using it
-    # either, and the engine carries on without it, said once.
+    # The register is reached only through {Locking.adapter}: this class
+    # decides what the engine claims and whose locks count, and the adapter
+    # alone knows how alock is asked. A lock ends with the engine that took
+    # it. A machine without alock has no agent using it either, and the
+    # engine carries on without it, said once.
+    #
+    # Shared by the dispatcher's threads: every piece of state it keeps (the
+    # listing, the failure last said, whether alock is missing) changes
+    # under one mutex.
     class AgentLocks
-      # How long one `alock list` answers for. The dispatcher asks on every
+      # How long one listing answers for. The dispatcher asks on every
       # one-second tick, and each answer starts a Ruby process.
       FRESH = 5
-
-      # One lock, as `alock list --json` reports it.
-      #
-      # @!attribute [r] agent
-      #   @return [String] the holder's agent id
-      # @!attribute [r] scope
-      #   @return [String] relative to {#tree}, e.g. `.plans/003.00━━🟡━━❯x/**`
-      # @!attribute [r] tree
-      #   @return [String] the checkout the lock was taken in
-      # @!attribute [r] intent
-      #   @return [String, nil]
-      Held = Data.define(:agent, :scope, :tree, :intent) do
-        # @return [String] the scope's literal part: `**` is "", `a/b/**` is "a/b"
-        def fixed = scope.split("/").take_while { !it.match?(/[*?\[{]/) }.join("/")
-
-        # @return [String] who holds it and why, for the log
-        def to_s = "#{agent} (#{intent || "no intent given"})"
-      end
 
       # @param root [String] the repository whose plans are locked
       # @param id [String] the agent id the engine's own locks carry
       # @param own [Array<String>] the engine's agents, who claim with
       #   `AGENT_ID=<name>` or `<name>-<suffix>` as their prompt tells them to
-      # @param command [TTY::Command]
+      # @param adapter [#list, #acquire, #release] see {Locking::Adapter}
       # @param clock [#call] monotonic seconds
-      def initialize(root:, id: AgentLocks.holder, own: [],
-        command: TTY::Command.new(printer: :null), clock: -> { UI.monotonic })
+      def initialize(root:, id: Locking.holder, own: [], adapter: Locking.adapter, clock: -> { UI.monotonic })
         @root = File.realpath(root)
         @id = id
         @own = own
-        @failing = nil
-        @command = command
+        @adapter = adapter
         @clock = clock
         @mutex = Mutex.new
+        @failing = nil
         @snapshot = nil
         @taken_at = nil
         @off = false
@@ -72,13 +54,6 @@ module OpenLanes
 
       # @return [String]
       attr_reader :id
-
-      # The agent id this engine process signs its plan-folder claims with.
-      # Agents it starts get it as `AGENT_PARENT_ID`, so alock reads their
-      # claims inside the folder as a child's, not as a stranger's.
-      #
-      # @return [String] `openlanes@<host>:<pid>`
-      def self.holder = "openlanes@#{Socket.gethostname}:#{Process.pid}"
 
       # Somebody else's live lock that overlaps the plan's folder, or any
       # lock taken inside its worktree. The engine's own agents are not
@@ -88,7 +63,7 @@ module OpenLanes
       #
       # @param dir [String] the plan folder
       # @param checkout [String, nil] the plan's worktree, when the run isolates
-      # @return [Held, nil]
+      # @return [Locking::Lock, nil]
       def held_elsewhere(dir, checkout: nil)
         folder = real(dir)
         work = checkout && real(checkout)
@@ -104,7 +79,7 @@ module OpenLanes
       # included: a worktree with a lock in it is in use, whoever holds it.
       #
       # @param checkout [String]
-      # @return [Held, nil]
+      # @return [Locking::Lock, nil]
       def held_in(checkout)
         work = real(checkout)
         held.find { real(it.tree) == work }
@@ -117,13 +92,13 @@ module OpenLanes
       # @param intent [String] what the engine is about to do there
       # @return [Boolean]
       def acquire(dir, intent)
-        run("acquire", scope(dir), intent, dir: File.dirname(dir))
+        run(:acquire, scope(dir), intent, dir: File.dirname(dir))
       end
 
       # @param dir [String] the plan folder, as it was named when acquired
       # @return [void]
       def release(dir)
-        run("release", scope(dir), dir: File.dirname(dir))
+        run(:release, scope(dir), dir: File.dirname(dir))
       end
 
       private
@@ -132,11 +107,11 @@ module OpenLanes
       # @return [Boolean] the engine itself, one of its agents, or a sub-agent of one
       def ours?(agent) = agent == @id || @own.any? { agent == it || agent.start_with?("#{it}-") }
 
-      # @return [Array<Held>] every active lock, at most {FRESH} seconds old
+      # @return [Array<Locking::Lock>] every active lock, at most {FRESH} seconds old
       def held
         @mutex.synchronize do
-          return [] if @off
-          return @snapshot if @snapshot && @clock.call - @taken_at < FRESH
+          next [] if @off
+          next @snapshot if @snapshot && @clock.call - @taken_at < FRESH
 
           @snapshot = list
           @taken_at = @clock.call
@@ -144,60 +119,56 @@ module OpenLanes
         end
       end
 
-      # @return [Array<Held>]
+      # Called with the mutex held.
+      #
+      # @return [Array<Locking::Lock>]
       def list
-        out = @command.run("alock", "list", "--json", "--dir", @root).out
-        listed = JSON.parse(out).filter_map do |lock|
-          next unless lock["status"] == "active"
-
-          Held.new(agent: lock["agent_id"].to_s, scope: lock["scope"].to_s, tree: lock["tree"].to_s, intent: lock["intent"])
-        end
+        listed = @adapter.list(@root)
         @failing = nil
         listed
-      rescue TTY::Command::ExitError, JSON::ParserError => e
-        failing(e)
+      rescue Locking::Unreadable => e
+        failing(e.message)
         []
-      rescue SystemCallError
+      rescue Locking::Unavailable
         missing
         []
       end
 
-      # @return [Boolean] exit 0; false on exit 1, which is a refusal
-      def run(*args, dir:)
-        return true if @off
+      # @return [Boolean] done; false when refused, or when alock failed,
+      #   since a plan nobody could check is left alone
+      def run(action, *args, dir:)
+        return true if @mutex.synchronize { @off }
 
-        result = @command.run!("alock", *args, "--dir", dir, env: { "AGENT_ID" => @id })
+        outcome = @adapter.public_send(action, *args, dir:, as: @id)
         @mutex.synchronize { @snapshot = nil }
-        # 1 is a refusal; anything above is alock failing, which is said, and
-        # counts as a refusal too: a plan nobody could check is left alone.
-        if result.exit_status > 1
-          left = args.first == "release" ? "; #{args[1]} stays held until the engine exits" : ""
-          UI.log("alock #{args.first} #{args[1]} failed: #{(result.err.to_s + result.out.to_s).lines.first.to_s.strip}#{left}",
-            level: :warn)
-        end
-        result.success?
-      rescue SystemCallError
-        missing
+        say_failed(action, args.first, outcome) if outcome.failed?
+        outcome.done?
+      rescue Locking::Unavailable
+        @mutex.synchronize { missing }
         true
+      end
+
+      # @return [void]
+      def say_failed(action, scope, outcome)
+        left = action == :release ? "; #{scope} stays held until the engine exits" : ""
+        UI.log("alock #{action} #{scope} failed: #{outcome.message}#{left}", level: :warn)
       end
 
       # Said once per failure, not on every tick it lasts: the listing is
       # asked for every few seconds, and the same line each time buried the
-      # log. A listing that works again clears it.
+      # log. A listing that works again clears it. Called with the mutex held.
       #
-      # @param error [Exception]
+      # @param reason [String]
       # @return [void]
-      def failing(error)
-        # TTY::Command's message is the command line first; the reason is in
-        # the stderr lines after it.
-        reason = error.message.lines.map(&:strip).reject(&:empty?).find { it.start_with?("stderr:") } ||
-                 error.message.lines.first.to_s.strip
+      def failing(reason)
         return if @failing == reason
 
         @failing = reason
         UI.log("alock list failed, plans unchecked until it works: #{reason}", level: :warn)
       end
 
+      # Called with the mutex held.
+      #
       # @return [void]
       def missing
         return if @off

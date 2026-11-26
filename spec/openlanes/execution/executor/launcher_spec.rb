@@ -33,7 +33,7 @@ RSpec.describe OpenLanes::Execution::Executor::Launcher do
     envs = []
     recording = ->(_argv, env:, **) { (envs << env) && child }
     described_class.new(spawn: recording).launch(%w[claude -p x], attempt)
-    expect(envs.first).to include(profile.adapter.environment).and include("AGENT_PARENT_ID" => OpenLanes::Engine::AgentLocks.holder)
+    expect(envs.first).to include(profile.adapter.environment).and include("AGENT_PARENT_ID" => OpenLanes::Locking.holder)
   end
 
   it "hands the handle the process and the sessions its transcript" do

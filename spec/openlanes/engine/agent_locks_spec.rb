@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
+require "tty/command"
+
 # W31: the plans an agent outside openlanes holds in alock, and the engine's
 # own locks in the same register. `alock` never runs: a command double
 # answers for it, the way it answers on the command line.
 RSpec.describe OpenLanes::Engine::AgentLocks do
-  subject(:locks) { described_class.new(root:, id: "openlanes@test", own: %w[backend-coder], command:, clock: -> { time.first }) }
+  subject(:locks) { described_class.new(root:, id: "openlanes@test", own: %w[backend-coder], adapter: OpenLanes::Locking::Shell.new(command:), clock: -> { time.first }) }
 
   let(:root) { Dir.mktmpdir("agent-locks") }
   let(:plans) { File.join(root, ".plans") }

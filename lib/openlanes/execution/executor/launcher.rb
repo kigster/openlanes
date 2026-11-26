@@ -32,7 +32,7 @@ module OpenLanes
         #
         # @param adapter [OpenLanes::Adapters::Base]
         # @return [Hash{String => String}]
-        def self.environment(adapter) = adapter.environment.merge("AGENT_PARENT_ID" => Engine.lock_holder)
+        def self.environment(adapter) = adapter.environment.merge(Locking.child_environment)
 
         # Read +child+ into a new transcript under the attempt's handle. Only
         # an {AgentProcess} can be taken back by a restarted engine, so only
