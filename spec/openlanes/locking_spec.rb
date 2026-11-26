@@ -20,12 +20,14 @@ RSpec.describe OpenLanes::Locking do
   # agent-lock can replace it with no caller changing.
   it "is the only code that runs alock" do
     lib = File.expand_path("../../lib/openlanes", __dir__)
-    # A process started on alock: run, run!, system, spawn, exec, Open3 or
-    # popen given "alock" or %w[alock ...], or %x / backticks opening on it.
-    # Prompt text and log lines that only name alock are not runs.
-    starter = /\b(run!?|system|spawn|exec|capture\w*|popen\w*)\s*\(?\s*\[?\s*(["']alock\b|%[wi][\[({]\s*alock\b)/
-    runner = Regexp.union(starter, /%x[\[({]\s*alock\b/, /[=(,]\s*`alock\b/)
-    runners = Dir.glob("#{lib}/**/*.rb").select { |file| File.read(file).match?(runner) }
+    # Code, not comments, that hands alock to a process: "alock" as its own
+    # argument (whatever comes before it, an env hash included), %w[alock
+    # ...], a backtick command, or "alock <subcommand> ..." as one string.
+    # Log lines and prompt text only name alock, and are not runs.
+    subcommand = /["']alock\s+(acquire|release(-all)?|list|break|resume|note|whoami)(["']|\s+["'<-])/
+    runner = Regexp.union(/["']alock["']/, /%[wi][\[({]\s*alock\b/, /(^|[=(,]\s*)`alock\s/, subcommand)
+    runs = ->(file) { File.readlines(file).any? { |line| !line.lstrip.start_with?("#") && line.match?(runner) } }
+    runners = Dir.glob("#{lib}/**/*.rb").select(&runs)
 
     expect(runners.map { it.delete_prefix("#{lib}/") }).to eq(["locking/shell.rb"])
   end

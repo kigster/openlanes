@@ -26,25 +26,31 @@ module OpenLanes
       # Seconds one `alock` may take. It answers in well under one; a call
       # still running after this is stuck (a Redis backend that stopped
       # answering), and is killed and reported as a failure.
+      #
+      # tty-command counts the time the child spends silent, and resets it on
+      # output, so a call that prints and then stalls can take up to twice
+      # this. SIGKILL goes to the child only; alock is one process, since
+      # the rbenv shim `exec`s it.
       TIMEOUT = 10
+
+      # The command this adapter runs.
+      EXECUTABLE = "alock"
 
       # @param command [TTY::Command]
       # @param timeout [Numeric] seconds, see {TIMEOUT}
-      def initialize(command: TTY::Command.new(printer: :null), timeout: TIMEOUT)
+      # @param executable [String] see {EXECUTABLE}; the spec swaps in a slow child
+      def initialize(command: TTY::Command.new(printer: :null), timeout: TIMEOUT, executable: EXECUTABLE)
         @command = command
         @timeout = timeout
+        @executable = executable
         @mutex = Mutex.new
       end
 
       # @param root [String]
       # @return [Array<Lock>]
       def list(root)
-        out = serially { @command.run("alock", "list", "--json", "--dir", root, timeout: @timeout).out }
-        JSON.parse(out).filter_map do |lock|
-          next unless lock["status"] == "active"
-
-          Lock.new(agent: lock["agent_id"].to_s, scope: lock["scope"].to_s, tree: lock["tree"].to_s, intent: lock["intent"])
-        end
+        out = serially { @command.run(@executable, "list", "--json", "--dir", root, timeout: @timeout).out }
+        locks(JSON.parse(out))
       rescue TTY::Command::ExitError, JSON::ParserError, TTY::Command::TimeoutExceeded, SystemCallError => e
         raise Unreadable, reason(e)
       end
@@ -59,11 +65,24 @@ module OpenLanes
 
       # @return [Outcome]
       def change(*, dir:, as:)
-        result = serially { @command.run!("alock", *, "--dir", dir, env: { "AGENT_ID" => as }, timeout: @timeout) }
+        result = serially { @command.run!(@executable, *, "--dir", dir, env: { "AGENT_ID" => as }, timeout: @timeout) }
         status = { 0 => :done, REFUSED => :refused }.fetch(result.exit_status, :failed)
         Outcome.new(status:, message: (result.err.to_s + result.out.to_s).lines.first.to_s.strip)
       rescue TTY::Command::TimeoutExceeded, SystemCallError => e
         Outcome.new(status: :failed, message: reason(e))
+      end
+
+      # @param listed [Object] `alock list --json`, parsed
+      # @return [Array<Lock>] the active ones
+      # @raise [Unreadable] when it is not a list of locks
+      def locks(listed)
+        raise Unreadable, "alock list --json is not a list of locks" unless listed.is_a?(Array) && listed.all?(Hash)
+
+        listed.filter_map do |lock|
+          next unless lock["status"] == "active"
+
+          Lock.new(agent: lock["agent_id"].to_s, scope: lock["scope"].to_s, tree: lock["tree"].to_s, intent: lock["intent"])
+        end
       end
 
       # Only a missing executable means alock is not installed. Any other
@@ -85,6 +104,8 @@ module OpenLanes
       # @param error [Exception]
       # @return [String]
       def reason(error)
+        return "#{@executable} timed out after #{@timeout}s" if error.is_a?(TTY::Command::TimeoutExceeded)
+
         lines = error.message.lines.map(&:strip).reject(&:empty?)
         lines.find { it.start_with?("stderr:") } || lines.first.to_s
       end

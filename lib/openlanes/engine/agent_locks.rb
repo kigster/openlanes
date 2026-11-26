@@ -39,7 +39,9 @@ module OpenLanes
       #   `AGENT_ID=<name>` or `<name>-<suffix>` as their prompt tells them to
       # @param adapter [#list, #acquire, #release, nil] see {Locking::Adapter};
       #   nil reads {Locking.adapter} on every call, so one swapped in after
-      #   the engine started still reaches it
+      #   the engine started reaches it on the next call. Not after alock was
+      #   found missing: that turns these locks off for good, and the last
+      #   listing stands for up to {FRESH} seconds
       # @param clock [#call] monotonic seconds
       def initialize(root:, id: Locking.holder, own: [], adapter: nil, clock: -> { UI.monotonic })
         @root = File.realpath(root)

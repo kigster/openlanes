@@ -47,10 +47,32 @@ RSpec.describe OpenLanes::Locking::Shell do
 
   it "fails one call, but keeps alock on, when a fork is refused or alock hangs" do
     allow(command).to receive(:run!).and_raise(Errno::EMFILE)
-    allow(command).to receive(:run).and_raise(TTY::Command::TimeoutExceeded, "alock list timed out")
+    allow(command).to receive(:run).and_raise(TTY::Command::TimeoutExceeded)
 
     expect([shell.acquire("a/**", "why", dir: "/p", as: "me").status, -> { shell.list("/r") }])
-      .to match([:failed, raise_error(OpenLanes::Locking::Unreadable, /timed out/)])
+      .to match([:failed, raise_error(OpenLanes::Locking::Unreadable, /timed out after 10s/)])
+  end
+
+  it "says a listing that is valid JSON but not a list of locks is unreadable" do
+    allow(command).to receive(:run).and_return(result(0, out: '{"locks": []}'))
+
+    expect { shell.list("/r") }.to raise_error(OpenLanes::Locking::Unreadable)
+  end
+
+  # The real timeout, on a real child: a stuck alock is killed, and the
+  # mutex is free for the next call.
+  it "kills a child that outlives the timeout" do
+    stuck = File.join(Dir.mktmpdir("stuck-alock"), "alock")
+    File.write(stuck, "#!/bin/sh\nexec sleep 5\n")
+    File.chmod(0o755, stuck)
+    slow = described_class.new(command: TTY::Command.new(printer: :null), timeout: 0.2, executable: stuck)
+    started = OpenLanes::UI.monotonic
+    outcome = slow.acquire("a/**", "why", dir: "/", as: "me")
+
+    expect([outcome.status, outcome.message, OpenLanes::UI.monotonic - started < 2])
+      .to eq([:failed, "#{stuck} timed out after 0.2s", true])
+  ensure
+    FileUtils.rm_rf(File.dirname(stuck)) if stuck
   end
 
   it "never runs two alock commands at once, whatever the threads" do
