@@ -46,9 +46,6 @@ module OpenLanes
 
     @agent_locks = ->(dir, own: []) { AgentLocks.new(root: dir, own:) }
 
-    # @return [String] the id this engine's alock claims are signed with
-    def lock_holder = AgentLocks.holder
-
     # The plans' alock register (W31), for the repository holding +dir+; nil
     # when the factory is, which is how the suite keeps `alock` unrun.
     #

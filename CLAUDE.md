@@ -133,6 +133,9 @@ lib/openlanes/
     deadline.rb          a wait on a child that ends it when its time is up (copilot, interview)
     transcript.rb        parses --output-format stream-json into a spinner phrase
   vcs/                   OpenLanes::Vcs — worktree.rb, publisher.rb (push, open the PR), github.rb (the gh seam)
+  locking/               OpenLanes::Locking — the alock register behind one adapter (shell.rb runs `alock`;
+                         a Ruby-API adapter can replace it via Locking.adapter=), and the holder id agents
+                         get as AGENT_PARENT_ID. Below engine/ and execution/, so neither calls up into the other
   presentation/          OpenLanes::Presentation —
                          documentation.rb (`openlanes docs`), diagram.rb (`openlanes states`), reporter.rb, viewer.rb
   support/               collapsed by Zeitwerk, so these stay OpenLanes::UI, ::Markdown, ::Frontmatter,

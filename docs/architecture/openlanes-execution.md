@@ -10,8 +10,6 @@ classDiagram
   class OpenLanes__Agents__Registry["OpenLanes::Agents::Registry"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Container["OpenLanes::Container"]
-  class OpenLanes__Engine["OpenLanes::Engine"]
-  <<module>> OpenLanes__Engine
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Execution["OpenLanes::Execution"]
   <<module>> OpenLanes__Execution
@@ -99,6 +97,8 @@ classDiagram
   class OpenLanes__Execution__Transcript["Transcript"]
   class OpenLanes__Lifecycle__Completion["OpenLanes::Lifecycle::Completion"]
   <<module>> OpenLanes__Lifecycle__Completion
+  class OpenLanes__Locking["OpenLanes::Locking"]
+  <<module>> OpenLanes__Locking
   class OpenLanes__Memory["OpenLanes::Memory"]
   <<module>> OpenLanes__Memory
   class OpenLanes__Plans__Journal["OpenLanes::Plans::Journal"]
@@ -182,10 +182,10 @@ classDiagram
   OpenLanes__Execution__Executor__JournalHold ..> OpenLanes__Error : uses
   OpenLanes__Execution__Executor__JournalHold ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Executor__JournalHold ..> OpenLanes__UI : uses
-  OpenLanes__Execution__Executor__Launcher ..> OpenLanes__Engine : uses
   OpenLanes__Execution__Executor__Launcher ..> OpenLanes__Execution__Clock : uses
   OpenLanes__Execution__Executor__Launcher ..> OpenLanes__Execution__ProcessStart : uses
   OpenLanes__Execution__Executor__Launcher ..> OpenLanes__Execution__Rearm : uses
+  OpenLanes__Execution__Executor__Launcher ..> OpenLanes__Locking : uses
   OpenLanes__Execution__Executor__Launcher ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor__Permissions ..> OpenLanes__Execution__Executor__Confinement : uses
   OpenLanes__Execution__Executor__Permissions ..> OpenLanes__Execution__Executor__Grants : uses

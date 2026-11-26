@@ -21,6 +21,7 @@ classDiagram
   class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
   class OpenLanes__Linear["OpenLanes::Linear"]
   class OpenLanes__Live["OpenLanes::Live"]
+  class OpenLanes__Locking["OpenLanes::Locking"]
   class OpenLanes__Log["OpenLanes::Log"]
   class OpenLanes__Memory["OpenLanes::Memory"]
   class OpenLanes__Plans["OpenLanes::Plans"]
@@ -114,6 +115,7 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Execution : 30
   OpenLanes__Engine ..> OpenLanes__Lifecycle : 11
   OpenLanes__Engine ..> OpenLanes__Live : 11
+  OpenLanes__Engine ..> OpenLanes__Locking : 3
   OpenLanes__Engine ..> OpenLanes__Log : 3
   OpenLanes__Engine ..> OpenLanes__Memory : 1
   OpenLanes__Engine ..> OpenLanes__Plans : 123
@@ -135,8 +137,8 @@ classDiagram
   OpenLanes__Execution ..> OpenLanes__Agents : 4
   OpenLanes__Execution ..> OpenLanes__Config : 1
   OpenLanes__Execution ..> OpenLanes__Container : 2
-  OpenLanes__Execution ..> OpenLanes__Engine : 1
   OpenLanes__Execution ..> OpenLanes__Lifecycle : 1
+  OpenLanes__Execution ..> OpenLanes__Locking : 1
   OpenLanes__Execution ..> OpenLanes__Memory : 2
   OpenLanes__Execution ..> OpenLanes__Plans : 7
   OpenLanes__Execution ..> OpenLanes__Supervision : 1
@@ -166,6 +168,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Slack : 1
   OpenLanes__Live ..> OpenLanes__Supervision : 1
   OpenLanes__Live ..> OpenLanes__UI : 7
+  OpenLanes__Locking ..> OpenLanes : 3
   OpenLanes__Memory ..> OpenLanes : 4
   OpenLanes__Memory ..> OpenLanes__Agents : 1
   OpenLanes__Memory ..> OpenLanes__Config : 1
@@ -239,6 +242,7 @@ classDiagram
 - [OpenLanes::Lifecycle](openlanes-lifecycle.md)
 - [OpenLanes::Linear](openlanes-linear.md)
 - [OpenLanes::Live](openlanes-live.md)
+- [OpenLanes::Locking](openlanes-locking.md)
 - [OpenLanes::Log](openlanes-log.md)
 - [OpenLanes::Memory](openlanes-memory.md)
 - [OpenLanes::Plans](openlanes-plans.md)
