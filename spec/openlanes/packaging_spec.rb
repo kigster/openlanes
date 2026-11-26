@@ -68,6 +68,10 @@ RSpec.describe "packaging" do
       expect(files).to include("Brewfile")
     end
 
+    it "ships the Slack app's manifest, which `slack connect` links to" do
+      expect(files).to include("docs/slack-app-manifest.yml")
+    end
+
     it "ships nothing from bin/ but ol-tee" do
       expect(files.grep(%r{\Abin/})).to eq(["bin/ol-tee"])
     end

@@ -63,7 +63,7 @@ classDiagram
   OpenLanes__Arbitration ..> OpenLanes__Agents : 3
   OpenLanes__Arbitration ..> OpenLanes__Plans : 12
   OpenLanes__Arbitration ..> OpenLanes__Vcs : 2
-  OpenLanes__CLI ..> OpenLanes : 30
+  OpenLanes__CLI ..> OpenLanes : 31
   OpenLanes__CLI ..> OpenLanes__Adapters : 3
   OpenLanes__CLI ..> OpenLanes__Agents : 13
   OpenLanes__CLI ..> OpenLanes__Apps : 5
@@ -83,7 +83,7 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Presentation : 8
   OpenLanes__CLI ..> OpenLanes__Setup : 9
   OpenLanes__CLI ..> OpenLanes__Skills : 1
-  OpenLanes__CLI ..> OpenLanes__Slack : 2
+  OpenLanes__CLI ..> OpenLanes__Slack : 6
   OpenLanes__CLI ..> OpenLanes__Supervision : 10
   OpenLanes__CLI ..> OpenLanes__UI : 22
   OpenLanes__CLI ..> OpenLanes__Uml : 2
@@ -187,8 +187,8 @@ classDiagram
   OpenLanes__Setup ..> OpenLanes__Live : 2
   OpenLanes__Setup ..> OpenLanes__UI : 2
   OpenLanes__Skills ..> OpenLanes : 1
-  OpenLanes__Slack ..> OpenLanes : 5
-  OpenLanes__Slack ..> OpenLanes__Config : 1
+  OpenLanes__Slack ..> OpenLanes : 8
+  OpenLanes__Slack ..> OpenLanes__Config : 2
   OpenLanes__Slack ..> OpenLanes__Live : 3
   OpenLanes__Slack ..> OpenLanes__UI : 4
   OpenLanes__Supervision ..> OpenLanes : 4

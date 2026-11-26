@@ -36,16 +36,25 @@ module OpenLanes
         # @param options [Hash]
         # @return [void]
         def call(**options)
-          room = OpenLanes::Slack.room
-          poll = OpenLanes::Slack::Poll.new(plan: PLAN, question: QUESTION)
-          ref = ask(room, poll)
-          say("Posted. React to it or reply in its thread; waiting #{options[:timeout]}s.")
-
-          vote = await(room, ref, poll, options[:timeout].to_i) or return unanswered(room, ref, poll)
-          room.close(ref, poll, ":white_check_mark: Answered by <@#{vote.user}>: #{vote.label}")
-          puts "#{room.name_of(vote.user)}\t#{vote.text}"
+          trial(OpenLanes::Slack.room, options[:timeout])
         rescue OpenLanes::Error => e
           refuse(e.message, 69)
+        end
+
+        # The round trip itself, for {Connect} too, which has just chosen the room.
+        #
+        # @param room [OpenLanes::Slack::Room]
+        # @param timeout [Integer, String] seconds to wait for an answer
+        # @return [void]
+        # @raise [OpenLanes::Error] when Slack refuses
+        def trial(room, timeout)
+          poll = OpenLanes::Slack::Poll.new(plan: PLAN, question: QUESTION)
+          ref = ask(room, poll)
+          say("Posted. React to it or reply in its thread; waiting #{timeout}s.")
+
+          vote = await(room, ref, poll, timeout.to_i) or return unanswered(room, ref, poll)
+          room.close(ref, poll, ":white_check_mark: Answered by <@#{vote.user}>: #{vote.label}")
+          puts "#{room.name_of(vote.user)}\t#{vote.text}"
         end
 
         private

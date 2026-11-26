@@ -1,0 +1,127 @@
+# frozen_string_literal: true
+
+require "open3"
+
+module OpenLanes
+  module Slack
+    # What joins a project to a channel: the token, the channel, the workspace
+    # and the operators, gathered from what was typed and what is configured
+    # already, and written to the project's `.env`.
+    #
+    # The `.env` and not `.openlanes/config.yml`, because the token goes
+    # there in any case, and one place is easier to check than two.
+    class Connection
+      # A channel's id, as opposed to its name.
+      CHANNEL_ID = /\A[CG][A-Z0-9]{6,}\z/
+
+      # The channel when none is named and none is configured.
+      DEFAULT_CHANNEL = "#openlanes-questions"
+
+      # @param root [String] the project root
+      # @param env [Hash] the environment
+      # @param app_env [String, nil] the Slack app's own `.env`
+      # @raise [OpenLanes::Error] when +app_env+ names no file. A typo used to
+      #   create an empty one, or, in a missing directory, fail with a
+      #   backtrace after the project's `.env` was already written.
+      def initialize(root:, env: ENV, app_env: nil)
+        @root = root
+        @env = env
+        @project = EnvFile.new(File.join(root, ".env"))
+        @app = app_file(app_env) if app_env
+      end
+
+      # @return [OpenLanes::Slack::EnvFile] the project's `.env`
+      attr_reader :project
+
+      # A setting as it stands. The Slack app's file first, since it was
+      # named on purpose; then what is exported; then the project's `.env`.
+      #
+      # @param name [String]
+      # @return [String, nil] nil when unset or blank everywhere
+      def [](name) = [app&.[](name), env[name], project[name]].find { !it.to_s.strip.empty? }
+
+      # With no channel named, the one a run would ask in today: the
+      # environment's, then `slack.channel` in `.openlanes/config.yml`. The
+      # file has to be asked too, because what is written here goes to `.env`,
+      # which wins over it: defaulting past it would move a configured
+      # project's questions to {DEFAULT_CHANNEL} without a word.
+      #
+      # The workspace falls back the same way, for a sharper reason: one not
+      # carried over leaves {Room#identity} nothing to check, so a re-run
+      # with another workspace's token exported moved the pin to that
+      # workspace and asked its test question there.
+      #
+      # @param token [String]
+      # @param operators [String] ids, separated by commas or spaces
+      # @param channel [String, nil] an id, or a public channel's name
+      # @param workspace [String, nil]
+      # @return [Hash{String => String}] the variables a run needs
+      # @raise [OpenLanes::Error] when `.openlanes/config.yml` cannot be read
+      def values(token:, operators:, channel: nil, workspace: nil)
+        { API::TOKEN_VARIABLE => token,
+          Settings::CHANNEL   => named(channel || self[Settings::CHANNEL] || configured(:channel) || DEFAULT_CHANNEL),
+          Settings::OPERATORS => operators.split(/[\s,]+/).reject(&:empty?).join(","),
+          Settings::WORKSPACE => workspace || self[Settings::WORKSPACE] || configured(:workspace) }.compact
+      end
+
+      # @param values [Hash{String => String}]
+      # @return [OpenLanes::Slack::Room]
+      # @raise [OpenLanes::Error] when the values cannot be asked with
+      def room(values) = Slack.room(config: Config.new, env: values)
+
+      # What each file would gain. The token goes to the project only: the
+      # app's file is where it came from.
+      #
+      # @param values [Hash{String => String}]
+      # @return [Hash{EnvFile => Hash{String => String}}]
+      def changes(values)
+        { project => values, app => values.except(API::TOKEN_VARIABLE) }
+          .reject { |file, _| file.nil? }
+          .to_h { |file, all| [file, file.changes(all)] }
+          .reject { |_, changed| changed.empty? }
+      end
+
+      # @param values [Hash{String => String}]
+      # @return [Hash{EnvFile => Hash{String => String}}] what was written
+      def write(values) = changes(values).each { |file, changed| file.write(changed) }
+
+      # @return [Boolean] whether git would commit the project's `.env`
+      def exposed? = git?("rev-parse", "--git-dir") && !git?("check-ignore", "--quiet", "--", project.path)
+
+      private
+
+      # @return [Hash]
+      attr_reader :env
+
+      # @return [OpenLanes::Slack::EnvFile, nil]
+      attr_reader :app
+
+      # @return [String]
+      attr_reader :root
+
+      # A `#` is optional when typed, since a shell reads an unquoted one as
+      # the start of a comment.
+      #
+      # @return [String]
+      def named(channel) = channel.match?(CHANNEL_ID) || channel.start_with?("#") ? channel : "##{channel}"
+
+      # @return [OpenLanes::Slack::EnvFile]
+      def app_file(path)
+        full = File.expand_path(path)
+        raise OpenLanes::Error, "--app-env #{path}: no such file; name the Slack app's existing .env" unless File.file?(full)
+
+        EnvFile.new(full)
+      end
+
+      # @return [Boolean]
+      def git?(*) = Open3.capture2e("git", "-C", root, *).last.success?
+
+      # @param key [Symbol] `:channel` or `:workspace`
+      # @return [String, nil] `slack.<key>` in the project's config file
+      def configured(key)
+        value = Config.load(root).slack[key].to_s.strip
+        value unless value.empty?
+      end
+    end
+  end
+end

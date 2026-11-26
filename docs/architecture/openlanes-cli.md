@@ -76,6 +76,7 @@ classDiagram
   class OpenLanes__CLI__Run["Run"]
   class OpenLanes__CLI__Setup["Setup"]
   class OpenLanes__CLI__Skills__Install["Skills::Install"]
+  class OpenLanes__CLI__Slack__Connect["Slack::Connect"]
   class OpenLanes__CLI__Slack__Test["Slack::Test"]
   class OpenLanes__CLI__Start["Start"]
   class OpenLanes__CLI__State__Estimate["State::Estimate"]
@@ -177,7 +178,12 @@ classDiagram
   <<module>> OpenLanes__Skills
   class OpenLanes__Slack["OpenLanes::Slack"]
   <<module>> OpenLanes__Slack
+  class OpenLanes__Slack__API["OpenLanes::Slack::API"]
+  class OpenLanes__Slack__AppManifest["OpenLanes::Slack::AppManifest"]
+  <<module>> OpenLanes__Slack__AppManifest
+  class OpenLanes__Slack__Connection["OpenLanes::Slack::Connection"]
   class OpenLanes__Slack__Poll["OpenLanes::Slack::Poll"]
+  class OpenLanes__Slack__Settings["OpenLanes::Slack::Settings"]
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   <<module>> OpenLanes__Supervision
   class OpenLanes__Supervision__Program["OpenLanes::Supervision::Program"]
@@ -411,6 +417,13 @@ classDiagram
   OpenLanes__CLI__Setup ..> OpenLanes__Setup : uses
   OpenLanes__CLI__Skills__Install --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Skills__Install ..> OpenLanes__Skills : uses
+  OpenLanes__CLI__Slack__Connect --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Slack__Connect ..> OpenLanes__CLI__Slack__Test : uses
+  OpenLanes__CLI__Slack__Connect ..> OpenLanes__Error : uses
+  OpenLanes__CLI__Slack__Connect ..> OpenLanes__Slack__API : uses
+  OpenLanes__CLI__Slack__Connect ..> OpenLanes__Slack__AppManifest : uses
+  OpenLanes__CLI__Slack__Connect ..> OpenLanes__Slack__Connection : uses
+  OpenLanes__CLI__Slack__Connect ..> OpenLanes__Slack__Settings : uses
   OpenLanes__CLI__Slack__Test --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Slack__Test ..> OpenLanes__Error : uses
   OpenLanes__CLI__Slack__Test ..> OpenLanes__Slack : uses
