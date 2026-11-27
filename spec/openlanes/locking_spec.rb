@@ -13,9 +13,13 @@ RSpec.describe OpenLanes::Locking do
     expect([configured, described_class.redis_url]).to eq([OpenLanes::Live.redis_url, "redis://locks.test:6379/3"])
   end
 
-  it "signs as this process, and hands an agent that id as its parent" do
+  it "hands an agent its parent, the Redis backend and the engine's own Redis" do
+    described_class.redis_url = "redis://locks.test:6379/3"
+
     expect(described_class.child_environment)
-      .to eq("AGENT_PARENT_ID" => "openlanes@#{Socket.gethostname}:#{Process.pid}", "AGENT_LOCK_BACKEND" => "redis")
+      .to eq("AGENT_PARENT_ID" => "openlanes@#{Socket.gethostname}:#{Process.pid}",
+        "AGENT_LOCK_BACKEND" => "redis",
+        "AGENT_LOCK_REDIS_URL" => "redis://locks.test:6379/3")
   end
 
   it "makes one adapter for every thread, and takes another in its place" do

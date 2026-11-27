@@ -25,6 +25,12 @@ module OpenLanes
     # machine's disk is invisible to the engine and to every other machine.
     BACKEND_VARIABLE = "AGENT_LOCK_BACKEND"
 
+    # The environment variable that names the one Redis `alock` may use,
+    # with no fallback. Agents get the engine's own ({.redis_url}). Not
+    # `REDIS_URL`: the project an agent is building may read that for a
+    # Redis of its own, and a shell profile may export it again.
+    REDIS_URL_VARIABLE = "AGENT_LOCK_REDIS_URL"
+
     @mutex = Mutex.new
     @adapter = nil
     @redis_url = nil
@@ -37,9 +43,15 @@ module OpenLanes
       # @return [String] `openlanes@<host>:<pid>`
       def holder = "openlanes@#{Socket.gethostname}:#{Process.pid}"
 
+      # The dispatcher is not the only locker: each agent it starts claims
+      # files with the `alock` command, in shells of its own. These three
+      # put those claims in the engine's store, as the engine's children.
+      #
       # @return [Hash{String => String}] what an agent's process needs added
-      #   to its environment to be this process's child in alock, on Redis
-      def child_environment = { PARENT_VARIABLE => holder, BACKEND_VARIABLE => "redis" }
+      #   to its environment
+      def child_environment
+        { PARENT_VARIABLE => holder, BACKEND_VARIABLE => "redis", REDIS_URL_VARIABLE => redis_url }
+      end
 
       # The Redis every lock lives in: the engine's own. A run that resolved
       # its URL from `--redis-url` says so through {.redis_url=}; anything

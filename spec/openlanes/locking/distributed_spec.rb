@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 # agent-lock's Ruby API, in this process, on the local Redis: the gem's own
 # code takes and refuses every lock, and nothing about it is mocked.
 #
@@ -63,7 +65,7 @@ RSpec.describe OpenLanes::Locking::Distributed, :redis do
 
   it "fails each call, and asks Redis again on the next, while Redis does not answer" do
     asked = 0
-    down = described_class.new(build: ->(_) { (asked += 1) && raise(Agent::Lock::RedisUnavailableError, "Redis did not answer") })
+    down = described_class.new(facade: ->(_) { (asked += 1) && raise(Agent::Lock::RedisUnavailableError, "Redis did not answer") })
 
     status = down.acquire(scope, "x", dir: plans, as: "me").status
 
@@ -73,7 +75,7 @@ RSpec.describe OpenLanes::Locking::Distributed, :redis do
 
   it "fails one call, and keeps the adapter on, when the store does not answer" do
     broken = Class.new { def acquire(*, **) = raise(Redis::CannotConnectError, "Connection refused\nsecond line") }.new
-    down = described_class.new(build: ->(_) { broken })
+    down = described_class.new(facade: ->(_) { broken })
 
     expect(down.acquire(scope, "x", dir: plans, as: "me")).to eq(OpenLanes::Locking::Outcome.new(status: :failed, message: "Connection refused"))
   end
@@ -81,7 +83,7 @@ RSpec.describe OpenLanes::Locking::Distributed, :redis do
   it "says a listing that failed is unreadable" do
     broken = Class.new { def list(**) = raise(Agent::Lock::Store::Mismatch, "this tree's locks live in redis") }.new
 
-    expect { described_class.new(build: ->(_) { broken }).list(root) }
+    expect { described_class.new(facade: ->(_) { broken }).list(root) }
       .to raise_error(OpenLanes::Locking::Unreadable, /live in redis/)
   end
 
@@ -94,16 +96,42 @@ RSpec.describe OpenLanes::Locking::Distributed, :redis do
     expect(redis.list(dir: root).records.map(&:pid)).to eq([Process.pid])
   end
 
-  # The split this closes: an engine on `--redis-url` whose locks went to
-  # `$REDIS_URL`, where no other engine on its Redis could see them.
-  it "locks on the Redis the engine runs on, one facade per URL, built once" do
-    built = []
-    urls = %w[redis://one redis://one redis://two]
-    several = described_class.new(build: ->(to) { built << to and redis }, url: -> { urls.shift })
+  # The dispatcher is not the only locker: the agents it starts run
+  # `alock` in shells of their own. Given the engine's environment, a child
+  # lands in the engine's Redis database and may claim inside the plan the
+  # engine holds, while a stranger on the same Redis is refused.
+  describe "an agent's alock, given the engine's environment" do
+    let(:engine) { OpenLanes::Locking.holder }
+    let(:file) { "003.00━━🟡━━❯tax-rule-dsl/plan.md" }
 
-    3.times { several.list(root) }
+    def alock(*argv, **env)
+      Open3.capture2e(env.transform_keys(&:to_s), Gem.ruby, Gem.bin_path("agent-lock", "alock"), *argv, "--dir", plans, unsetenv_others: false)
+    end
 
-    expect(built).to eq(%w[redis://one redis://two])
+    before do
+      OpenLanes::Locking.redis_url = url
+      adapter.acquire(scope, "building", dir: plans, as: engine)
+    end
+
+    it "claims inside the engine's plan as its child, in the engine's database" do
+      _, status = alock("acquire", file, "writing the plan", **OpenLanes::Locking.child_environment, AGENT_ID: "backend-coder")
+      records = redis.list(dir: root).records
+
+      expect([status.exitstatus, records.map(&:agent_id).sort, records.find { it.agent_id == "backend-coder" }.parent_agent_id])
+        .to eq([0, ["backend-coder", engine], engine])
+    end
+
+    it "is refused when it is nobody's child" do
+      out, status = alock("acquire", file, "x", **OpenLanes::Locking.child_environment.except("AGENT_PARENT_ID"), AGENT_ID: "stranger")
+
+      expect([status.exitstatus, out]).to match([1, /REFUSED/])
+    end
+
+    it "fails, and falls back to no file store, when the engine's Redis does not answer" do
+      out, status = alock("acquire", file, "x", **OpenLanes::Locking.child_environment, AGENT_LOCK_REDIS_URL: TestRedis::UNREACHABLE, AGENT_ID: "backend-coder")
+
+      expect([status.exitstatus, out]).to match([2, /ERROR/])
+    end
   end
 
   it "is the adapter openlanes uses unless told otherwise" do
