@@ -5,7 +5,7 @@ RSpec.describe OpenLanes::Locking do
 
   it "signs as this process, and hands an agent that id as its parent" do
     expect(described_class.child_environment)
-      .to eq("AGENT_PARENT_ID" => "openlanes@#{Socket.gethostname}:#{Process.pid}")
+      .to eq("AGENT_PARENT_ID" => "openlanes@#{Socket.gethostname}:#{Process.pid}", "AGENT_LOCK_BACKEND" => "redis")
   end
 
   it "makes one adapter for every thread, and takes another in its place" do
@@ -13,12 +13,13 @@ RSpec.describe OpenLanes::Locking do
     other = Object.new
     described_class.adapter = other
 
-    expect([adapters.uniq.size, adapters.first.class, described_class.adapter]).to eq([1, OpenLanes::Locking::Shell, other])
+    expect([adapters.uniq.size, adapters.first.class, described_class.adapter]).to eq([1, OpenLanes::Locking::Distributed, other])
   end
 
-  # Every call to alock goes through one adapter, so a Ruby adapter for
-  # agent-lock can replace it with no caller changing.
-  it "is the only code that runs alock" do
+  # The register is asked in process, through agent-lock's Ruby API on
+  # Redis. A forked `alock` chooses its own backend, the file store when
+  # Redis does not answer, so no code here may run one.
+  it "runs no alock command anywhere" do
     lib = File.expand_path("../../lib/openlanes", __dir__)
     # Code, not comments, that hands alock to a process: "alock" as its own
     # argument (whatever comes before it, an env hash included), %w[alock
@@ -29,7 +30,7 @@ RSpec.describe OpenLanes::Locking do
     runs = ->(file) { File.readlines(file).any? { |line| !line.lstrip.start_with?("#") && line.match?(runner) } }
     runners = Dir.glob("#{lib}/**/*.rb").select(&runs)
 
-    expect(runners.map { it.delete_prefix("#{lib}/") }).to eq(["locking/shell.rb"])
+    expect(runners.map { it.delete_prefix("#{lib}/") }).to eq([])
   end
 
   # The engine depends on execution, so execution must not depend on the

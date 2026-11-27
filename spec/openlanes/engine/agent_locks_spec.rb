@@ -1,30 +1,26 @@
 # frozen_string_literal: true
 
-require "tty/command"
-
 # W31: the plans an agent outside openlanes holds in alock, and the engine's
-# own locks in the same register. `alock` never runs: a command double
-# answers for it, the way it answers on the command line.
+# own locks in the same register. No register is asked: an adapter double
+# answers for it, as Locking::Distributed would.
 RSpec.describe OpenLanes::Engine::AgentLocks do
-  subject(:locks) { described_class.new(root:, id: "openlanes@test", own: %w[backend-coder], adapter: OpenLanes::Locking::Shell.new(command:), clock: -> { time.first }) }
+  subject(:locks) { described_class.new(root:, id: "openlanes@test", own: %w[backend-coder], adapter:, clock: -> { time.first }) }
 
   let(:root) { Dir.mktmpdir("agent-locks") }
   let(:plans) { File.join(root, ".plans") }
   let(:folder) { File.join(plans, "003.00━━🟡━━❯tax-rule-dsl") }
   let(:checkout) { File.join(root, "..", "worktrees", "003.00-tax-rule-dsl") }
   let(:time) { [100.0] }
-  let(:command) { instance_double(TTY::Command) }
+  let(:adapter) { instance_double(OpenLanes::Locking::Distributed) }
   let(:listed) { [] }
 
-  def lock(scope, agent: "claude-1", tree: root, status: "active", intent: "refactoring")
-    { "agent_id" => agent, "scope" => scope, "tree" => tree, "status" => status, "intent" => intent }
-  end
+  def lock(scope, agent: "claude-1", tree: root, intent: "refactoring") = OpenLanes::Locking::Lock.new(agent:, scope:, tree:, intent:)
 
-  def result(status, out: "", err: "") = instance_double(TTY::Command::Result, exit_status: status, success?: status.zero?, out:, err:)
+  def outcome(status, message = "") = OpenLanes::Locking::Outcome.new(status:, message:)
 
   before do
     FileUtils.mkdir_p(folder)
-    allow(command).to receive(:run).with("alock", "list", "--json", "--dir", File.realpath(root), timeout: 10) { result(0, out: JSON.generate(listed)) }
+    allow(adapter).to receive(:list).with(File.realpath(root)) { listed.dup }
   end
 
   after { FileUtils.rm_rf(root) }
@@ -83,28 +79,26 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
       expect(locks.held_elsewhere(folder, checkout:)).not_to be_nil
     end
 
-    it "ignores other plans, other checkouts, the engine's own locks and locks no longer active" do
+    it "ignores other plans, other checkouts and the engine's own locks" do
       listed.push(lock(".plans/004.00━━🟡━━❯other/**"),
         lock("**", tree: File.join(root, "..", "elsewhere")),
-        lock(".plans/003.00━━🟡━━❯tax-rule-dsl/**", agent: "openlanes@test"),
-        lock("**", status: "interrupted"))
+        lock(".plans/003.00━━🟡━━❯tax-rule-dsl/**", agent: "openlanes@test"))
 
       expect(locks.held_elsewhere(folder, checkout:)).to be_nil
     end
 
-    it "asks alock once per #{described_class::FRESH} seconds" do
+    it "asks the register once per #{described_class::FRESH} seconds" do
       3.times { locks.held_elsewhere(folder) }
       time[0] += described_class::FRESH
       locks.held_elsewhere(folder)
 
-      expect(command).to have_received(:run).twice
+      expect(adapter).to have_received(:list).twice
     end
 
     it "says a failing listing once, not on every pass, and again after it recovers" do
-      failure = TTY::Command::ExitError.new("alock list --json", result(1, err: "can't find executable alock"))
       answers = [:fail, :fail, :ok, :fail]
-      allow(command).to receive(:run) do
-        answers.shift == :fail ? raise(failure) : result(0, out: "[]")
+      allow(adapter).to receive(:list) do
+        answers.shift == :fail ? raise(OpenLanes::Locking::Unreadable, "Redis did not answer") : []
       end
       allow(OpenLanes::UI).to receive(:log)
       4.times do
@@ -113,52 +107,40 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
       end
 
       expect(OpenLanes::UI).to have_received(:log)
-        .with("alock list failed, plans unchecked until it works: stderr: can't find executable alock", level: :warn).twice
-    end
-
-    it "checks nothing this pass when alock answers nonsense, and says so" do
-      allow(command).to receive(:run).and_return(result(0, out: "not json"))
-      allow(OpenLanes::UI).to receive(:log)
-
-      aggregate_failures do
-        expect(locks.held_elsewhere(folder)).to be_nil
-        expect(OpenLanes::UI).to have_received(:log).with(/alock list failed/, level: :warn)
-      end
+        .with("alock list failed, plans unchecked until it works: Redis did not answer", level: :warn).twice
     end
   end
 
   describe "#acquire and #release" do
-    let(:argv) { ["--dir", plans, { env: { "AGENT_ID" => "openlanes@test" }, timeout: 10 }] }
-
     it "claims the folder and everything in it, as the engine" do
-      allow(command).to receive(:run!).and_return(result(0))
+      allow(adapter).to receive(:acquire).and_return(outcome(:done))
 
       aggregate_failures do
         expect(locks.acquire(folder, "openlanes: backend-coder on 003.00")).to be(true)
-        expect(command).to have_received(:run!)
-          .with("alock", "acquire", "003.00━━🟡━━❯tax-rule-dsl/**", "openlanes: backend-coder on 003.00", *argv)
+        expect(adapter).to have_received(:acquire)
+          .with("003.00━━🟡━━❯tax-rule-dsl/**", "openlanes: backend-coder on 003.00", dir: plans, as: "openlanes@test")
       end
     end
 
     it "is refused when somebody else holds it" do
-      allow(command).to receive(:run!).and_return(result(1, out: "REFUSED, do not write here"))
+      allow(adapter).to receive(:acquire).and_return(outcome(:refused, "REFUSED, do not write here"))
 
       expect(locks.acquire(folder, "x")).to be(false)
     end
 
-    it "counts alock failing as a refusal, and says why" do
-      allow(command).to receive(:run!).and_return(result(2, err: "empty scope"))
+    it "counts the register failing as a refusal, and says why" do
+      allow(adapter).to receive(:acquire).and_return(outcome(:failed, "Redis did not answer"))
       allow(OpenLanes::UI).to receive(:log)
 
       aggregate_failures do
         expect(locks.acquire(folder, "x")).to be(false)
         expect(OpenLanes::UI).to have_received(:log)
-          .with("alock acquire 003.00━━🟡━━❯tax-rule-dsl/** failed: empty scope", level: :warn)
+          .with("alock acquire 003.00━━🟡━━❯tax-rule-dsl/** failed: Redis did not answer", level: :warn)
       end
     end
 
     it "names the scope a failed release leaves held" do
-      allow(command).to receive(:run!).and_return(result(2, err: "store gone"))
+      allow(adapter).to receive(:release).and_return(outcome(:failed, "store gone"))
       allow(OpenLanes::UI).to receive(:log)
       locks.release(folder)
 
@@ -169,36 +151,19 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
     end
 
     it "gives the folder back" do
-      allow(command).to receive(:run!).and_return(result(0))
+      allow(adapter).to receive(:release).and_return(outcome(:done))
       locks.release(folder)
 
-      expect(command).to have_received(:run!).with("alock", "release", "003.00━━🟡━━❯tax-rule-dsl/**", *argv)
+      expect(adapter).to have_received(:release).with("003.00━━🟡━━❯tax-rule-dsl/**", dir: plans, as: "openlanes@test")
     end
 
     it "asks again after a lock it took, rather than trusting the old answer" do
-      allow(command).to receive(:run!).and_return(result(0))
+      allow(adapter).to receive(:acquire).and_return(outcome(:done))
       locks.held_elsewhere(folder)
       locks.acquire(folder, "x")
       locks.held_elsewhere(folder)
 
-      expect(command).to have_received(:run).twice
-    end
-  end
-
-  context "without alock installed" do
-    before do
-      allow(command).to receive(:run).and_raise(Errno::ENOENT, "alock")
-      allow(command).to receive(:run!).and_raise(Errno::ENOENT, "alock")
-      allow(OpenLanes::UI).to receive(:log)
-    end
-
-    it "lets every plan through, and says so once" do
-      aggregate_failures do
-        expect(locks.held_elsewhere(folder)).to be_nil
-        expect(locks.acquire(folder, "x")).to be(true)
-        expect(locks.held_elsewhere(folder)).to be_nil
-        expect(OpenLanes::UI).to have_received(:log).with(/alock is not installed/, level: :warn).once
-      end
+      expect(adapter).to have_received(:list).twice
     end
   end
 end

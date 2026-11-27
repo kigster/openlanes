@@ -143,8 +143,8 @@ RSpec.configure do |config|
     OpenLanes::Live.choice_judge = nil
     OpenLanes::Live.choice_converter = nil
     OpenLanes::Live.interviewer = nil
-    # alock is a real command reading a real register (W31); examples about
-    # it build their own AgentLocks around a command double.
+    # The alock register is real, in Redis (W31); examples about
+    # it build their own AgentLocks around an adapter of their own.
     OpenLanes::Engine.agent_locks = nil
   end
 

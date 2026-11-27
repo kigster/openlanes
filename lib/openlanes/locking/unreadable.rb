@@ -2,8 +2,8 @@
 
 module OpenLanes
   module Locking
-    # The register could not be read this time: alock failed, timed out, or
-    # answered with something that is not a listing. Callers ask again.
+    # The register could not be read this time: Redis did not answer, or
+    # agent-lock failed underneath. Callers ask again.
     class Unreadable < OpenLanes::Error; end
   end
 end

@@ -12,11 +12,18 @@ module OpenLanes
   # `Engine`, which already depends on `Execution`, and the two namespaces
   # formed a cycle. Both now depend on this one instead.
   #
-  # {Shell} runs the `alock` command. An adapter over agent-lock's Ruby API
-  # can take its place through {.adapter=}, with no caller changing.
+  # {Distributed} asks agent-lock's Ruby API in this process, on Redis and
+  # nowhere else. The specs put a double in its place through {.adapter=},
+  # with no caller changing.
   module Locking
     # The environment variable alock reads a holder's parent from.
     PARENT_VARIABLE = "AGENT_PARENT_ID"
+
+    # The environment variable that pins `alock` to one backend. Agents get
+    # it set to Redis, the store {Distributed} uses: left to choose, `alock`
+    # takes the file store when Redis does not answer, and a lock on one
+    # machine's disk is invisible to the engine and to every other machine.
+    BACKEND_VARIABLE = "AGENT_LOCK_BACKEND"
 
     @mutex = Mutex.new
     @adapter = nil
@@ -30,15 +37,15 @@ module OpenLanes
       def holder = "openlanes@#{Socket.gethostname}:#{Process.pid}"
 
       # @return [Hash{String => String}] what an agent's process needs added
-      #   to its environment to be this process's child in alock
-      def child_environment = { PARENT_VARIABLE => holder }
+      #   to its environment to be this process's child in alock, on Redis
+      def child_environment = { PARENT_VARIABLE => holder, BACKEND_VARIABLE => "redis" }
 
       # The process-wide adapter, made on first use.
       #
       # @return [#list, #acquire, #release] see {Adapter}
-      def adapter = @mutex.synchronize { @adapter ||= Shell.new }
+      def adapter = @mutex.synchronize { @adapter ||= Distributed.new }
 
-      # @param adapter [#list, #acquire, #release, nil] nil goes back to {Shell}
+      # @param adapter [#list, #acquire, #release, nil] nil goes back to {Distributed}
       # @return [void]
       def adapter=(adapter)
         @mutex.synchronize { @adapter = adapter }
