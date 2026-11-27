@@ -115,7 +115,7 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Execution : 30
   OpenLanes__Engine ..> OpenLanes__Lifecycle : 11
   OpenLanes__Engine ..> OpenLanes__Live : 11
-  OpenLanes__Engine ..> OpenLanes__Locking : 2
+  OpenLanes__Engine ..> OpenLanes__Locking : 3
   OpenLanes__Engine ..> OpenLanes__Log : 3
   OpenLanes__Engine ..> OpenLanes__Memory : 1
   OpenLanes__Engine ..> OpenLanes__Plans : 123
@@ -169,6 +169,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Supervision : 1
   OpenLanes__Live ..> OpenLanes__UI : 7
   OpenLanes__Locking ..> OpenLanes : 2
+  OpenLanes__Locking ..> OpenLanes__Live : 1
   OpenLanes__Memory ..> OpenLanes : 4
   OpenLanes__Memory ..> OpenLanes__Agents : 1
   OpenLanes__Memory ..> OpenLanes__Config : 1

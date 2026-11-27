@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/kigster/agent-lock
-  revision: 9aa33b5713c9957dcb0b22e3fe416502c03e004b
-  ref: 9aa33b5713c9957dcb0b22e3fe416502c03e004b
+  revision: 89ba4dcc42572ed890f0e46d31b8c705824f641f
+  ref: 89ba4dcc42572ed890f0e46d31b8c705824f641f
   specs:
     agent-lock (4.0.0)
       dry-cli (~> 1.4)

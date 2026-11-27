@@ -751,6 +751,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__Holder : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__Node : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Locking : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Log : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Log__Invalid : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Log__Settings : uses

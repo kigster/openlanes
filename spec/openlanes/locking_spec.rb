@@ -1,7 +1,17 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::Locking do
-  after { described_class.adapter = nil }
+  after do
+    described_class.adapter = nil
+    described_class.redis_url = nil
+  end
+
+  it "locks on the engine's Redis, and on the configured one until a run names its own" do
+    configured = described_class.redis_url
+    described_class.redis_url = "redis://locks.test:6379/3"
+
+    expect([configured, described_class.redis_url]).to eq([OpenLanes::Live.redis_url, "redis://locks.test:6379/3"])
+  end
 
   it "signs as this process, and hands an agent that id as its parent" do
     expect(described_class.child_environment)

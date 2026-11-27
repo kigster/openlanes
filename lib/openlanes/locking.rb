@@ -27,6 +27,7 @@ module OpenLanes
 
     @mutex = Mutex.new
     @adapter = nil
+    @redis_url = nil
 
     class << self
       # The agent id this openlanes process signs its claims with. Agents it
@@ -39,6 +40,19 @@ module OpenLanes
       # @return [Hash{String => String}] what an agent's process needs added
       #   to its environment to be this process's child in alock, on Redis
       def child_environment = { PARENT_VARIABLE => holder, BACKEND_VARIABLE => "redis" }
+
+      # The Redis every lock lives in: the engine's own. A run that resolved
+      # its URL from `--redis-url` says so through {.redis_url=}; anything
+      # else reads the config file and `$REDIS_URL`, as the engine does.
+      #
+      # @return [String]
+      def redis_url = @mutex.synchronize { @redis_url } || Live.redis_url
+
+      # @param url [String, nil] nil goes back to {Live.redis_url}
+      # @return [void]
+      def redis_url=(url)
+        @mutex.synchronize { @redis_url = url }
+      end
 
       # The process-wide adapter, made on first use.
       #

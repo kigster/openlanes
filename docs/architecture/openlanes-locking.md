@@ -5,6 +5,8 @@
 ```mermaid
 classDiagram
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Live["OpenLanes::Live"]
+  <<module>> OpenLanes__Live
   class OpenLanes__Locking["OpenLanes::Locking"]
   <<module>> OpenLanes__Locking
   class OpenLanes__Locking__Adapter["Adapter"]
@@ -14,7 +16,9 @@ classDiagram
   class OpenLanes__Locking__Outcome["Outcome"]
   class OpenLanes__Locking__Unreadable["Unreadable"]
   OpenLanes__Locking ..> OpenLanes__Error : uses
+  OpenLanes__Locking ..> OpenLanes__Live : uses
   OpenLanes__Locking ..> OpenLanes__Locking__Distributed : uses
+  OpenLanes__Locking__Distributed ..> OpenLanes__Locking : uses
   OpenLanes__Locking__Distributed ..|> OpenLanes__Locking__Adapter : includes
   OpenLanes__Locking__Distributed ..> OpenLanes__Locking__Lock : uses
   OpenLanes__Locking__Distributed ..> OpenLanes__Locking__Outcome : uses

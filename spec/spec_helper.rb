@@ -146,6 +146,7 @@ RSpec.configure do |config|
     # The alock register is real, in Redis (W31); examples about
     # it build their own AgentLocks around an adapter of their own.
     OpenLanes::Engine.agent_locks = nil
+    OpenLanes::Locking.redis_url = nil
   end
 
   # Every real-Redis example holds the machine-wide lock while it runs, and

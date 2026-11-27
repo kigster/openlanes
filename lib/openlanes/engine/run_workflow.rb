@@ -401,7 +401,10 @@ module OpenLanes
         end
 
         config = Config.current
-        store = Live.connect(Live.redis_url(option: @options[:redis_url], config:))
+        url = Live.redis_url(option: @options[:redis_url], config:)
+        # Locks go where the board and the plan claims go, whatever named it.
+        Locking.redis_url = url
+        store = Live.connect(url)
         node = Live::Node.current(root: @root, role: node_role)
         session = Live.session(store:, root: @root, tree: @tree, agents:, project: config.project, node:)
         startup("Live board", session.described)

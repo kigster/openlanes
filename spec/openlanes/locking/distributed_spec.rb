@@ -7,15 +7,16 @@
 # ControlRoomProcess#stop_all flushed it mid-claim, deleting agent-lock's
 # mutex key, and the claim failed as a lost lease.
 RSpec.describe OpenLanes::Locking::Distributed, :redis do
-  subject(:adapter) { described_class.new(redis: -> { redis }) }
+  subject(:adapter) { described_class.new(url: -> { url }) }
 
-  let(:redis) { Agent::Lock::Facade.new(strategies: %w[redis], redis_url: TestRedis.url(9)) }
+  let(:url) { TestRedis.url(9) }
+  let(:redis) { Agent::Lock::Facade.new(strategies: %w[redis], redis_url: url) }
   let(:root) { File.realpath(Dir.mktmpdir("distributed")) }
   let(:plans) { File.join(root, ".plans") }
   let(:scope) { "003.00━━🟡━━❯tax-rule-dsl/**" }
 
   before do
-    Redis.new(url: TestRedis.url(9)).then { it.flushdb && it.close }
+    Redis.new(url:).then { it.flushdb && it.close }
     system("git", "init", "-q", root, exception: true)
     FileUtils.mkdir_p(File.join(plans, "003.00━━🟡━━❯tax-rule-dsl"))
   end
@@ -62,7 +63,7 @@ RSpec.describe OpenLanes::Locking::Distributed, :redis do
 
   it "fails each call, and asks Redis again on the next, while Redis does not answer" do
     asked = 0
-    down = described_class.new(redis: -> { (asked += 1) && raise(Agent::Lock::RedisUnavailableError, "Redis did not answer") })
+    down = described_class.new(build: ->(_) { (asked += 1) && raise(Agent::Lock::RedisUnavailableError, "Redis did not answer") })
 
     status = down.acquire(scope, "x", dir: plans, as: "me").status
 
@@ -72,7 +73,7 @@ RSpec.describe OpenLanes::Locking::Distributed, :redis do
 
   it "fails one call, and keeps the adapter on, when the store does not answer" do
     broken = Class.new { def acquire(*, **) = raise(Redis::CannotConnectError, "Connection refused\nsecond line") }.new
-    down = described_class.new(redis: -> { broken })
+    down = described_class.new(build: ->(_) { broken })
 
     expect(down.acquire(scope, "x", dir: plans, as: "me")).to eq(OpenLanes::Locking::Outcome.new(status: :failed, message: "Connection refused"))
   end
@@ -80,7 +81,7 @@ RSpec.describe OpenLanes::Locking::Distributed, :redis do
   it "says a listing that failed is unreadable" do
     broken = Class.new { def list(**) = raise(Agent::Lock::Store::Mismatch, "this tree's locks live in redis") }.new
 
-    expect { described_class.new(redis: -> { broken }).list(root) }
+    expect { described_class.new(build: ->(_) { broken }).list(root) }
       .to raise_error(OpenLanes::Locking::Unreadable, /live in redis/)
   end
 
@@ -91,6 +92,18 @@ RSpec.describe OpenLanes::Locking::Distributed, :redis do
     adapter.acquire(scope, "building", dir: plans, as: "openlanes@one")
 
     expect(redis.list(dir: root).records.map(&:pid)).to eq([Process.pid])
+  end
+
+  # The split this closes: an engine on `--redis-url` whose locks went to
+  # `$REDIS_URL`, where no other engine on its Redis could see them.
+  it "locks on the Redis the engine runs on, one facade per URL, built once" do
+    built = []
+    urls = %w[redis://one redis://one redis://two]
+    several = described_class.new(build: ->(to) { built << to and redis }, url: -> { urls.shift })
+
+    3.times { several.list(root) }
+
+    expect(built).to eq(%w[redis://one redis://two])
   end
 
   it "is the adapter openlanes uses unless told otherwise" do
