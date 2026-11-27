@@ -18,6 +18,7 @@ classDiagram
   OpenLanes__Locking ..> OpenLanes__Error : uses
   OpenLanes__Locking ..> OpenLanes__Live : uses
   OpenLanes__Locking ..> OpenLanes__Locking__Distributed : uses
+  OpenLanes__Locking__Distributed ..> OpenLanes__Live : uses
   OpenLanes__Locking__Distributed ..> OpenLanes__Locking : uses
   OpenLanes__Locking__Distributed ..|> OpenLanes__Locking__Adapter : includes
   OpenLanes__Locking__Distributed ..> OpenLanes__Locking__Lock : uses

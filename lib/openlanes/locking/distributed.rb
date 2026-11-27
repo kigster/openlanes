@@ -95,9 +95,12 @@ module OpenLanes
       # @raise [Agent::Lock::RedisUnavailableError]
       def facade = @facade.call(@url.call)
 
+      # agent-lock names the Redis it could not reach by its whole URL, and
+      # this line goes to the log, so a password in that URL would too.
+      #
       # @param error [Exception]
-      # @return [String]
-      def first_line(error) = error.message.lines.first.to_s.strip
+      # @return [String] its first line, any URL's credentials masked
+      def first_line(error) = error.message.lines.first.to_s.strip.gsub(%r{\S+://\S+}) { Live.redact(it) }
 
       # @param text [String, nil]
       # @return [String, nil]

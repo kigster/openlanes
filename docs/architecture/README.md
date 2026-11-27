@@ -169,7 +169,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Supervision : 1
   OpenLanes__Live ..> OpenLanes__UI : 7
   OpenLanes__Locking ..> OpenLanes : 2
-  OpenLanes__Locking ..> OpenLanes__Live : 1
+  OpenLanes__Locking ..> OpenLanes__Live : 2
   OpenLanes__Memory ..> OpenLanes : 4
   OpenLanes__Memory ..> OpenLanes__Agents : 1
   OpenLanes__Memory ..> OpenLanes__Config : 1

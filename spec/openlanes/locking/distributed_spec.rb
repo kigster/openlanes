@@ -91,6 +91,12 @@ RSpec.describe OpenLanes::Locking::Distributed, :redis do
     expect(down.acquire(scope, "x", dir: plans, as: "me")).to eq(OpenLanes::Locking::Outcome.new(status: :failed, message: "Connection refused"))
   end
 
+  it "masks the password in a Redis URL before the message reaches the log" do
+    down = described_class.new(facade: ->(_) { raise(Agent::Lock::RedisUnavailableError, "Redis did not answer on redis://kig:s3cret@h:6379/0") })
+
+    expect(down.acquire(scope, "x", dir: plans, as: "me").message).to eq("Redis did not answer on redis://:***@h:6379/0")
+  end
+
   it "says a listing that failed is unreadable" do
     broken = Class.new { def list(**) = raise(Agent::Lock::Store::Mismatch, "this tree's locks live in redis") }.new
 
