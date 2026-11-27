@@ -9,18 +9,15 @@ classDiagram
   <<module>> OpenLanes__Locking
   class OpenLanes__Locking__Adapter["Adapter"]
   <<module>> OpenLanes__Locking__Adapter
+  class OpenLanes__Locking__Distributed["Distributed"]
   class OpenLanes__Locking__Lock["Lock"]
   class OpenLanes__Locking__Outcome["Outcome"]
-  class OpenLanes__Locking__Shell["Shell"]
-  class OpenLanes__Locking__Unavailable["Unavailable"]
   class OpenLanes__Locking__Unreadable["Unreadable"]
   OpenLanes__Locking ..> OpenLanes__Error : uses
-  OpenLanes__Locking ..> OpenLanes__Locking__Shell : uses
-  OpenLanes__Locking__Shell ..|> OpenLanes__Locking__Adapter : includes
-  OpenLanes__Locking__Shell ..> OpenLanes__Locking__Lock : uses
-  OpenLanes__Locking__Shell ..> OpenLanes__Locking__Outcome : uses
-  OpenLanes__Locking__Shell ..> OpenLanes__Locking__Unavailable : uses
-  OpenLanes__Locking__Shell ..> OpenLanes__Locking__Unreadable : uses
-  OpenLanes__Locking__Unavailable --|> OpenLanes__Error : inherits
+  OpenLanes__Locking ..> OpenLanes__Locking__Distributed : uses
+  OpenLanes__Locking__Distributed ..|> OpenLanes__Locking__Adapter : includes
+  OpenLanes__Locking__Distributed ..> OpenLanes__Locking__Lock : uses
+  OpenLanes__Locking__Distributed ..> OpenLanes__Locking__Outcome : uses
+  OpenLanes__Locking__Distributed ..> OpenLanes__Locking__Unreadable : uses
   OpenLanes__Locking__Unreadable --|> OpenLanes__Error : inherits
 ```
