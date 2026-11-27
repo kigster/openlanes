@@ -420,7 +420,8 @@ module OpenLanes
       def without_live(message)
         unless @quiet
           warn("#{message}\n\nThe run goes on without the live board: no page, no commands from it, and no " \
-               "plan claims shared with other machines. Start redis-server, or pass --redis-url.")
+               "plan is started until Redis answers, because every lock lives there. Start redis-server, or " \
+               "pass --redis-url.")
         end
         Success(nil)
       end

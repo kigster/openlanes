@@ -34,8 +34,8 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | :-- | :-- | :-- | :-- | :-- | :-- |
 | `lib/openlanes/apps/runner.rb` | `@stopping` | `Apps::Runner` | runner loop, signal trap | `Concurrent::AtomicBoolean` | guarded |
 | `lib/openlanes/apps/supervisor.rb` | `@statuses`, `@tails` | `Apps::Supervisor` | reader, waiter, caller | `@mutex` on every read and write | guarded |
-| `lib/openlanes/engine/agent_locks.rb` | the held-locks snapshot, the failure last said, `@off` | `Engine::AgentLocks` | tick, agent jobs | `@mutex` on every read and write | guarded |
-| `lib/openlanes/locking.rb` | the process-wide adapter | `Locking` | any | `@mutex` around `adapter` and `adapter=` | guarded |
+| `lib/openlanes/engine/agent_locks.rb` | the held-locks snapshot, the failure last said | `Engine::AgentLocks` | tick, agent jobs | `@mutex` on every read and write | guarded |
+| `lib/openlanes/locking.rb` | the process-wide adapter, the Redis URL locks go to | `Locking` | any | `@mutex` around `adapter`, `adapter=`, `redis_url` and `redis_url=` | guarded |
 | `lib/openlanes/locking/distributed.rb` | nothing of its own: the frozen `Agent::Lock.distributed` facade, which builds a manager per call | `Locking::Distributed` | tick, agent jobs, merge watch | none needed; the holder goes in each call's own `agent_id:`, never in `ENV`, and the pid a lock is tied to is read per call | guarded |
 | `lib/openlanes/engine/dispatcher/desk/registers.rb` | `running`, `history` | `Engine::Dispatcher::Desk::Registers`, read through `Desk` and `Desk::Rounds` | tick, agent jobs, PR watch, unblock | `mutex` around every cross-thread read and write | guarded |
 | `lib/openlanes/engine/dispatcher.rb` | the tick itself | `Engine::Dispatcher` | any caller of `#tick` | `@tick_lock` (`Monitor`): two overlapping ticks each started the same plan; `dispatcher_stress_spec.rb` found it (fixed in 038.00) | guarded |
