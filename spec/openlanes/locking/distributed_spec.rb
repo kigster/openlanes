@@ -37,6 +37,17 @@ RSpec.describe OpenLanes::Locking::Distributed, :redis do
               :done, []])
   end
 
+  # agent-lock infers a parent for a named holder: the session that launched
+  # the process. With one, that session's lock would not block the engine.
+  it "is nobody's child, so a lock the session that started it holds still blocks it" do
+    launcher = redis.whoami.id
+    # Wider than the engine's claim: a claim on a parent's exact scope is
+    # refused either way, so only a narrower one tells the two apart.
+    redis.acquire("**", "a person at work", dir: plans, agent_id: launcher, parent_id: false)
+
+    expect(adapter.acquire(scope, "building", dir: plans, as: "openlanes@one").status).to eq(:refused)
+  end
+
   it "says acquiring a lock it already holds is done" do
     adapter.acquire(scope, "building", dir: plans, as: "openlanes@one")
 
@@ -115,10 +126,9 @@ RSpec.describe OpenLanes::Locking::Distributed, :redis do
 
     it "claims inside the engine's plan as its child, in the engine's database" do
       _, status = alock("acquire", file, "writing the plan", **OpenLanes::Locking.child_environment, AGENT_ID: "backend-coder")
-      records = redis.list(dir: root).records
+      held = redis.list(dir: root).records.to_h { [it.agent_id, it.parent_agent_id] }
 
-      expect([status.exitstatus, records.map(&:agent_id).sort, records.find { it.agent_id == "backend-coder" }.parent_agent_id])
-        .to eq([0, ["backend-coder", engine], engine])
+      expect([status.exitstatus, held]).to eq([0, { engine => nil, "backend-coder" => engine }])
     end
 
     it "is refused when it is nobody's child" do

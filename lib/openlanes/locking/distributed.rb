@@ -27,6 +27,11 @@ module OpenLanes
     # Lifetime: a facade ties a lock to the Ruby process that took it
     # (agent-lock's `holder: :process`, its default), read on every call, so
     # every lock ends with openlanes, and a fork holds its own.
+    #
+    # Parent: none. The engine is a top-level service, but agent-lock infers
+    # a parent for any named holder: whatever session launched the process.
+    # A lock that session held then did not block the engine, so each call
+    # says there is no parent.
     class Distributed
       include Adapter
 
@@ -61,12 +66,12 @@ module OpenLanes
       end
 
       # @return [Outcome] `:done` for `:acquired` and `:already_mine`
-      def acquire(scope, intent, dir:, as:) = change { facade.acquire(scope, intent, dir:, agent_id: as) }
+      def acquire(scope, intent, dir:, as:) = change { facade.acquire(scope, intent, dir:, agent_id: as, parent_id: false) }
 
       # @return [Outcome] `:done` for `:released`, `:refused` for `:not_found`
       def release(scope, dir:, as:)
         change do
-          result = facade.release(scope, dir:, agent_id: as)
+          result = facade.release(scope, dir:, agent_id: as, parent_id: false)
           next Outcome.new(status: :refused, message: "NOT LOCKED #{scope}") if result.status == :not_found
 
           result
