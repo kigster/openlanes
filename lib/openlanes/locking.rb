@@ -12,14 +12,28 @@ module OpenLanes
   # `Engine`, which already depends on `Execution`, and the two namespaces
   # formed a cycle. Both now depend on this one instead.
   #
-  # {Shell} runs the `alock` command. An adapter over agent-lock's Ruby API
-  # can take its place through {.adapter=}, with no caller changing.
+  # {Distributed} asks agent-lock's Ruby API in this process, on Redis and
+  # nowhere else. The specs put a double in its place through {.adapter=},
+  # with no caller changing.
   module Locking
     # The environment variable alock reads a holder's parent from.
     PARENT_VARIABLE = "AGENT_PARENT_ID"
 
+    # The environment variable that pins `alock` to one backend. Agents get
+    # it set to Redis, the store {Distributed} uses: left to choose, `alock`
+    # takes the file store when Redis does not answer, and a lock on one
+    # machine's disk is invisible to the engine and to every other machine.
+    BACKEND_VARIABLE = "AGENT_LOCK_BACKEND"
+
+    # The environment variable that names the one Redis `alock` may use,
+    # with no fallback. Agents get the engine's own ({.redis_url}). Not
+    # `REDIS_URL`: the project an agent is building may read that for a
+    # Redis of its own, and a shell profile may export it again.
+    REDIS_URL_VARIABLE = "AGENT_LOCK_REDIS_URL"
+
     @mutex = Mutex.new
     @adapter = nil
+    @redis_url = nil
 
     class << self
       # The agent id this openlanes process signs its claims with. Agents it
@@ -29,16 +43,35 @@ module OpenLanes
       # @return [String] `openlanes@<host>:<pid>`
       def holder = "openlanes@#{Socket.gethostname}:#{Process.pid}"
 
+      # The dispatcher is not the only locker: each agent it starts claims
+      # files with the `alock` command, in shells of its own. These three
+      # put those claims in the engine's store, as the engine's children.
+      #
       # @return [Hash{String => String}] what an agent's process needs added
-      #   to its environment to be this process's child in alock
-      def child_environment = { PARENT_VARIABLE => holder }
+      #   to its environment
+      def child_environment
+        { PARENT_VARIABLE => holder, BACKEND_VARIABLE => "redis", REDIS_URL_VARIABLE => redis_url }
+      end
+
+      # The Redis every lock lives in: the engine's own. A run that resolved
+      # its URL from `--redis-url` says so through {.redis_url=}; anything
+      # else reads the config file and `$REDIS_URL`, as the engine does.
+      #
+      # @return [String]
+      def redis_url = @mutex.synchronize { @redis_url } || Live.redis_url
+
+      # @param url [String, nil] nil goes back to {Live.redis_url}
+      # @return [void]
+      def redis_url=(url)
+        @mutex.synchronize { @redis_url = url }
+      end
 
       # The process-wide adapter, made on first use.
       #
       # @return [#list, #acquire, #release] see {Adapter}
-      def adapter = @mutex.synchronize { @adapter ||= Shell.new }
+      def adapter = @mutex.synchronize { @adapter ||= Distributed.new }
 
-      # @param adapter [#list, #acquire, #release, nil] nil goes back to {Shell}
+      # @param adapter [#list, #acquire, #release, nil] nil goes back to {Distributed}
       # @return [void]
       def adapter=(adapter)
         @mutex.synchronize { @adapter = adapter }

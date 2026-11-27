@@ -401,7 +401,10 @@ module OpenLanes
         end
 
         config = Config.current
-        store = Live.connect(Live.redis_url(option: @options[:redis_url], config:))
+        url = Live.redis_url(option: @options[:redis_url], config:)
+        # Locks go where the board and the plan claims go, whatever named it.
+        Locking.redis_url = url
+        store = Live.connect(url)
         node = Live::Node.current(root: @root, role: node_role)
         session = Live.session(store:, root: @root, tree: @tree, agents:, project: config.project, node:)
         startup("Live board", session.described)
@@ -417,7 +420,8 @@ module OpenLanes
       def without_live(message)
         unless @quiet
           warn("#{message}\n\nThe run goes on without the live board: no page, no commands from it, and no " \
-               "plan claims shared with other machines. Start redis-server, or pass --redis-url.")
+               "plan is started until Redis answers, because every lock lives there. Start redis-server, or " \
+               "pass --redis-url.")
         end
         Success(nil)
       end

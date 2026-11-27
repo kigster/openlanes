@@ -14,23 +14,22 @@ module OpenLanes
     # agents are in it, so that agent sees the engine too. With alock on
     # Redis this reaches across machines as well.
     #
-    # `alock acquire` is the atomic step: it refuses (exit 1) when anybody
-    # holds an overlapping scope, so two contenders cannot both win. The
+    # Acquiring is the atomic step: it is refused when anybody holds an
+    # overlapping scope, so two contenders cannot both win. The
     # listing only keeps the engine from asking, tick after tick, for plans
     # it would be refused.
     #
     # The register is reached only through {Locking.adapter}: this class
     # decides what the engine claims and whose locks count, and the adapter
     # alone knows how alock is asked. A lock ends with the engine that took
-    # it. A machine without alock has no agent using it either, and the
-    # engine carries on without it, said once.
+    # it. While the register does not answer, plans are left alone: one
+    # nobody could check is one somebody may be in.
     #
     # Shared by the dispatcher's threads: every piece of state it keeps (the
-    # listing, the failure last said, whether alock is missing) changes
-    # under one mutex.
+    # listing, the failure last said) changes under one mutex.
     class AgentLocks
       # How long one listing answers for. The dispatcher asks on every
-      # one-second tick, and each answer starts a Ruby process.
+      # one-second tick, and each answer reads the whole store.
       FRESH = 5
 
       # @param root [String] the repository whose plans are locked
@@ -39,9 +38,8 @@ module OpenLanes
       #   `AGENT_ID=<name>` or `<name>-<suffix>` as their prompt tells them to
       # @param adapter [#list, #acquire, #release, nil] see {Locking::Adapter};
       #   nil reads {Locking.adapter} on every call, so one swapped in after
-      #   the engine started reaches it on the next call. Not after alock was
-      #   found missing: that turns these locks off for good, and the last
-      #   listing stands for up to {FRESH} seconds
+      #   the engine started reaches it on the next call; the last listing
+      #   stands for up to {FRESH} seconds
       # @param clock [#call] monotonic seconds
       def initialize(root:, id: Locking.holder, own: [], adapter: nil, clock: -> { UI.monotonic })
         @root = File.realpath(root)
@@ -53,7 +51,6 @@ module OpenLanes
         @failing = nil
         @snapshot = nil
         @taken_at = nil
-        @off = false
       end
 
       # @return [String]
@@ -89,8 +86,8 @@ module OpenLanes
         held.find { real(it.tree) == work }
       end
 
-      # Claim the plan's folder. False when somebody holds it, in which case
-      # the plan is left alone; true when alock is not installed.
+      # Claim the plan's folder. False when somebody holds it, or when the
+      # register did not answer; either way the plan is left alone.
       #
       # @param dir [String] the plan folder
       # @param intent [String] what the engine is about to do there
@@ -117,7 +114,6 @@ module OpenLanes
       # @return [Array<Locking::Lock>] every active lock, at most {FRESH} seconds old
       def held
         @mutex.synchronize do
-          next [] if @off
           next @snapshot if @snapshot && @clock.call - @taken_at < FRESH
 
           @snapshot = list
@@ -136,23 +132,15 @@ module OpenLanes
       rescue Locking::Unreadable => e
         failing(e.message)
         []
-      rescue Locking::Unavailable
-        missing
-        []
       end
 
       # @return [Boolean] done; false when refused, or when alock failed,
       #   since a plan nobody could check is left alone
       def run(action, *args, dir:)
-        return true if @mutex.synchronize { @off }
-
         outcome = adapter.public_send(action, *args, dir:, as: @id)
         @mutex.synchronize { @snapshot = nil }
         say_failed(action, args.first, outcome) if outcome.failed?
         outcome.done?
-      rescue Locking::Unavailable
-        @mutex.synchronize { missing }
-        true
       end
 
       # @return [void]
@@ -172,16 +160,6 @@ module OpenLanes
 
         @failing = reason
         UI.log("alock list failed, plans unchecked until it works: #{reason}", level: :warn)
-      end
-
-      # Called with the mutex held.
-      #
-      # @return [void]
-      def missing
-        return if @off
-
-        @off = true
-        UI.log("alock is not installed: plans are not checked against agents outside openlanes", level: :warn)
       end
 
       # The folder and everything in it: a directory scope covers its

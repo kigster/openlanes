@@ -737,6 +737,15 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
         result
         expect(OpenLanes::Live).to have_received(:connect).with("redis://elsewhere:6380/2")
       end
+
+      # Locks on `$REDIS_URL` while the board is elsewhere would be locks
+      # no other engine on that Redis can see.
+      it "takes its locks there too" do
+        result
+        expect(OpenLanes::Locking.redis_url).to eq("redis://elsewhere:6380/2")
+      ensure
+        OpenLanes::Locking.redis_url = nil
+      end
     end
 
     context "with --dry-run" do

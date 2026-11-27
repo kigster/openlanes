@@ -230,7 +230,6 @@ classDiagram
   class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
   class OpenLanes__Locking["OpenLanes::Locking"]
   <<module>> OpenLanes__Locking
-  class OpenLanes__Locking__Unavailable["OpenLanes::Locking::Unavailable"]
   class OpenLanes__Locking__Unreadable["OpenLanes::Locking::Unreadable"]
   class OpenLanes__Log["OpenLanes::Log"]
   <<module>> OpenLanes__Log
@@ -304,7 +303,6 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Error : uses
   OpenLanes__Engine ..> OpenLanes__Plans : uses
   OpenLanes__Engine__AgentLocks ..> OpenLanes__Locking : uses
-  OpenLanes__Engine__AgentLocks ..> OpenLanes__Locking__Unavailable : uses
   OpenLanes__Engine__AgentLocks ..> OpenLanes__Locking__Unreadable : uses
   OpenLanes__Engine__AgentLocks ..> OpenLanes__UI : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Agents__Names : uses
@@ -753,6 +751,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__Holder : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__Node : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Locking : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Log : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Log__Invalid : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Log__Settings : uses

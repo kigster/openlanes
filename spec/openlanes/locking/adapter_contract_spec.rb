@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 # "No caller changes": AgentLocks runs on any adapter that keeps the
-# Locking::Adapter contract. This one keeps the register in memory, the way
-# an adapter over agent-lock's Ruby API would keep it in the gem.
-RSpec.describe "a locking adapter other than Shell" do
+# Locking::Adapter contract. This one keeps the register in memory, where
+# Locking::Distributed keeps it in Redis.
+RSpec.describe "a locking adapter other than Distributed" do
   let(:memory) do
     Class.new do
       include OpenLanes::Locking::Adapter

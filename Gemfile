@@ -7,6 +7,11 @@ source "https://rubygems.org"
 # only what you need in order to work on it.
 gemspec
 
+# agent-lock 4.0.0 (the Ruby facade) is not on RubyGems yet. Pinned to its
+# main branch by commit until it is; then this line goes and the gemspec
+# constraint alone stands.
+gem "agent-lock", git: "https://github.com/kigster/agent-lock", ref: "02ef58ccb863f5eb03f71c04cef2f50f6d899de0"
+
 gem "rake"
 gem "yard"
 
